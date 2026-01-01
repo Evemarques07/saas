@@ -1,18 +1,6 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: {
-      head: string[][];
-      body: string[][];
-      startY?: number;
-      theme?: string;
-      headStyles?: Record<string, unknown>;
-    }) => jsPDF;
-  }
-}
+import autoTable from 'jspdf-autotable';
 
 export function exportToExcel<T extends Record<string, unknown>>(
   data: T[],
@@ -46,7 +34,7 @@ export function exportToPDF<T extends Record<string, unknown>>(
     const headers = Object.keys(data[0]);
     const rows = data.map((item) => headers.map((h) => String(item[h] ?? '')));
 
-    doc.autoTable({
+    autoTable(doc, {
       head: [headers],
       body: rows,
       startY: 40,
