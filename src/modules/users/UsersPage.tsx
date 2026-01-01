@@ -5,11 +5,12 @@ import EditIcon from '@mui/icons-material/Edit';
 import BlockIcon from '@mui/icons-material/Block';
 import SearchIcon from '@mui/icons-material/Search';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { sendInviteEmail } from '../../services/email';
 import { CompanyMember, MemberRole, TableColumn } from '../../types';
 
 const ROLES: { value: MemberRole; label: string }[] = [
@@ -37,6 +38,13 @@ export function UsersPage() {
   const [editRole, setEditRole] = useState<MemberRole>('seller');
   const [submitting, setSubmitting] = useState(false);
 
+  // Toggle Active Modal
+  const [toggleModal, setToggleModal] = useState<{ open: boolean; member: CompanyMember | null }>({
+    open: false,
+    member: null,
+  });
+  const [toggling, setToggling] = useState(false);
+
   useEffect(() => {
     if (currentCompany) {
       fetchMembers();
@@ -48,19 +56,40 @@ export function UsersPage() {
 
     setLoading(true);
 
-    const { data, error } = await supabase
+    // Buscar members primeiro
+    const { data: membersData, error: membersError } = await supabase
       .from('company_members')
-      .select(`
-        *,
-        profile:profiles(*)
-      `)
+      .select('*')
       .eq('company_id', currentCompany.id)
       .order('created_at');
 
-    if (!error && data) {
-      setMembers(data);
+    if (membersError || !membersData) {
+      setLoading(false);
+      return;
     }
 
+    // Buscar profiles dos members
+    const userIds = membersData.map(m => m.user_id).filter(Boolean);
+
+    if (userIds.length === 0) {
+      setMembers(membersData.map(m => ({ ...m, profile: null })));
+      setLoading(false);
+      return;
+    }
+
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+
+    // Combinar dados
+    const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+    const membersWithProfiles = membersData.map(m => ({
+      ...m,
+      profile: profilesMap.get(m.user_id) || null,
+    }));
+
+    setMembers(membersWithProfiles);
     setLoading(false);
   };
 
@@ -74,26 +103,54 @@ export function UsersPage() {
     e.preventDefault();
 
     if (!inviteEmail) {
-      toast.error('Email é obrigatório');
+      toast.error('Email e obrigatorio');
       return;
     }
 
     setSendingInvite(true);
 
     try {
-      const { error } = await supabase.from('invites').insert({
-        email: inviteEmail,
-        company_id: currentCompany!.id,
-        role: inviteRole,
-        invited_by: user!.uid,
-      });
+      // Criar convite no banco
+      const { data: inviteData, error: inviteError } = await supabase
+        .from('invites')
+        .insert({
+          email: inviteEmail,
+          company_id: currentCompany!.id,
+          role: inviteRole,
+          invited_by: user!.uid,
+        })
+        .select('token')
+        .single();
 
-      if (error) throw error;
+      if (inviteError) throw inviteError;
 
-      toast.success(`Convite enviado para ${inviteEmail}`);
+      // Gerar link de convite
+      const inviteLink = `${window.location.origin}/aceitar-convite?token=${inviteData.token}`;
+
+      // Tentar enviar email
+      let emailSent = false;
+      try {
+        const emailResult = await sendInviteEmail({
+          email: inviteEmail,
+          companyName: currentCompany!.name,
+          inviteLink: inviteLink,
+        });
+        emailSent = emailResult.success;
+      } catch {
+        // Ignora erro de email, vai usar fallback
+      }
+
+      if (emailSent) {
+        toast.success(`Convite enviado para ${inviteEmail}`);
+      } else {
+        // Fallback: copiar link
+        await navigator.clipboard.writeText(inviteLink);
+        toast.success('Convite criado! Link copiado para a area de transferencia.');
+      }
+
       setShowInviteModal(false);
     } catch {
-      toast.error('Erro ao enviar convite');
+      toast.error('Erro ao criar convite');
     } finally {
       setSendingInvite(false);
     }
@@ -130,22 +187,33 @@ export function UsersPage() {
     }
   };
 
-  const handleToggleActive = async (member: CompanyMember) => {
-    const action = member.is_active ? 'desativar' : 'ativar';
-    if (!confirm(`Deseja ${action} este usuário?`)) return;
+  const handleOpenToggleModal = (member: CompanyMember) => {
+    setToggleModal({ open: true, member });
+  };
 
+  const handleCloseToggleModal = () => {
+    setToggleModal({ open: false, member: null });
+  };
+
+  const handleConfirmToggle = async () => {
+    if (!toggleModal.member) return;
+
+    setToggling(true);
     try {
       const { error } = await supabase
         .from('company_members')
-        .update({ is_active: !member.is_active })
-        .eq('id', member.id);
+        .update({ is_active: !toggleModal.member.is_active })
+        .eq('id', toggleModal.member.id);
 
       if (error) throw error;
 
-      toast.success(`Usuário ${member.is_active ? 'desativado' : 'ativado'}!`);
+      toast.success(`Usuario ${toggleModal.member.is_active ? 'desativado' : 'ativado'}!`);
+      handleCloseToggleModal();
       fetchMembers();
     } catch {
-      toast.error('Erro ao atualizar usuário');
+      toast.error('Erro ao atualizar usuario');
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -211,7 +279,7 @@ export function UsersPage() {
                 <EditIcon className="w-4 h-4" />
               </button>
               <button
-                onClick={() => handleToggleActive(m)}
+                onClick={() => handleOpenToggleModal(m)}
                 className={`p-1 transition-colors ${
                   m.is_active
                     ? 'text-gray-500 hover:text-red-600'
@@ -354,6 +422,18 @@ export function UsersPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Toggle Active Confirm Modal */}
+      <ConfirmModal
+        isOpen={toggleModal.open}
+        onClose={handleCloseToggleModal}
+        onConfirm={handleConfirmToggle}
+        title={toggleModal.member?.is_active ? 'Desativar Usuario' : 'Ativar Usuario'}
+        message={`Deseja ${toggleModal.member?.is_active ? 'desativar' : 'ativar'} o usuario "${toggleModal.member?.profile?.full_name}"?`}
+        confirmText={toggleModal.member?.is_active ? 'Desativar' : 'Ativar'}
+        variant={toggleModal.member?.is_active ? 'danger' : 'info'}
+        loading={toggling}
+      />
     </PageContainer>
   );
 }

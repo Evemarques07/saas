@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ImageUpload } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ImageUpload, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
@@ -26,6 +26,11 @@ export function ProductsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; product: Product | null }>({
+    open: false,
+    product: null,
+  });
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -191,13 +196,22 @@ export function ProductsPage() {
     }
   };
 
-  const handleDelete = async (product: Product) => {
-    if (!confirm(`Deseja excluir o produto "${product.name}"?`)) return;
+  const handleOpenDeleteModal = (product: Product) => {
+    setDeleteModal({ open: true, product });
+  };
 
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({ open: false, product: null });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.product) return;
+
+    setDeleting(true);
     try {
       // Remover imagem do storage se existir
-      if (product.image_url) {
-        await deleteProductImage(product.image_url).catch(() => {
+      if (deleteModal.product.image_url) {
+        await deleteProductImage(deleteModal.product.image_url).catch(() => {
           // Ignora erro ao deletar imagem
         });
       }
@@ -205,13 +219,16 @@ export function ProductsPage() {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', product.id);
+        .eq('id', deleteModal.product.id);
 
       if (error) throw error;
       toast.success('Produto excluido com sucesso!');
+      handleCloseDeleteModal();
       fetchData();
     } catch {
       toast.error('Erro ao excluir produto');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -288,7 +305,7 @@ export function ProductsPage() {
           </button>
           {canManageProducts && (
             <button
-              onClick={() => handleDelete(p)}
+              onClick={() => handleOpenDeleteModal(p)}
               className="p-1 text-gray-500 hover:text-red-600 transition-colors"
             >
               <DeleteIcon className="w-4 h-4" />
@@ -461,6 +478,18 @@ export function ProductsPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Produto"
+        message={`Deseja excluir o produto "${deleteModal.product?.name}"?`}
+        confirmText="Excluir"
+        variant="danger"
+        loading={deleting}
+      />
     </PageContainer>
   );
 }

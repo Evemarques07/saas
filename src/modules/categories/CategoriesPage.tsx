@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import CategoryIcon from '@mui/icons-material/Category';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Modal, ModalFooter, Card } from '../../components/ui';
+import { Button, Input, Table, Modal, ModalFooter, Card, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
@@ -20,6 +20,11 @@ export function CategoriesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; category: Category | null }>({
+    open: false,
+    category: null,
+  });
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -113,20 +118,32 @@ export function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (category: Category) => {
-    if (!confirm(`Deseja excluir a categoria "${category.name}"?\n\nProdutos vinculados ficarao sem categoria.`)) return;
+  const handleOpenDeleteModal = (category: Category) => {
+    setDeleteModal({ open: true, category });
+  };
 
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({ open: false, category: null });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.category) return;
+
+    setDeleting(true);
     try {
       const { error } = await supabase
         .from('categories')
         .delete()
-        .eq('id', category.id);
+        .eq('id', deleteModal.category.id);
 
       if (error) throw error;
       toast.success('Categoria excluida com sucesso!');
+      handleCloseDeleteModal();
       fetchCategories();
     } catch {
       toast.error('Erro ao excluir categoria');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -169,7 +186,7 @@ export function CategoriesPage() {
           </button>
           {canManageProducts && (
             <button
-              onClick={() => handleDelete(c)}
+              onClick={() => handleOpenDeleteModal(c)}
               className="p-1 text-gray-500 hover:text-red-600 transition-colors"
             >
               <DeleteIcon className="w-4 h-4" />
@@ -253,6 +270,18 @@ export function CategoriesPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Categoria"
+        message={`Deseja excluir a categoria "${deleteModal.category?.name}"?\n\nProdutos vinculados ficarao sem categoria.`}
+        confirmText="Excluir"
+        variant="danger"
+        loading={deleting}
+      />
     </PageContainer>
   );
 }

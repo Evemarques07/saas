@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Card } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Card, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
@@ -21,6 +21,11 @@ export function CustomersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; customer: Customer | null }>({
+    open: false,
+    customer: null,
+  });
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -128,20 +133,32 @@ export function CustomersPage() {
     }
   };
 
-  const handleDelete = async (customer: Customer) => {
-    if (!confirm(`Deseja excluir o cliente "${customer.name}"?`)) return;
+  const handleOpenDeleteModal = (customer: Customer) => {
+    setDeleteModal({ open: true, customer });
+  };
 
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({ open: false, customer: null });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.customer) return;
+
+    setDeleting(true);
     try {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', customer.id);
+        .eq('id', deleteModal.customer.id);
 
       if (error) throw error;
-      toast.success('Cliente excluído com sucesso!');
+      toast.success('Cliente excluido com sucesso!');
+      handleCloseDeleteModal();
       fetchCustomers();
     } catch {
       toast.error('Erro ao excluir cliente');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -194,7 +211,7 @@ export function CustomersPage() {
           </button>
           {isAdmin && (
             <button
-              onClick={() => handleDelete(c)}
+              onClick={() => handleOpenDeleteModal(c)}
               className="p-1 text-gray-500 hover:text-red-600 transition-colors"
             >
               <DeleteIcon className="w-4 h-4" />
@@ -326,6 +343,18 @@ export function CustomersPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Cliente"
+        message={`Deseja excluir o cliente "${deleteModal.customer?.name}"?`}
+        confirmText="Excluir"
+        variant="danger"
+        loading={deleting}
+      />
     </PageContainer>
   );
 }
