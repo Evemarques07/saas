@@ -5,9 +5,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import SendIcon from '@mui/icons-material/Send';
 import SearchIcon from '@mui/icons-material/Search';
 import EmailIcon from '@mui/icons-material/Email';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Card } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Card, InviteLinkModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { sendInviteEmail } from '../../services/email';
@@ -45,6 +44,13 @@ export function CompaniesPage() {
   const [inviteCompany, setInviteCompany] = useState<Company | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
+
+  // Invite Link Modal
+  const [inviteLinkModal, setInviteLinkModal] = useState<{ open: boolean; link: string; email: string }>({
+    open: false,
+    link: '',
+    email: '',
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -222,12 +228,13 @@ export function CompaniesPage() {
           { duration: 5000 }
         );
       } else {
-        // Email falhou, mas convite foi criado - copiar link
-        await navigator.clipboard.writeText(inviteLink);
-        toast.success(
-          `Empresa criada! Não foi possível enviar email, mas o link foi copiado.\n\nEnvie para: ${email}`,
-          { duration: 8000 }
-        );
+        // Email falhou - mostrar modal com link para copiar
+        setInviteLinkModal({
+          open: true,
+          link: inviteLink,
+          email: email,
+        });
+        toast.success('Empresa criada com sucesso!');
         console.error('[CompaniesPage] Erro ao enviar email:', emailResult.error);
       }
 
@@ -276,24 +283,21 @@ export function CompaniesPage() {
         inviteLink: inviteLink,
       });
 
+      setShowInviteModal(false);
+
       if (emailResult.success) {
-        toast.success(
-          `Convite enviado para ${inviteEmail}!`,
-          { duration: 5000 }
-        );
+        toast.success(`Convite enviado para ${inviteEmail}!`);
       } else {
-        // Email falhou - copiar link como fallback
-        await navigator.clipboard.writeText(inviteLink);
-        toast.success(
-          `Convite criado! Não foi possível enviar email, mas o link foi copiado.\n\nEnvie para: ${inviteEmail}`,
-          { duration: 8000 }
-        );
+        // Email falhou - mostrar modal com link para copiar
+        setInviteLinkModal({
+          open: true,
+          link: inviteLink,
+          email: inviteEmail,
+        });
         console.error('[CompaniesPage] Erro ao enviar email:', emailResult.error);
       }
 
       console.log('Link do convite:', inviteLink);
-
-      setShowInviteModal(false);
     } catch (err) {
       console.error('Erro ao criar convite:', err);
       toast.error('Erro ao criar convite');
@@ -564,6 +568,14 @@ export function CompaniesPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      {/* Invite Link Modal */}
+      <InviteLinkModal
+        isOpen={inviteLinkModal.open}
+        onClose={() => setInviteLinkModal({ open: false, link: '', email: '' })}
+        inviteLink={inviteLinkModal.link}
+        email={inviteLinkModal.email}
+      />
     </PageContainer>
   );
 }

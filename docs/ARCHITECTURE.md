@@ -109,6 +109,7 @@ src/
 │   ├── admin/         # Area do Super Admin
 │   ├── dashboard/     # Dashboard principal
 │   ├── products/      # Produtos
+│   ├── categories/    # Categorias
 │   ├── customers/     # Clientes
 │   ├── sales/         # Vendas
 │   ├── catalog/       # Catalogo publico

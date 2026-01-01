@@ -293,7 +293,7 @@ export function DashboardPage() {
           </h3>
           <div className="h-64">
             {salesData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
                   <XAxis dataKey="date" tick={{ fill: chartColors.text, fontSize: 12 }} />
@@ -334,7 +334,7 @@ export function DashboardPage() {
           </h3>
           <div className="h-64">
             {topProducts.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={topProducts} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
                   <XAxis type="number" tick={{ fill: chartColors.text, fontSize: 12 }} />

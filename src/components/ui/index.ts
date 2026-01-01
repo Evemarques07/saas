@@ -8,3 +8,4 @@ export { Badge } from './Badge';
 export { Loader, PageLoader, FullPageLoader } from './Loader';
 export { Table } from './Table';
 export { ImageUpload } from './ImageUpload';
+export { InviteLinkModal } from './InviteLinkModal';

@@ -418,6 +418,25 @@ npm run lint
 
 ---
 
+## Deploy para Producao
+
+### Firebase Hosting
+
+O projeto esta configurado para deploy automatico via GitHub Actions.
+
+**Deploy automatico:**
+- Ao fazer merge na branch `main`, o deploy e feito automaticamente
+- PRs geram preview automatico
+
+**Deploy manual (se necessario):**
+```bash
+npm run build && npx firebase deploy --only hosting
+```
+
+**URL de producao:** https://saas-af55a.web.app
+
+---
+
 ## Proximos Passos
 
 Apos a instalacao:

@@ -38,9 +38,10 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] Tema claro/escuro
 - [x] Layout responsivo com Sidebar
 - [x] Componentes UI reutilizaveis
-- [x] Dashboard com metricas
+- [x] Dashboard com metricas e graficos
 - [x] CRUD de Produtos
 - [x] CRUD de Clientes
+- [x] **CRUD de Categorias**
 - [x] Sistema de Vendas
 - [x] Catalogo publico
 - [x] Exportacao Excel/PDF
@@ -49,6 +50,9 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] **UI moderna com cantos arredondados**
 - [x] **Logo EJYM com fonte Bebas Neue**
 - [x] **Coluna de email do admin na lista de empresas**
+- [x] **Modais de confirmacao (ConfirmModal)**
+- [x] **Modal de link de convite (InviteLinkModal)**
+- [x] **Firebase Hosting com CI/CD (GitHub Actions)**
 
 ### Proximos Passos
 
@@ -95,6 +99,7 @@ O sistema utiliza uma arquitetura hibrida:
 | `/app/:slug/vendas` | Gestao de vendas | Autenticado |
 | `/app/:slug/clientes` | Gestao de clientes | Autenticado |
 | `/app/:slug/produtos` | Gestao de produtos | Autenticado |
+| `/app/:slug/categorias` | Gestao de categorias | Autenticado |
 | `/app/:slug/usuarios` | Gestao de usuarios | Admin |
 
 ---
@@ -118,6 +123,7 @@ src/
 │   ├── sales/           # Gestao de vendas
 │   ├── customers/       # Gestao de clientes
 │   ├── products/        # Gestao de produtos
+│   ├── categories/      # Gestao de categorias
 │   ├── catalog/         # Catalogo publico
 │   ├── companies/       # Gestao de empresas (Super Admin)
 │   └── users/           # Gestao de usuarios
@@ -150,6 +156,11 @@ docs/                    # Documentacao
 ├── ARCHITECTURE.md     # Arquitetura do sistema
 ├── FIREBASE_AUTH.md    # Documentacao Firebase Auth
 └── ROADMAP.md          # Planos futuros
+
+.github/
+└── workflows/           # GitHub Actions
+    ├── firebase-hosting-merge.yml   # Deploy ao fazer merge na main
+    └── firebase-hosting-pull-request.yml  # Preview em PRs
 ```
 
 ---
@@ -356,6 +367,8 @@ const { theme, toggleTheme } = useTheme();
 | `Input` | Campo de entrada com label, erro, icones |
 | `Select` | Select customizado |
 | `Modal` | Modal reutilizavel com header e footer |
+| `ConfirmModal` | Modal de confirmacao com variantes (danger, warning, info) |
+| `InviteLinkModal` | Modal para exibir e copiar link de convite |
 | `Table` | Tabela com ordenacao e loading state |
 | `Card` | Container card |
 | `Badge` | Badge de status (success, warning, danger, info) |
@@ -374,6 +387,17 @@ const { theme, toggleTheme } = useTheme();
 | `npm run build` | Gera build de producao |
 | `npm run preview` | Preview do build de producao |
 | `npm run lint` | Executa linter |
+
+### Deploy
+
+O deploy e feito automaticamente via GitHub Actions ao fazer merge na branch `main`.
+
+**Deploy manual (se necessario):**
+```bash
+npm run build && npx firebase deploy --only hosting
+```
+
+**URL de producao:** https://saas-af55a.web.app
 
 ---
 

@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import BlockIcon from '@mui/icons-material/Block';
 import SearchIcon from '@mui/icons-material/Search';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ConfirmModal } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ConfirmModal, InviteLinkModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,6 +31,13 @@ export function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<MemberRole>('seller');
   const [sendingInvite, setSendingInvite] = useState(false);
+
+  // Invite Link Modal
+  const [inviteLinkModal, setInviteLinkModal] = useState<{ open: boolean; link: string; email: string }>({
+    open: false,
+    link: '',
+    email: '',
+  });
 
   // Edit Modal
   const [showEditModal, setShowEditModal] = useState(false);
@@ -140,15 +147,18 @@ export function UsersPage() {
         // Ignora erro de email, vai usar fallback
       }
 
-      if (emailSent) {
-        toast.success(`Convite enviado para ${inviteEmail}`);
-      } else {
-        // Fallback: copiar link
-        await navigator.clipboard.writeText(inviteLink);
-        toast.success('Convite criado! Link copiado para a area de transferencia.');
-      }
-
       setShowInviteModal(false);
+
+      if (emailSent) {
+        toast.success(`Convite enviado por email para ${inviteEmail}`);
+      } else {
+        // Mostrar modal com link para copiar
+        setInviteLinkModal({
+          open: true,
+          link: inviteLink,
+          email: inviteEmail,
+        });
+      }
     } catch {
       toast.error('Erro ao criar convite');
     } finally {
@@ -433,6 +443,14 @@ export function UsersPage() {
         confirmText={toggleModal.member?.is_active ? 'Desativar' : 'Ativar'}
         variant={toggleModal.member?.is_active ? 'danger' : 'info'}
         loading={toggling}
+      />
+
+      {/* Invite Link Modal */}
+      <InviteLinkModal
+        isOpen={inviteLinkModal.open}
+        onClose={() => setInviteLinkModal({ open: false, link: '', email: '' })}
+        inviteLink={inviteLinkModal.link}
+        email={inviteLinkModal.email}
       />
     </PageContainer>
   );

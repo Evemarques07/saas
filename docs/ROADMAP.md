@@ -30,6 +30,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  [x] Empresas       [x] Vendas       [x] Storage  [ ] API      [ ] NFCe      │
 │  [x] Convites       [x] Catalogo     [ ] PWA                                 │
 │  [x] RLS            [x] Exportacao   [x] Edge Fn                             │
+│                     [x] Categorias   [x] Hosting                             │
 │                                                                               │
 │  ██████████████████ ██████████████   ████████░░   ░░░░░░░░     ░░░░░░░░      │
 │      CONCLUIDO         CONCLUIDO      EM PROG      FUTURO       PLANEJADO    │
@@ -103,6 +104,12 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 - [x] Categorizacao
 - [x] Controle de estoque
 - [x] Preco de custo e venda
+- [x] Status ativo/inativo
+
+### Gestao de Categorias
+
+- [x] CRUD completo de categorias
+- [x] Vinculacao com produtos
 - [x] Status ativo/inativo
 
 ### Gestao de Clientes
@@ -189,6 +196,14 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 - [ ] Instalacao no celular
 - [ ] Funcionamento offline (leitura)
 - [ ] Push notifications
+
+### Hospedagem e Deploy
+
+- [x] Firebase Hosting configurado
+- [x] GitHub Actions para CI/CD
+- [x] Deploy automatico ao fazer merge na main
+- [x] Preview de PRs automatico
+- [x] Deploy manual disponivel
 
 ### Melhorias de Seguranca
 
@@ -357,6 +372,25 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 ---
 
 ## Changelog
+
+### v0.4.0 (Dezembro 2024)
+
+- **Firebase Hosting**
+  - Deploy automatico via GitHub Actions (CI/CD)
+  - Workflow para merge na main e preview em PRs
+  - Deploy manual: `npm run build && npx firebase deploy --only hosting`
+  - URL de producao: https://saas-af55a.web.app
+- **Gestao de Categorias**
+  - CRUD completo de categorias de produtos
+  - Vinculacao de produtos a categorias
+- **Melhorias de UX**
+  - `ConfirmModal` - Modal de confirmacao substituindo `window.confirm()`
+  - `InviteLinkModal` - Modal para exibir e copiar link de convite
+  - Todas as acoes destrutivas agora usam modais
+- **Correcoes**
+  - Fix jspdf-autotable para producao (import correto)
+  - Fix query de members em UsersPage (separacao de queries)
+  - Fix warning do Recharts (minWidth no ResponsiveContainer)
 
 ### v0.3.0 (Dezembro 2024)
 
