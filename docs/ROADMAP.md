@@ -28,7 +28,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  [x] Google OAuth   [x] Produtos     [x] WhatsApp [ ] Stripe   [ ] QR Code   │
 │  [x] Multi-tenant   [x] Clientes     [ ] Relat.   [ ] Mobile   [ ] PDV       │
 │  [x] Empresas       [x] Vendas       [x] Storage  [ ] API      [ ] NFCe      │
-│  [x] Convites       [x] Catalogo     [ ] PWA      [x] Logo                   │
+│  [x] Convites       [x] Catalogo     [x] PWA      [x] Logo                   │
 │  [x] RLS            [x] Exportacao   [x] Edge Fn  [x] Config                 │
 │  [x] Mobile-First   [x] Categorias   [x] Hosting  [x] Senha                  │
 │  [x] Sidebar Drawer [x] Import Excel [x] SKU Auto [x] Filtros                │
@@ -212,10 +212,11 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ### PWA (Progressive Web App)
 
-- [ ] Manifest.json
-- [ ] Service Worker
-- [ ] Instalacao no celular
-- [ ] Funcionamento offline (leitura)
+- [x] Manifest.json (via vite-plugin-pwa)
+- [x] Service Worker (Workbox)
+- [x] Instalacao no celular/desktop
+- [x] Cache offline de assets e fontes
+- [x] Prompt de instalacao a cada 1 hora
 - [ ] Push notifications
 
 ### Hospedagem e Deploy
@@ -393,6 +394,18 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 ---
 
 ## Changelog
+
+### v0.9.0 (Janeiro 2026)
+
+- **PWA (Progressive Web App)**
+  - Configuracao do vite-plugin-pwa com manifest e Workbox
+  - Hook `usePWAInstall` para gerenciar instalacao
+  - Componente `PWAInstallPrompt` com bottom sheet animado
+  - Prompt de instalacao a cada 1 hora (se nao instalado)
+  - Para de mostrar apos 5 recusas
+  - Cache de assets estaticos e fontes Google
+  - Icones PWA (192x192, 512x512, apple-touch-icon)
+  - Meta tags para iOS e Android
 
 ### v0.8.0 (Janeiro 2026)
 

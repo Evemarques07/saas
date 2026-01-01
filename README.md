@@ -78,6 +78,11 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
   - Margens e espacamentos otimizados
 - [x] **Toggle de visibilidade em todos inputs de senha**
 - [x] **Confirmacao de cancelamento de venda com justificativa**
+- [x] **PWA (Progressive Web App)**
+  - Instalacao no celular/desktop
+  - Prompt de instalacao a cada 1 hora
+  - Service Worker com cache offline
+  - Manifest com icones e tema
 
 ### Proximos Passos
 
@@ -143,6 +148,8 @@ src/
 │   │   ├── AdminSidebar.tsx
 │   │   ├── AdminHeader.tsx
 │   │   └── TenantLayout.tsx
+│   ├── pwa/             # Componentes PWA
+│   │   └── PWAInstallPrompt.tsx
 │   └── feedback/        # Skeleton, EmptyState
 ├── modules/             # Modulos funcionais
 │   ├── auth/            # Login, Registro, Convites
@@ -176,6 +183,7 @@ src/
 │   └── export.ts        # Exportacao Excel/PDF
 ├── types/               # TypeScript types
 └── hooks/               # Custom hooks
+    └── usePWAInstall.ts # Hook para gerenciar instalacao PWA
 
 supabase/
 ├── migrations/          # Migrations do banco de dados

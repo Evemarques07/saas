@@ -694,6 +694,96 @@ Quando um pedido e marcado como "completed" (entregue):
 
 ---
 
+## PWA (Progressive Web App)
+
+O sistema implementa PWA para permitir instalacao e uso offline.
+
+### Arquitetura PWA
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      NAVEGADOR                                │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                    React App                             │ │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │ │
+│  │  │usePWAInstall │  │PWAInstall    │  │ App.tsx      │   │ │
+│  │  │   (hook)     │  │Prompt        │  │              │   │ │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘   │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                            │                                   │
+│                            ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                  Service Worker                          │ │
+│  │  - Cache de assets (JS, CSS, HTML, imagens)             │ │
+│  │  - Cache de fontes Google                               │ │
+│  │  - Estrategia CacheFirst para fontes                    │ │
+│  │  - Auto-update em novas versoes                         │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Fluxo de Instalacao
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│beforeinstall│────▶│  Verifica   │────▶│   Mostra    │
+│prompt event │     │  1h passou? │     │   Prompt    │
+└─────────────┘     └─────────────┘     └─────────────┘
+                          │                    │
+                          │ Nao                │
+                          ▼                    ▼
+                    ┌─────────────┐     ┌─────────────┐
+                    │   Aguarda   │     │  Usuario    │
+                    │  proximo    │     │  escolhe    │
+                    │  intervalo  │     └─────────────┘
+                    └─────────────┘            │
+                                              ▼
+                          ┌───────────────────┴───────────────────┐
+                          │                                       │
+                    ┌─────────────┐                        ┌─────────────┐
+                    │  Instalar   │                        │  Dispensar  │
+                    │             │                        │             │
+                    └─────────────┘                        └─────────────┘
+                          │                                       │
+                          ▼                                       ▼
+                    ┌─────────────┐                        ┌─────────────┐
+                    │   Marca     │                        │ Incrementa  │
+                    │ installed   │                        │dismiss count│
+                    └─────────────┘                        └─────────────┘
+```
+
+### Hook usePWAInstall
+
+```tsx
+const {
+  isInstallable,  // Se o navegador permite instalacao
+  isInstalled,    // Se ja esta instalado
+  showPrompt,     // Se deve mostrar o prompt
+  installApp,     // Funcao para instalar
+  dismissPrompt,  // Funcao para dispensar
+  canShowPrompt   // Se pode mostrar (installable && !installed)
+} = usePWAInstall();
+```
+
+### Configuracao (vite.config.ts)
+
+| Opcao | Valor | Descricao |
+|-------|-------|-----------|
+| `registerType` | autoUpdate | Atualiza SW automaticamente |
+| `display` | standalone | App sem barra do navegador |
+| `theme_color` | #6366f1 | Cor primaria (indigo) |
+| `background_color` | #111827 | Cor de fundo (gray-900) |
+
+### Armazenamento Local
+
+| Key | Descricao |
+|-----|-----------|
+| `ejym_pwa_last_prompt` | Timestamp do ultimo prompt |
+| `ejym_pwa_installed` | Flag se foi instalado |
+| `ejym_pwa_dismissed_count` | Contador de recusas (max 5) |
+
+---
+
 ## Seguranca
 
 ### Camadas de Protecao
