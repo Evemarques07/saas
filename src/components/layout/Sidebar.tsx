@@ -3,6 +3,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import CategoryIcon from '@mui/icons-material/Category';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import GroupIcon from '@mui/icons-material/Group';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -36,6 +37,7 @@ const navItemsConfig: NavItemConfig[] = [
   { route: PATHS.VENDAS, label: 'Vendas', icon: <ShoppingCartIcon /> },
   { route: PATHS.CLIENTES, label: 'Clientes', icon: <PeopleIcon /> },
   { route: PATHS.PRODUTOS, label: 'Produtos', icon: <InventoryIcon /> },
+  { route: PATHS.CATEGORIAS, label: 'Categorias', icon: <CategoryIcon /> },
   { route: PATHS.USUARIOS, label: 'Usuarios', icon: <GroupIcon />, adminOnly: true },
 ];
 

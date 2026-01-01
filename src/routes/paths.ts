@@ -15,6 +15,7 @@ export const PATHS = {
   VENDAS: '/vendas',
   CLIENTES: '/clientes',
   PRODUTOS: '/produtos',
+  CATEGORIAS: '/categorias',
   USUARIOS: '/usuarios',
   EMPRESAS: '/empresas',
 } as const;

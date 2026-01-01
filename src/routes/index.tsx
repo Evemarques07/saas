@@ -8,6 +8,7 @@ import { AcceptInvitePage } from '../modules/auth/AcceptInvitePage';
 // App Pages (Tenant)
 import { DashboardPage } from '../modules/dashboard/DashboardPage';
 import { ProductsPage } from '../modules/products/ProductsPage';
+import { CategoriesPage } from '../modules/categories/CategoriesPage';
 import { CustomersPage } from '../modules/customers/CustomersPage';
 import { SalesPage } from '../modules/sales/SalesPage';
 import { CatalogPage } from '../modules/catalog/CatalogPage';
@@ -94,6 +95,7 @@ export function AppRoutes() {
         <Route path="vendas" element={<SalesPage />} />
         <Route path="clientes" element={<CustomersPage />} />
         <Route path="produtos" element={<ProductsPage />} />
+        <Route path="categorias" element={<CategoriesPage />} />
         <Route path="usuarios" element={<UsersPage />} />
       </Route>
 
