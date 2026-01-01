@@ -215,7 +215,8 @@ export function CategoriesPage() {
       action={
         <Button onClick={() => handleOpenModal()}>
           <AddIcon className="w-4 h-4" />
-          Nova Categoria
+          <span className="hidden sm:inline">Nova Categoria</span>
+          <span className="sm:hidden">Nova</span>
         </Button>
       }
     >
@@ -236,6 +237,48 @@ export function CategoriesPage() {
         keyExtractor={(c) => c.id}
         loading={loading}
         emptyMessage="Nenhuma categoria encontrada"
+        mobileCardRender={(c) => (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <CategoryIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{c.name}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(c.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleOpenModal(c)}
+                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Editar"
+                >
+                  <EditIcon className="w-5 h-5" />
+                </button>
+                {canManageProducts && (
+                  <button
+                    onClick={() => handleOpenDeleteModal(c)}
+                    className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title="Excluir"
+                  >
+                    <DeleteIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {c.description && (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                {c.description}
+              </p>
+            )}
+          </div>
+        )}
       />
 
       {/* Modal */}

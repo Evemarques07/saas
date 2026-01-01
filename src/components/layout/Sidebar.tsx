@@ -10,6 +10,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,6 +24,9 @@ import {
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  isOpen?: boolean;
+  isMobile?: boolean;
+  onClose?: () => void;
 }
 
 interface NavItemConfig {
@@ -45,7 +49,7 @@ const navItemsConfig: NavItemConfig[] = [
   { route: PATHS.CONFIGURACOES, label: 'Configuracoes', icon: <SettingsIcon /> },
 ];
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { isSuperAdmin } = useAuth();
@@ -53,6 +57,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   // Se nao tem empresa, nao renderiza
   if (!currentCompany) {
+    return null;
+  }
+
+  // Em mobile, se nao esta aberto, nao renderiza
+  if (isMobile && !isOpen) {
     return null;
   }
 
@@ -87,47 +96,59 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return location.pathname.startsWith(itemPath);
   };
 
+  // Funcao para fechar sidebar ao navegar (mobile)
+  const handleNavClick = () => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <aside
       className={`
-        fixed left-4 top-4 bottom-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-        transition-all duration-300 z-30 rounded-2xl shadow-lg overflow-hidden
-        ${collapsed ? 'w-16' : 'w-64'}
+        fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+        transition-all duration-300 z-50 shadow-lg overflow-hidden
+        ${isMobile
+          ? 'left-0 top-0 bottom-0 w-72 rounded-r-2xl'
+          : 'left-4 top-4 bottom-4 rounded-2xl ' + (collapsed ? 'w-16' : 'w-64')
+        }
       `}
     >
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
-        {!collapsed && (
+        {(isMobile || !collapsed) && (
           <span className="logo-text text-2xl font-bold text-primary-600">EJYM</span>
         )}
         <button
-          onClick={onToggle}
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          onClick={isMobile ? onClose : onToggle}
+          className={`p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${!isMobile && collapsed ? 'mx-auto' : ''}`}
         >
-          {collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
+          {isMobile ? <CloseIcon /> : collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="p-2 space-y-1">
+      <nav className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-5rem)]">
         {navItems.map((item) => {
           const isActive = isActiveRoute(item.path, item.route);
+          const showLabel = isMobile || !collapsed;
 
           return (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
               className={`
-                flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
                 ${isActive
                   ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
                   : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }
               `}
-              title={collapsed ? item.label : undefined}
+              title={!showLabel ? item.label : undefined}
             >
-              <span className="w-5 h-5">{item.icon}</span>
-              {!collapsed && (
+              <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+              {showLabel && (
                 <span className="text-sm font-medium">{item.label}</span>
               )}
             </NavLink>
@@ -136,12 +157,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {/* Catalog Link - Opens in new tab */}
         <button
-          onClick={handleOpenCatalog}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-          title={collapsed ? 'Catalogo Publico' : undefined}
+          onClick={() => {
+            handleOpenCatalog();
+            handleNavClick();
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+          title={!isMobile && collapsed ? 'Catalogo Publico' : undefined}
         >
-          <span className="w-5 h-5"><StorefrontIcon /></span>
-          {!collapsed && (
+          <span className="w-5 h-5 flex-shrink-0"><StorefrontIcon /></span>
+          {(isMobile || !collapsed) && (
             <>
               <span className="text-sm font-medium flex-1 text-left">Catalogo</span>
               <OpenInNewIcon className="w-4 h-4 text-gray-400" />
@@ -152,12 +176,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Admin Panel Link - Super Admin only */}
         {isSuperAdmin && (
           <button
-            onClick={() => navigate('/admin')}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
-            title={collapsed ? 'Painel Admin' : undefined}
+            onClick={() => {
+              navigate('/admin');
+              handleNavClick();
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+            title={!isMobile && collapsed ? 'Painel Admin' : undefined}
           >
-            <span className="w-5 h-5"><AdminPanelSettingsIcon /></span>
-            {!collapsed && (
+            <span className="w-5 h-5 flex-shrink-0"><AdminPanelSettingsIcon /></span>
+            {(isMobile || !collapsed) && (
               <span className="text-sm font-medium flex-1 text-left">Painel Admin</span>
             )}
           </button>

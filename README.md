@@ -36,7 +36,7 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] **Envio automatico de email de convite (MailerSend)**
 - [x] Aceitacao de convite sem confirmacao de email
 - [x] Tema claro/escuro
-- [x] Layout responsivo com Sidebar
+- [x] Layout responsivo mobile-first com Sidebar drawer
 - [x] Componentes UI reutilizaveis
 - [x] Dashboard com metricas e graficos
 - [x] CRUD de Produtos
@@ -69,6 +69,15 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] **Estatisticas de pedidos no dashboard**
 - [x] **Pagina individual de produto no catalogo (link compartilhavel)**
 - [x] **Botao de copiar/abrir link do produto na lista de produtos**
+- [x] **Filtro de periodo dinamico no dashboard**
+- [x] **Busca de produtos no modal de nova venda**
+- [x] **Layout responsivo mobile-first**
+  - Sidebar como drawer no mobile
+  - Header fixo no mobile
+  - Tabelas convertidas em cards no mobile
+  - Margens e espacamentos otimizados
+- [x] **Toggle de visibilidade em todos inputs de senha**
+- [x] **Confirmacao de cancelamento de venda com justificativa**
 
 ### Proximos Passos
 
@@ -388,12 +397,12 @@ const { theme, toggleTheme } = useTheme();
 | Componente | Descricao |
 |------------|-----------|
 | `Button` | Botao com variantes (primary, secondary, danger, ghost) |
-| `Input` | Campo de entrada com label, erro, icones |
+| `Input` | Campo de entrada com label, erro, icones (leftIcon/rightIcon) |
 | `Select` | Select customizado |
 | `Modal` | Modal reutilizavel com header e footer |
 | `ConfirmModal` | Modal de confirmacao com variantes (danger, warning, info) |
 | `InviteLinkModal` | Modal para exibir e copiar link de convite |
-| `Table` | Tabela com ordenacao e loading state |
+| `Table` | Tabela com ordenacao, loading state e `mobileCardRender` para cards no mobile |
 | `Card` | Container card |
 | `Badge` | Badge de status (success, warning, danger, info) |
 | `Loader` | Spinner de carregamento |

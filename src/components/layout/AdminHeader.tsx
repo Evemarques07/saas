@@ -6,11 +6,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { buildAppPath } from '../../routes/paths';
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  onMenuClick?: () => void;
+  isMobile?: boolean;
+}
+
+export function AdminHeader({ onMenuClick, isMobile = false }: AdminHeaderProps) {
   const navigate = useNavigate();
   const { profile, companies, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -27,11 +33,22 @@ export function AdminHeader() {
   };
 
   return (
-    <header className="h-14 mx-4 mt-4 bg-gray-800 border border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-4">
-      {/* Left Side - Title */}
+    <header className="sticky top-2 md:relative md:top-0 z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 bg-gray-800 border border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+      {/* Left Side - Menu button (mobile) + Title */}
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold text-white">
-          Painel Administrativo
+        {/* Mobile Menu Button */}
+        {isMobile && onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 rounded-lg text-gray-400 hover:bg-gray-700 transition-colors"
+            title="Menu"
+          >
+            <MenuIcon />
+          </button>
+        )}
+        <span className="text-base md:text-lg font-semibold text-white">
+          <span className="hidden sm:inline">Painel Administrativo</span>
+          <span className="sm:hidden">Admin</span>
         </span>
       </div>
 

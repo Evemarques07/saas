@@ -30,9 +30,9 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  [x] Empresas       [x] Vendas       [x] Storage  [ ] API      [ ] NFCe      │
 │  [x] Convites       [x] Catalogo     [ ] PWA      [x] Logo                   │
 │  [x] RLS            [x] Exportacao   [x] Edge Fn  [x] Config                 │
-│                     [x] Categorias   [x] Hosting  [x] Senha                  │
-│                     [x] Import Excel [x] SKU Auto                            │
-│                     [x] Carrinho     [x] Pedidos                             │
+│  [x] Mobile-First   [x] Categorias   [x] Hosting  [x] Senha                  │
+│  [x] Sidebar Drawer [x] Import Excel [x] SKU Auto [x] Filtros                │
+│  [x] Cards Mobile   [x] Carrinho     [x] Pedidos  [x] Cancel                 │
 │                                                                               │
 │  ██████████████████ ██████████████   ████████░░   ░░░░░░░░     ░░░░░░░░      │
 │      CONCLUIDO         CONCLUIDO      EM PROG      FUTURO       PLANEJADO    │
@@ -73,7 +73,9 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ### Interface Base
 
-- [x] Layout responsivo com Sidebar
+- [x] Layout responsivo mobile-first com Sidebar drawer
+- [x] Header sticky no mobile
+- [x] Tabelas com `mobileCardRender` para cards no mobile
 - [x] Area admin separada (`/admin/*`)
 - [x] Tema claro/escuro
 - [x] Componentes UI reutilizaveis
@@ -99,6 +101,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
   - Clientes
   - Produtos
 - [x] Link para catalogo publico
+- [x] **Filtro de periodo dinamico**
 
 ### Gestao de Produtos
 
@@ -133,6 +136,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 - [x] Formas de pagamento
 - [x] Historico de vendas
 - [x] Filtros por periodo
+- [x] Cancelamento com confirmacao e justificativa
 
 ### Catalogo Publico
 
@@ -389,6 +393,38 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 ---
 
 ## Changelog
+
+### v0.8.0 (Janeiro 2026)
+
+- **Layout Responsivo Mobile-First**
+  - Sidebar como drawer no mobile com overlay
+  - Header sticky apenas no mobile (alinhado com sidebar)
+  - Tabelas convertidas em cards no mobile usando `mobileCardRender`
+  - Margens e paddings reduzidos para melhor aproveitamento de espaco
+  - Deteccao de mobile via `window.innerWidth < 768`
+- **Toggle de Visibilidade de Senha**
+  - Adicionado icone de olho em todos os inputs de senha
+  - Usando prop `rightIcon` do componente Input para alinhamento correto
+  - Implementado em: LoginPage, RegisterPage, AcceptInvitePage, SettingsPage
+- **Confirmacao de Cancelamento de Venda**
+  - Modal de confirmacao ao cancelar uma venda
+  - Campo opcional para justificativa do cancelamento
+  - Motivo salvo junto com a venda cancelada
+- **Paginas com Cards no Mobile**
+  - ProductsPage, CustomersPage, SalesPage
+  - CategoriesPage, UsersPage, CompaniesPage
+  - Modais de venda (carrinho e detalhes)
+
+### v0.7.0 (Janeiro 2026)
+
+- **Filtro de Periodo no Dashboard**
+  - Opcoes: Hoje, Ontem, Ultimos 7 dias, Ultimos 30 dias, Este mes, Mes passado, Todo periodo
+  - Filtra vendas, faturamento, pedidos do catalogo e graficos
+  - Clientes e produtos mostram contagem total (nao sao afetados pelo filtro)
+- **Busca de Produtos no Modal de Venda**
+  - Campo de busca por nome, descricao ou SKU
+  - Substituicao do dropdown por lista filtrada
+  - Melhoria para lojas com muitos produtos
 
 ### v0.6.0 (Janeiro 2026)
 

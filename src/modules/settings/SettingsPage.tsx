@@ -3,6 +3,8 @@ import { toast } from 'react-hot-toast';
 import BusinessIcon from '@mui/icons-material/Business';
 import LockIcon from '@mui/icons-material/Lock';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Card, Button, Input, ImageUpload } from '../../components/ui';
@@ -36,6 +38,9 @@ export function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleLogoChange = (file: File | null) => {
     setLogoFile(file);
@@ -315,30 +320,72 @@ export function SettingsPage() {
 
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
             <Input
-              type="password"
+              type={showCurrentPassword ? 'text' : 'password'}
               label="Senha Atual"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Digite sua senha atual"
+              leftIcon={<LockIcon className="w-5 h-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showCurrentPassword ? (
+                    <VisibilityOffIcon className="w-5 h-5" />
+                  ) : (
+                    <VisibilityIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
               required
             />
 
             <Input
-              type="password"
+              type={showNewPassword ? 'text' : 'password'}
               label="Nova Senha"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Digite a nova senha"
+              leftIcon={<LockIcon className="w-5 h-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showNewPassword ? (
+                    <VisibilityOffIcon className="w-5 h-5" />
+                  ) : (
+                    <VisibilityIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
               helperText="Minimo de 6 caracteres"
               required
             />
 
             <Input
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               label="Confirmar Nova Senha"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirme a nova senha"
+              leftIcon={<LockIcon className="w-5 h-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showConfirmPassword ? (
+                    <VisibilityOffIcon className="w-5 h-5" />
+                  ) : (
+                    <VisibilityIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
               required
             />
 

@@ -4,6 +4,8 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
 import BlockIcon from '@mui/icons-material/Block';
 import SearchIcon from '@mui/icons-material/Search';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ConfirmModal, InviteLinkModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -335,7 +337,8 @@ export function UsersPage() {
       action={
         <Button onClick={handleOpenInviteModal}>
           <PersonAddIcon className="w-4 h-4" />
-          Convidar Usuário
+          <span className="hidden sm:inline">Convidar Usuário</span>
+          <span className="sm:hidden">Convidar</span>
         </Button>
       }
     >
@@ -356,6 +359,65 @@ export function UsersPage() {
         keyExtractor={(m) => m.id}
         loading={loading}
         emptyMessage="Nenhum usuário encontrado"
+        mobileCardRender={(m) => (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <PersonIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {m.profile?.full_name || 'Sem nome'}
+                  </h3>
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    <EmailIcon className="w-3 h-3" />
+                    <span className="truncate">{m.profile?.email || '-'}</span>
+                  </div>
+                </div>
+              </div>
+              <Badge variant={m.is_active ? 'success' : 'danger'} className="flex-shrink-0">
+                {m.is_active ? 'Ativo' : 'Inativo'}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={m.role === 'admin' ? 'info' : m.role === 'manager' ? 'warning' : 'default'}
+                >
+                  {getRoleLabel(m.role)}
+                </Badge>
+                <span className="text-xs text-gray-500">
+                  Desde {new Date(m.created_at).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+
+              {isAdmin && m.user_id !== user?.uid && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEditModal(m)}
+                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title="Editar função"
+                  >
+                    <EditIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenToggleModal(m)}
+                    className={`p-2 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      m.is_active
+                        ? 'text-gray-500 hover:text-red-600'
+                        : 'text-gray-500 hover:text-green-600'
+                    }`}
+                    title={m.is_active ? 'Desativar' : 'Ativar'}
+                  >
+                    <BlockIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       />
 
       {/* Invite Modal */}

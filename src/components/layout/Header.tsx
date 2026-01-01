@@ -6,11 +6,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import BusinessIcon from '@mui/icons-material/Business';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+  isMobile?: boolean;
+}
+
+export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   const navigate = useNavigate();
   const { profile, companies, signOut } = useAuth();
   const { currentCompany, switchCompany } = useTenant();
@@ -25,29 +31,42 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 mx-4 mt-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-4">
-      {/* Company Selector */}
-      <div className="relative">
-        {companies.length > 0 && (
+    <header className="sticky top-2 md:relative md:top-0 z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+      {/* Left Side - Menu button (mobile) + Company Selector */}
+      <div className="flex items-center gap-1 md:gap-2">
+        {/* Mobile Menu Button */}
+        {isMobile && onMenuClick && (
           <button
-            onClick={() => setShowCompanyMenu(!showCompanyMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={onMenuClick}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Menu"
           >
-            {currentCompany?.logo_url ? (
-              <img
-                src={currentCompany.logo_url}
-                alt={currentCompany.name}
-                className="w-8 h-8 rounded-lg object-cover"
-              />
-            ) : (
-              <BusinessIcon className="w-5 h-5 text-gray-500" />
-            )}
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {currentCompany?.name || 'Selecionar empresa'}
-            </span>
-            <KeyboardArrowDownIcon className="w-4 h-4 text-gray-400" />
+            <MenuIcon />
           </button>
         )}
+
+        {/* Company Selector */}
+        <div className="relative">
+          {companies.length > 0 && (
+            <button
+              onClick={() => setShowCompanyMenu(!showCompanyMenu)}
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              {currentCompany?.logo_url ? (
+                <img
+                  src={currentCompany.logo_url}
+                  alt={currentCompany.name}
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-lg object-cover"
+                />
+              ) : (
+                <BusinessIcon className="w-5 h-5 text-gray-500" />
+              )}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[120px] md:max-w-none truncate">
+                {currentCompany?.name || 'Selecionar empresa'}
+              </span>
+              <KeyboardArrowDownIcon className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
 
         {showCompanyMenu && companies.length > 1 && (
           <>
@@ -85,6 +104,7 @@ export function Header() {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Right Side */}

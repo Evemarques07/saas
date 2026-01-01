@@ -5,6 +5,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Card, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -239,17 +242,18 @@ export function CustomersPage() {
       subtitle={`${filteredCustomers.length} clientes cadastrados`}
       action={
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => handleExport('excel')}>
+          <Button variant="secondary" onClick={() => handleExport('excel')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             Excel
           </Button>
-          <Button variant="secondary" onClick={() => handleExport('pdf')}>
+          <Button variant="secondary" onClick={() => handleExport('pdf')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             PDF
           </Button>
           <Button onClick={() => handleOpenModal()}>
             <AddIcon className="w-4 h-4" />
-            Novo Cliente
+            <span className="hidden sm:inline">Novo Cliente</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       }
@@ -271,6 +275,61 @@ export function CustomersPage() {
         keyExtractor={(c) => c.id}
         loading={loading}
         emptyMessage="Nenhum cliente encontrado"
+        mobileCardRender={(c) => (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <PersonIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{c.name}</h3>
+                  {c.document && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{c.document}</p>
+                  )}
+                </div>
+              </div>
+              <Badge variant={c.is_active ? 'success' : 'default'} className="flex-shrink-0">
+                {c.is_active ? 'Ativo' : 'Inativo'}
+              </Badge>
+            </div>
+
+            <div className="mt-3 space-y-1.5 text-sm">
+              {c.email && (
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                  <EmailIcon className="w-4 h-4 text-gray-400" />
+                  <span className="truncate">{c.email}</span>
+                </div>
+              )}
+              {c.phone && (
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                  <PhoneIcon className="w-4 h-4 text-gray-400" />
+                  <span>{c.phone}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <button
+                onClick={() => handleOpenModal(c)}
+                className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Editar"
+              >
+                <EditIcon className="w-5 h-5" />
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => handleOpenDeleteModal(c)}
+                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Excluir"
+                >
+                  <DeleteIcon className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       />
 
       {/* Modal */}

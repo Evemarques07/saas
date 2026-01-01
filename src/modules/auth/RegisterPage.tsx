@@ -142,51 +142,51 @@ export function RegisterPage() {
               autoComplete="email"
             />
 
-            <div className="relative">
-              <Input
-                label="Senha"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Minimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<LockIcon className="w-5 h-5" />}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                {showPassword ? (
-                  <VisibilityOffIcon className="w-5 h-5" />
-                ) : (
-                  <VisibilityIcon className="w-5 h-5" />
-                )}
-              </button>
-            </div>
+            <Input
+              label="Senha"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Minimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<LockIcon className="w-5 h-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <VisibilityOffIcon className="w-5 h-5" />
+                  ) : (
+                    <VisibilityIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
+              autoComplete="new-password"
+            />
 
-            <div className="relative">
-              <Input
-                label="Confirmar senha"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Repita a senha"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                leftIcon={<LockIcon className="w-5 h-5" />}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                {showConfirmPassword ? (
-                  <VisibilityOffIcon className="w-5 h-5" />
-                ) : (
-                  <VisibilityIcon className="w-5 h-5" />
-                )}
-              </button>
-            </div>
+            <Input
+              label="Confirmar senha"
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Repita a senha"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              leftIcon={<LockIcon className="w-5 h-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showConfirmPassword ? (
+                    <VisibilityOffIcon className="w-5 h-5" />
+                  ) : (
+                    <VisibilityIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
+              autoComplete="new-password"
+            />
 
             <Button
               type="submit"

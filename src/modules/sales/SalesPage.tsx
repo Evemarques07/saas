@@ -36,10 +36,17 @@ export function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
 
   // View Sale Modal
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingSale, setViewingSale] = useState<Sale | null>(null);
+
+  // Cancel Sale Modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelingSale, setCancelingSale] = useState<Sale | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (currentCompany) {
@@ -89,8 +96,19 @@ export function SalesPage() {
     setDiscount('0');
     setPaymentMethod('');
     setNotes('');
+    setProductSearch('');
     setShowNewSaleModal(true);
   };
+
+  // Filtrar produtos pela pesquisa
+  const filteredProducts = products.filter((p) => {
+    const searchLower = productSearch.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(searchLower) ||
+      (p.description?.toLowerCase().includes(searchLower) ?? false) ||
+      (p.sku?.toLowerCase().includes(searchLower) ?? false)
+    );
+  });
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -217,6 +235,53 @@ export function SalesPage() {
     }
   };
 
+  const handleOpenCancelModal = (sale: Sale) => {
+    setCancelingSale(sale);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    setShowCancelModal(false);
+    setCancelingSale(null);
+    setCancelReason('');
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelingSale) return;
+
+    setCancelling(true);
+    try {
+      // Atualizar status e adicionar justificativa nas notas
+      const currentNotes = cancelingSale.notes || '';
+      const cancelNote = cancelReason
+        ? `[CANCELADO em ${new Date().toLocaleDateString('pt-BR')}] Motivo: ${cancelReason}`
+        : `[CANCELADO em ${new Date().toLocaleDateString('pt-BR')}]`;
+      const newNotes = currentNotes
+        ? `${cancelNote}\n\n${currentNotes}`
+        : cancelNote;
+
+      const { error } = await supabase
+        .from('sales')
+        .update({
+          status: 'cancelled',
+          notes: newNotes
+        })
+        .eq('id', cancelingSale.id);
+
+      if (error) throw error;
+
+      toast.success('Venda cancelada com sucesso!');
+      handleCloseCancelModal();
+      setShowViewModal(false);
+      fetchData();
+    } catch {
+      toast.error('Erro ao cancelar venda');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleExport = (format: 'excel' | 'pdf') => {
     const data = filteredSales.map((s) => ({
       Data: new Date(s.created_at).toLocaleDateString('pt-BR'),
@@ -329,17 +394,18 @@ export function SalesPage() {
       subtitle={`${filteredSales.length} vendas registradas`}
       action={
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => handleExport('excel')}>
+          <Button variant="secondary" onClick={() => handleExport('excel')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             Excel
           </Button>
-          <Button variant="secondary" onClick={() => handleExport('pdf')}>
+          <Button variant="secondary" onClick={() => handleExport('pdf')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             PDF
           </Button>
           <Button onClick={handleOpenNewSale}>
             <AddIcon className="w-4 h-4" />
-            Nova Venda
+            <span className="hidden sm:inline">Nova Venda</span>
+            <span className="sm:hidden">Nova</span>
           </Button>
         </div>
       }
@@ -377,6 +443,35 @@ export function SalesPage() {
         keyExtractor={(s) => s.id}
         loading={loading}
         emptyMessage="Nenhuma venda encontrada"
+        mobileCardRender={(s) => (
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
+            onClick={() => handleViewSale(s)}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {s.customer?.name || 'Sem cliente'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {new Date(s.created_at).toLocaleDateString('pt-BR')} - {new Date(s.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <Badge variant={getStatusVariant(s.status)}>
+                {getStatusLabel(s.status)}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {s.items?.length || 0} item(s)
+              </span>
+              <span className="text-lg font-bold text-primary-600">
+                {formatCurrency(s.total)}
+              </span>
+            </div>
+          </div>
+        )}
       />
 
       {/* New Sale Modal */}
@@ -414,75 +509,157 @@ export function SalesPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Adicionar Produto
             </label>
-            <Select
-              value=""
-              onChange={(e) => handleAddToCart(e.target.value)}
-              options={products.map((p) => ({
-                value: p.id,
-                label: `${p.name} - ${formatCurrency(p.price)} (Estoque: ${p.stock})`,
-              }))}
-              placeholder="Selecione um produto..."
+            <Input
+              placeholder="Pesquisar por nome, descricao ou SKU..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              leftIcon={<SearchIcon className="w-5 h-5" />}
             />
+            {productSearch && (
+              <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.slice(0, 20).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        handleAddToCart(p.id);
+                        setProductSearch('');
+                      }}
+                      disabled={p.stock <= 0}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2 text-sm text-left
+                        hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+                        border-b border-gray-100 dark:border-gray-700 last:border-0
+                        ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      <div>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{p.name}</span>
+                        {p.sku && <span className="text-gray-400 ml-2">({p.sku})</span>}
+                      </div>
+                      <div className="text-right">
+                        <span className="font-medium text-primary-600">{formatCurrency(p.price)}</span>
+                        <span className={`ml-2 text-xs ${p.stock <= 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                          Est: {p.stock}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                    Nenhum produto encontrado
+                  </div>
+                )}
+                {filteredProducts.length > 20 && (
+                  <div className="px-3 py-2 text-xs text-gray-400 text-center bg-gray-50 dark:bg-gray-700/50">
+                    Mostrando 20 de {filteredProducts.length} produtos. Refine sua busca.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Cart */}
           {cart.length > 0 && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700/50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Produto
-                    </th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Qtd
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Preço
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Total
-                    </th>
-                    <th className="px-4 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {cart.map((item) => (
-                    <tr key={item.product.id}>
-                      <td className="px-4 py-2 text-sm">{item.product.name}</td>
-                      <td className="px-4 py-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleUpdateQuantity(
-                              item.product.id,
-                              parseInt(e.target.value)
-                            )
-                          }
-                          className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        {formatCurrency(item.product.price)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right font-medium">
+              {/* Mobile: Cards */}
+              <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {cart.map((item) => (
+                  <div key={item.product.id} className="p-3 bg-white dark:bg-gray-800">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {formatCurrency(item.product.price)} cada
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFromCart(item.product.id)}
+                        className="text-red-500 hover:text-red-700 text-xs"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          handleUpdateQuantity(item.product.id, parseInt(e.target.value))
+                        }
+                        className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className="font-medium text-primary-600">
                         {formatCurrency(item.product.price * item.quantity)}
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFromCart(item.product.id)}
-                          className="text-red-500 hover:text-red-700 text-sm"
-                        >
-                          Remover
-                        </button>
-                      </td>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Produto
+                      </th>
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Qtd
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Preço
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Total
+                      </th>
+                      <th className="px-4 py-2"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {cart.map((item) => (
+                      <tr key={item.product.id}>
+                        <td className="px-4 py-2 text-sm">{item.product.name}</td>
+                        <td className="px-4 py-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleUpdateQuantity(
+                                item.product.id,
+                                parseInt(e.target.value)
+                              )
+                            }
+                            className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
+                          />
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right">
+                          {formatCurrency(item.product.price)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right font-medium">
+                          {formatCurrency(item.product.price * item.quantity)}
+                        </td>
+                        <td className="px-4 py-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromCart(item.product.id)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Remover
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -533,7 +710,7 @@ export function SalesPage() {
       >
         {viewingSale && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Data:</span>
                 <p className="font-medium">
@@ -551,9 +728,7 @@ export function SalesPage() {
                 <p className="font-medium">-</p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">
-                  Forma de Pagamento:
-                </span>
+                <span className="text-gray-500 dark:text-gray-400">Pagamento:</span>
                 <p className="font-medium">
                   {viewingSale.payment_method || '-'}
                 </p>
@@ -562,40 +737,63 @@ export function SalesPage() {
 
             {/* Items */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700/50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Produto
-                    </th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Qtd
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Preço
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {viewingSale.items?.map((item: SaleItem) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-2 text-sm">{item.product_name}</td>
-                      <td className="px-4 py-2 text-sm text-center">
-                        {item.quantity}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        {formatCurrency(item.unit_price)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right font-medium">
+              {/* Mobile: Cards */}
+              <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {viewingSale.items?.map((item: SaleItem) => (
+                  <div key={item.id} className="p-3 bg-white dark:bg-gray-800">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 text-sm flex-1">
+                        {item.product_name}
+                      </p>
+                      <span className="font-medium text-primary-600 text-sm">
                         {formatCurrency(item.total)}
-                      </td>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span>{item.quantity}x</span>
+                      <span>{formatCurrency(item.unit_price)} cada</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Produto
+                      </th>
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Qtd
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Preço
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Total
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {viewingSale.items?.map((item: SaleItem) => (
+                      <tr key={item.id}>
+                        <td className="px-4 py-2 text-sm">{item.product_name}</td>
+                        <td className="px-4 py-2 text-sm text-center">
+                          {item.quantity}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right">
+                          {formatCurrency(item.unit_price)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right font-medium">
+                          {formatCurrency(item.total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Totals */}
@@ -622,7 +820,7 @@ export function SalesPage() {
 
             {/* Status Actions */}
             {isAdmin && viewingSale.status !== 'cancelled' && (
-              <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                 {viewingSale.status === 'pending' && (
                   <Button
                     variant="primary"
@@ -636,17 +834,76 @@ export function SalesPage() {
                 )}
                 <Button
                   variant="danger"
-                  onClick={() => {
-                    handleUpdateStatus(viewingSale.id, 'cancelled');
-                    setShowViewModal(false);
-                  }}
+                  onClick={() => handleOpenCancelModal(viewingSale)}
                 >
                   Cancelar Venda
                 </Button>
               </div>
             )}
+
+            {/* Exibir motivo do cancelamento se houver */}
+            {viewingSale.status === 'cancelled' && viewingSale.notes && (
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-700 dark:text-red-300 whitespace-pre-line">
+                  {viewingSale.notes}
+                </p>
+              </div>
+            )}
           </div>
         )}
+      </Modal>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={handleCloseCancelModal}
+        title="Cancelar Venda"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Tem certeza que deseja cancelar esta venda?
+            </p>
+            {cancelingSale && (
+              <p className="text-sm text-red-600 dark:text-red-400 font-medium mt-2">
+                Venda de {formatCurrency(cancelingSale.total)} - {cancelingSale.customer?.name || 'Sem cliente'}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Motivo do cancelamento (opcional)
+            </label>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Informe o motivo do cancelamento..."
+              rows={3}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={handleCloseCancelModal}
+              disabled={cancelling}
+            >
+              Voltar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmCancel}
+              loading={cancelling}
+            >
+              Confirmar Cancelamento
+            </Button>
+          </ModalFooter>
+        </div>
       </Modal>
     </PageContainer>
   );

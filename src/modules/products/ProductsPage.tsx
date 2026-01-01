@@ -555,21 +555,22 @@ export function ProductsPage() {
       subtitle={`${filteredProducts.length} produtos cadastrados`}
       action={
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="secondary" onClick={() => handleExport('excel')}>
+          <Button variant="secondary" onClick={() => handleExport('excel')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             Excel
           </Button>
-          <Button variant="secondary" onClick={() => handleExport('pdf')}>
+          <Button variant="secondary" onClick={() => handleExport('pdf')} className="hidden sm:flex">
             <FileDownloadIcon className="w-4 h-4" />
             PDF
           </Button>
-          <Button variant="secondary" onClick={() => setShowImportModal(true)}>
+          <Button variant="secondary" onClick={() => setShowImportModal(true)} className="hidden sm:flex">
             <FileUploadIcon className="w-4 h-4" />
             Importar
           </Button>
           <Button onClick={() => handleOpenModal()}>
             <AddIcon className="w-4 h-4" />
-            Novo Produto
+            <span className="hidden sm:inline">Novo Produto</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       }
@@ -591,6 +592,86 @@ export function ProductsPage() {
         keyExtractor={(p) => p.id}
         loading={loading}
         emptyMessage="Nenhum produto encontrado"
+        mobileCardRender={(p) => (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex gap-3">
+              {/* Image */}
+              {p.image_url ? (
+                <img
+                  src={p.image_url}
+                  alt={p.name}
+                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <ImageIcon className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{p.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{p.sku || 'Sem SKU'}</p>
+                  </div>
+                  <Badge variant={p.is_active ? 'success' : 'default'} className="flex-shrink-0">
+                    {p.is_active ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-4 mt-2 text-sm">
+                  <span className="font-semibold text-primary-600">R$ {p.price.toFixed(2)}</span>
+                  <span className={`${p.stock <= p.min_stock ? 'text-red-600' : 'text-gray-500'}`}>
+                    Est: {p.stock}
+                  </span>
+                  {p.category?.name && (
+                    <span className="text-gray-500 truncate">{p.category.name}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              {p.show_in_catalog && p.is_active && (
+                <>
+                  <button
+                    onClick={() => handleCopyProductLink(p.id)}
+                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title="Copiar link"
+                  >
+                    <LinkIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenProductLink(p.id)}
+                    className="p-2 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title="Abrir"
+                  >
+                    <OpenInNewIcon className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+              <div className="flex-1" />
+              <button
+                onClick={() => handleOpenModal(p)}
+                className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Editar"
+              >
+                <EditIcon className="w-5 h-5" />
+              </button>
+              {canManageProducts && (
+                <button
+                  onClick={() => handleOpenDeleteModal(p)}
+                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Excluir"
+                >
+                  <DeleteIcon className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       />
 
       {/* Modal */}

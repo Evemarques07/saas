@@ -129,6 +129,73 @@ src/
 └── hooks/             # Custom hooks
 ```
 
+### Responsividade Mobile-First
+
+O sistema utiliza uma abordagem mobile-first para garantir boa experiencia em todos os dispositivos:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      DESKTOP (md+)                            │
+│  ┌─────────┐  ┌─────────────────────────────────────────┐   │
+│  │ Sidebar │  │               Header                     │   │
+│  │ (fixed) │  ├─────────────────────────────────────────┤   │
+│  │         │  │               Content                    │   │
+│  │         │  │   ┌───────────────────────────────────┐  │   │
+│  │         │  │   │          Table View                │  │   │
+│  │         │  │   └───────────────────────────────────┘  │   │
+│  └─────────┘  └─────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────┐
+│        MOBILE (<md)          │
+│  ┌─────────────────────────┐ │
+│  │   Header (sticky)       │ │
+│  │   [≡] Company    [User] │ │
+│  ├─────────────────────────┤ │
+│  │      Content            │ │
+│  │  ┌───────────────────┐  │ │
+│  │  │   Card View       │  │ │
+│  │  │   (mobileCard)    │  │ │
+│  │  └───────────────────┘  │ │
+│  │  ┌───────────────────┐  │ │
+│  │  │   Card View       │  │ │
+│  │  └───────────────────┘  │ │
+│  └─────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+#### Componentes Responsivos
+
+| Componente | Desktop | Mobile |
+|------------|---------|--------|
+| **Sidebar** | Fixa na lateral, colapsavel | Drawer com overlay |
+| **Header** | Normal (scroll com pagina) | Sticky no topo |
+| **Table** | Tabela tradicional | Cards via `mobileCardRender` |
+| **PageContainer** | Padding maior | Padding reduzido |
+| **Modais** | Scroll horizontal se necessario | Cards empilhados |
+
+#### Breakpoints (Tailwind)
+
+| Classe | Largura | Uso |
+|--------|---------|-----|
+| `sm:` | 640px+ | Ajustes pequenos |
+| `md:` | 768px+ | Desktop vs Mobile |
+| `lg:` | 1024px+ | Telas grandes |
+
+#### Deteccao de Mobile
+
+```tsx
+// Hook pattern usado nos layouts
+const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => setIsMobile(window.innerWidth < 768);
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  return () => window.removeEventListener('resize', checkMobile);
+}, []);
+```
+
 ### Gerenciamento de Estado
 
 ```
@@ -166,7 +233,35 @@ src/
 │  │  - Persistencia localStorage    │    │
 │  └─────────────────────────────────┘    │
 └─────────────────────────────────────────┘
+
+### Dashboard com Filtro de Periodo
+
+O dashboard suporta filtragem dinamica de dados por periodo:
+
 ```
+┌─────────────────────────────────────────┐
+│           PeriodFilter                   │
+│  - today: Hoje                          │
+│  - yesterday: Ontem                     │
+│  - last7days: Ultimos 7 dias            │
+│  - last30days: Ultimos 30 dias (padrao) │
+│  - thisMonth: Este mes                  │
+│  - lastMonth: Mes passado               │
+│  - all: Todo periodo                    │
+└─────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────┐
+│         Dados Filtrados                  │
+│  - Total de Vendas                      │
+│  - Faturamento                          │
+│  - Pedidos do Catalogo (por status)     │
+│  - Grafico de Vendas                    │
+│  - Top Produtos                         │
+└─────────────────────────────────────────┘
+```
+
+**Nota:** Clientes e Produtos exibem contagens totais (nao sao afetados pelo filtro de periodo).
 
 ---
 

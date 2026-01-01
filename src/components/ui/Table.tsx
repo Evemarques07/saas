@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { TableColumn } from '../../types';
@@ -12,6 +12,7 @@ interface TableProps<T> {
   sortDirection?: 'asc' | 'desc';
   emptyMessage?: string;
   loading?: boolean;
+  mobileCardRender?: (item: T) => ReactNode;
 }
 
 export function Table<T>({
@@ -23,7 +24,17 @@ export function Table<T>({
   sortDirection,
   emptyMessage = 'Nenhum registro encontrado',
   loading,
+  mobileCardRender,
 }: TableProps<T>) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleSort = (column: TableColumn<T>) => {
     if (!column.sortable || !onSort) return;
 
@@ -44,7 +55,28 @@ export function Table<T>({
     return (item as Record<string, unknown>)[key as string] as ReactNode;
   };
 
+  // Loading state
   if (loading) {
+    if (isMobile && mobileCardRender) {
+      return (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
+                </div>
+              </div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full mb-2" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/3" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="animate-pulse">
@@ -57,6 +89,27 @@ export function Table<T>({
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Mobile card view
+  if (isMobile && mobileCardRender) {
+    if (data.length === 0) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-500 dark:text-gray-400">
+          {emptyMessage}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {data.map((item) => (
+          <div key={keyExtractor(item)}>
+            {mobileCardRender(item)}
+          </div>
+        ))}
       </div>
     );
   }

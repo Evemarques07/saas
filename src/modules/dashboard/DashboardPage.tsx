@@ -23,10 +23,22 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-hot-toast';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Card, Button } from '../../components/ui';
+import { Card, Button, Select } from '../../components/ui';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
+
+type PeriodFilter = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'thisMonth' | 'lastMonth' | 'all';
+
+const periodOptions = [
+  { value: 'today', label: 'Hoje' },
+  { value: 'yesterday', label: 'Ontem' },
+  { value: 'last7days', label: 'Últimos 7 dias' },
+  { value: 'last30days', label: 'Últimos 30 dias' },
+  { value: 'thisMonth', label: 'Este mês' },
+  { value: 'lastMonth', label: 'Mês passado' },
+  { value: 'all', label: 'Todo período' },
+];
 
 interface DashboardStats {
   totalSales: number;
@@ -71,8 +83,47 @@ export function DashboardPage() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartsReady, setChartsReady] = useState(false);
+  const [period, setPeriod] = useState<PeriodFilter>('last30days');
   const salesChartRef = useRef<HTMLDivElement>(null);
   const productsChartRef = useRef<HTMLDivElement>(null);
+
+  // Calcular datas baseado no período selecionado
+  const getDateRange = (periodFilter: PeriodFilter): { startDate: Date | null; endDate: Date | null } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (periodFilter) {
+      case 'today':
+        return { startDate: today, endDate: now };
+      case 'yesterday': {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return { startDate: yesterday, endDate: today };
+      }
+      case 'last7days': {
+        const last7 = new Date(today);
+        last7.setDate(last7.getDate() - 7);
+        return { startDate: last7, endDate: now };
+      }
+      case 'last30days': {
+        const last30 = new Date(today);
+        last30.setDate(last30.getDate() - 30);
+        return { startDate: last30, endDate: now };
+      }
+      case 'thisMonth': {
+        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { startDate: firstDayThisMonth, endDate: now };
+      }
+      case 'lastMonth': {
+        const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { startDate: firstDayLastMonth, endDate: lastDayLastMonth };
+      }
+      case 'all':
+      default:
+        return { startDate: null, endDate: null };
+    }
+  };
 
   // Delay chart rendering until container is mounted and has dimensions
   useEffect(() => {
@@ -86,21 +137,45 @@ export function DashboardPage() {
     if (currentCompany) {
       fetchDashboardData();
     }
-  }, [currentCompany]);
+  }, [currentCompany, period]);
 
   const fetchDashboardData = async () => {
     if (!currentCompany) return;
 
     setLoading(true);
+    const { startDate, endDate } = getDateRange(period);
 
     try {
+      // Build sales query with date filter
+      let salesQuery = supabase
+        .from('sales')
+        .select('total, created_at')
+        .eq('company_id', currentCompany.id)
+        .eq('status', 'completed');
+
+      if (startDate) {
+        salesQuery = salesQuery.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        salesQuery = salesQuery.lte('created_at', endDate.toISOString());
+      }
+
+      // Build catalog orders query with date filter
+      let ordersQuery = supabase
+        .from('catalog_orders')
+        .select('status, created_at')
+        .eq('company_id', currentCompany.id);
+
+      if (startDate) {
+        ordersQuery = ordersQuery.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        ordersQuery = ordersQuery.lte('created_at', endDate.toISOString());
+      }
+
       // Fetch stats
       const [salesResult, customersResult, productsResult, catalogOrdersResult] = await Promise.all([
-        supabase
-          .from('sales')
-          .select('total')
-          .eq('company_id', currentCompany.id)
-          .eq('status', 'completed'),
+        salesQuery,
         supabase
           .from('customers')
           .select('id', { count: 'exact' })
@@ -111,10 +186,7 @@ export function DashboardPage() {
           .select('id', { count: 'exact' })
           .eq('company_id', currentCompany.id)
           .eq('is_active', true),
-        supabase
-          .from('catalog_orders')
-          .select('status')
-          .eq('company_id', currentCompany.id),
+        ordersQuery,
       ]);
 
       const totalRevenue = salesResult.data?.reduce((acc, sale) => acc + Number(sale.total), 0) || 0;
@@ -135,17 +207,22 @@ export function DashboardPage() {
         cancelled: orders.filter((o) => o.status === 'cancelled').length,
       });
 
-      // Fetch sales data for chart (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data: recentSales } = await supabase
+      // Fetch sales data for chart (use same period filter)
+      let chartQuery = supabase
         .from('sales')
         .select('created_at, total')
         .eq('company_id', currentCompany.id)
         .eq('status', 'completed')
-        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: true });
+
+      if (startDate) {
+        chartQuery = chartQuery.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        chartQuery = chartQuery.lte('created_at', endDate.toISOString());
+      }
+
+      const { data: recentSales } = await chartQuery;
 
       // Group by date
       const salesByDate: Record<string, number> = {};
@@ -164,16 +241,25 @@ export function DashboardPage() {
 
       setSalesData(chartData);
 
-      // Fetch top products
-      const { data: saleItems } = await supabase
+      // Fetch top products (with date filter)
+      let topProductsQuery = supabase
         .from('sale_items')
         .select(`
           quantity,
           product_name,
-          sale:sales!inner(company_id, status)
+          sale:sales!inner(company_id, status, created_at)
         `)
         .eq('sale.company_id', currentCompany.id)
         .eq('sale.status', 'completed');
+
+      if (startDate) {
+        topProductsQuery = topProductsQuery.gte('sale.created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        topProductsQuery = topProductsQuery.lte('sale.created_at', endDate.toISOString());
+      }
+
+      const { data: saleItems } = await topProductsQuery;
 
       const productQuantities: Record<string, number> = {};
       saleItems?.forEach((item) => {
@@ -269,54 +355,75 @@ export function DashboardPage() {
       subtitle={`Visão geral de ${currentCompany.name}`}
     >
       {/* Catalog Link Card */}
-      <Card className="p-4 mb-6 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-primary-600 text-white">
-              <StorefrontIcon />
+      <Card className="p-3 md:p-4 mb-4 md:mb-6 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 md:p-3 rounded-lg bg-primary-600 text-white flex-shrink-0">
+              <StorefrontIcon className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">
                 Catálogo Público
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 break-all">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px] sm:max-w-none">
                 {catalogUrl}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="secondary"
               onClick={handleCopyCatalogLink}
               className="flex items-center gap-2"
+              size="sm"
             >
               <ContentCopyIcon className="w-4 h-4" />
-              Copiar Link
+              <span className="hidden sm:inline">Copiar</span>
             </Button>
             <Button
               onClick={handleOpenCatalog}
               className="flex items-center gap-2"
+              size="sm"
             >
               <OpenInNewIcon className="w-4 h-4" />
-              Abrir Catálogo
+              <span className="hidden sm:inline">Abrir</span>
             </Button>
           </div>
         </div>
       </Card>
 
+      {/* Period Filter */}
+      <Card className="p-3 md:p-4 mb-4 md:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Filtre os dados por período
+            </p>
+          </div>
+          <div className="w-full sm:w-48">
+            <Select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+              options={periodOptions}
+            />
+          </div>
+        </div>
+      </Card>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         {statCards.map((stat) => (
-          <Card key={stat.title} className="p-4">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+          <Card key={stat.title} className="p-3 md:p-4">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className={`p-2 md:p-3 rounded-lg ${stat.bgColor} flex-shrink-0`}>
                 <span className={stat.color}>{stat.icon}</span>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="min-w-0">
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 truncate">
                   {stat.title}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                   {loading ? '...' : stat.value}
                 </p>
               </div>
@@ -326,46 +433,46 @@ export function DashboardPage() {
       </div>
 
       {/* Catalog Orders Stats */}
-      <Card className="p-4 mb-6">
-        <div className="flex items-center gap-3 mb-4">
+      <Card className="p-3 md:p-4 mb-4 md:mb-6">
+        <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
           <LocalShippingIcon className="text-primary-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
             Pedidos do Catálogo
           </h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
-            <PendingIcon className="text-yellow-600" />
-            <div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+            <PendingIcon className="text-yellow-600 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+            <div className="min-w-0">
               <p className="text-xs text-gray-500 dark:text-gray-400">Pendentes</p>
-              <p className="text-xl font-bold text-yellow-600">
+              <p className="text-lg md:text-xl font-bold text-yellow-600">
                 {loading ? '...' : orderStats.pending}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <CheckCircleIcon className="text-blue-600" />
-            <div>
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+            <CheckCircleIcon className="text-blue-600 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+            <div className="min-w-0">
               <p className="text-xs text-gray-500 dark:text-gray-400">Confirmados</p>
-              <p className="text-xl font-bold text-blue-600">
+              <p className="text-lg md:text-xl font-bold text-blue-600">
                 {loading ? '...' : orderStats.confirmed}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
-            <LocalShippingIcon className="text-green-600" />
-            <div>
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+            <LocalShippingIcon className="text-green-600 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+            <div className="min-w-0">
               <p className="text-xs text-gray-500 dark:text-gray-400">Entregues</p>
-              <p className="text-xl font-bold text-green-600">
+              <p className="text-lg md:text-xl font-bold text-green-600">
                 {loading ? '...' : orderStats.completed}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
-            <CancelIcon className="text-red-600" />
-            <div>
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+            <CancelIcon className="text-red-600 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+            <div className="min-w-0">
               <p className="text-xs text-gray-500 dark:text-gray-400">Cancelados</p>
-              <p className="text-xl font-bold text-red-600">
+              <p className="text-lg md:text-xl font-bold text-red-600">
                 {loading ? '...' : orderStats.cancelled}
               </p>
             </div>
@@ -374,13 +481,13 @@ export function DashboardPage() {
       </Card>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Sales Chart */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <Card className="p-3 md:p-4">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4">
             Vendas nos últimos 30 dias
           </h3>
-          <div ref={salesChartRef} className="h-64" style={{ minHeight: 256 }}>
+          <div ref={salesChartRef} className="h-48 md:h-64" style={{ minHeight: 192 }}>
             {!chartsReady ? (
               <div className="h-full flex items-center justify-center text-gray-500">
                 <div className="animate-pulse">Carregando gráfico...</div>
@@ -421,11 +528,11 @@ export function DashboardPage() {
         </Card>
 
         {/* Top Products Chart */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <Card className="p-3 md:p-4">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4">
             Produtos mais vendidos
           </h3>
-          <div ref={productsChartRef} className="h-64" style={{ minHeight: 256 }}>
+          <div ref={productsChartRef} className="h-48 md:h-64" style={{ minHeight: 192 }}>
             {!chartsReady ? (
               <div className="h-full flex items-center justify-center text-gray-500">
                 <div className="animate-pulse">Carregando gráfico...</div>
