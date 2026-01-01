@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppRoutes } from './routes';
+import { PWAInstallPrompt } from './components/pwa';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               },
             }}
           />
+          <PWAInstallPrompt />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
