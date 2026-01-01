@@ -25,12 +25,14 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  ────────────────────────────────────────────────────────────────────────    │
 │                                                                               │
 │  [x] Auth Firebase  [x] Dashboard    [x] Email    [ ] Planos   [ ] Cod.Barras│
-│  [x] Google OAuth   [x] Produtos     [ ] WhatsApp [ ] Stripe   [ ] QR Code   │
+│  [x] Google OAuth   [x] Produtos     [x] WhatsApp [ ] Stripe   [ ] QR Code   │
 │  [x] Multi-tenant   [x] Clientes     [ ] Relat.   [ ] Mobile   [ ] PDV       │
 │  [x] Empresas       [x] Vendas       [x] Storage  [ ] API      [ ] NFCe      │
-│  [x] Convites       [x] Catalogo     [ ] PWA                                 │
-│  [x] RLS            [x] Exportacao   [x] Edge Fn                             │
-│                     [x] Categorias   [x] Hosting                             │
+│  [x] Convites       [x] Catalogo     [ ] PWA      [x] Logo                   │
+│  [x] RLS            [x] Exportacao   [x] Edge Fn  [x] Config                 │
+│                     [x] Categorias   [x] Hosting  [x] Senha                  │
+│                     [x] Import Excel [x] SKU Auto                            │
+│                     [x] Carrinho     [x] Pedidos                             │
 │                                                                               │
 │  ██████████████████ ██████████████   ████████░░   ░░░░░░░░     ░░░░░░░░      │
 │      CONCLUIDO         CONCLUIDO      EM PROG      FUTURO       PLANEJADO    │
@@ -140,6 +142,19 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 - [x] Busca de produtos
 - [x] Exibicao de precos
 - [x] Informacoes da empresa
+- [x] **Carrinho de compras (localStorage)**
+- [x] **Checkout com formulario de cliente**
+- [x] **Pagina individual de produto (link compartilhavel)**
+
+### Pedidos do Catalogo
+
+- [x] **Tabelas `catalog_orders` e `catalog_order_items`**
+- [x] **Pagina de gestao de pedidos**
+- [x] **Status: pending, confirmed, completed, cancelled**
+- [x] **Botao WhatsApp para contato**
+- [x] **Conversao automatica de pedido em venda**
+- [x] **Baixa automatica de estoque**
+- [x] **Estatisticas de pedidos no dashboard**
 
 ### Exportacoes
 
@@ -170,8 +185,10 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ### Integracao WhatsApp
 
-- [ ] Botao de contato no catalogo
-- [ ] Notificacao de nova venda
+- [x] **Botao de contato no catalogo (pedidos)**
+- [x] **Mensagem pre-formatada com dados do pedido**
+- [x] **Formatacao automatica do numero (55 + DDD)**
+- [ ] Notificacao de nova venda (push)
 - [ ] Lembrete de pagamento
 
 ### Relatorios Avancados
@@ -184,7 +201,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ### Storage de Arquivos
 
-- [ ] Upload de logo da empresa
+- [x] Upload de logo da empresa (Supabase Storage)
 - [x] Upload de imagens de produtos (Supabase Storage)
 - [ ] Compressao automatica
 - [ ] CDN para entrega
@@ -372,6 +389,62 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 ---
 
 ## Changelog
+
+### v0.6.0 (Janeiro 2026)
+
+- **Carrinho de Compras no Catalogo**
+  - CartContext com persistencia em localStorage (por empresa/slug)
+  - CartDrawer para visualizar/editar itens
+  - Validacao de estoque ao adicionar produtos
+  - Interface responsiva para mobile
+- **Sistema de Pedidos do Catalogo**
+  - Tabelas `catalog_orders` e `catalog_order_items`
+  - CheckoutModal com formulario (nome, telefone, observacoes)
+  - Pagina de gestao de pedidos `/app/:slug/pedidos`
+  - Status: pending, confirmed, completed, cancelled
+  - Botao WhatsApp para contatar cliente
+- **Conversao Pedido → Venda**
+  - Ao marcar pedido como "entregue", cria venda automaticamente
+  - Baixa automatica de estoque
+  - Forma de pagamento: "Catalogo Online"
+  - Faturamento unificado com vendas manuais
+- **Dashboard: Estatisticas de Pedidos**
+  - Cards com contagem por status (pendentes, confirmados, entregues, cancelados)
+  - Cores diferenciadas por status
+- **Pagina Individual de Produto**
+  - Rota `/catalogo/:slug/produto/:productId`
+  - Detalhes completos do produto
+  - Adicionar ao carrinho
+  - Link "Ver Catalogo Completo"
+- **Link Compartilhavel de Produto**
+  - Botao de copiar link na lista de produtos
+  - Botao de abrir em nova aba
+  - Links so aparecem para produtos ativos no catalogo
+
+### v0.5.0 (Janeiro 2025)
+
+- **Upload de Logo da Empresa**
+  - Bucket `companies` no Supabase Storage
+  - Administradores podem fazer upload/remover logo
+  - Logo exibido no Header, seletor de empresa, lista de empresas e usuarios
+- **Alteracao de Senha**
+  - Todos os usuarios podem alterar sua propria senha
+  - Reautenticacao com Firebase para seguranca
+- **Pagina de Configuracoes**
+  - Nova rota `/app/:slug/configuracoes`
+  - Upload de logo (admin only)
+  - Alteracao de senha (todos)
+- **Lista de Usuarios do Sistema (Super Admin)**
+  - Nova rota `/admin/usuarios`
+  - Usuarios agrupados por empresa (accordion)
+  - Busca por nome, email ou empresa
+  - Secao separada para usuarios sem empresa
+- **Melhorias na Gestao de Produtos**
+  - Foto do produto exibida na lista (thumbnail 12x12)
+  - SKU automatico no formato `PROD-00001` ao criar produto
+  - Importacao em massa de produtos via Excel
+  - Download de modelo Excel para importacao
+  - Vinculacao automatica de categoria pelo nome na importacao
 
 ### v0.4.0 (Dezembro 2024)
 

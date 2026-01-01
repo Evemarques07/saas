@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { supabase } from '../../services/supabase';
 import { Company, Product, Category } from '../../types';
-import { Input, Select, Card } from '../../components/ui';
+import { Input, Select, Card, Button } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
+import { CartProvider, useCart } from '../../contexts/CartContext';
+import { CartDrawer, CheckoutModal } from './components';
 
 export function CatalogPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,9 +20,6 @@ export function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
 
   useEffect(() => {
     if (slug) {
@@ -66,18 +69,6 @@ export function CatalogPage() {
     setLoading(false);
   };
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = !categoryFilter || p.category_id === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
-
   if (loading) {
     return <PageLoader />;
   }
@@ -94,7 +85,48 @@ export function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <CartProvider companySlug={company.slug}>
+      <CatalogContent
+        company={company}
+        products={products}
+        categories={categories}
+      />
+    </CartProvider>
+  );
+}
+
+interface CatalogContentProps {
+  company: Company;
+  products: Product[];
+  categories: Category[];
+}
+
+function CatalogContent({ company, products, categories }: CatalogContentProps) {
+  const { itemCount, addItem, isInCart, getItemQuantity, updateQuantity } = useCart();
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = !categoryFilter || p.category_id === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleCheckout = () => {
+    setCartOpen(false);
+    setCheckoutOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -116,6 +148,20 @@ export function CatalogPage() {
                 </p>
               </div>
             </div>
+
+            {/* Cart Button (Desktop) */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            >
+              <ShoppingCartIcon className="w-5 h-5" />
+              <span className="font-medium">Carrinho</span>
+              {itemCount > 0 && (
+                <span className="px-2 py-0.5 text-xs font-bold bg-white text-primary-600 rounded-full">
+                  {itemCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -154,61 +200,103 @@ export function CatalogPage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} padding="none" className="overflow-hidden">
-                {/* Product Image */}
-                <div className="aspect-square bg-gray-100 dark:bg-gray-700">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <svg
-                        className="w-16 h-16"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
+            {filteredProducts.map((product) => {
+              const inCart = isInCart(product.id);
+              const quantity = getItemQuantity(product.id);
+              const isOutOfStock = product.stock <= 0;
 
-                {/* Product Info */}
-                <div className="p-4">
-                  {product.category && (
-                    <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
-                      {product.category.name}
-                    </span>
-                  )}
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  {product.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                      {product.description}
+              return (
+                <Card key={product.id} padding="none" className="overflow-hidden flex flex-col">
+                  {/* Product Image */}
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 relative">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg
+                          className="w-16 h-16"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white font-semibold text-lg">Esgotado</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="p-4 flex-1 flex flex-col">
+                    {product.category && (
+                      <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
+                        {product.category.name}
+                      </span>
+                    )}
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1 line-clamp-2">
+                      {product.name}
+                    </h3>
+                    {product.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                        {product.description}
+                      </p>
+                    )}
+                    <p className="text-lg font-bold text-primary-600 mt-2">
+                      {formatCurrency(product.price)}
                     </p>
-                  )}
-                  <p className="text-lg font-bold text-primary-600 mt-2">
-                    {formatCurrency(product.price)}
-                  </p>
-                  {product.stock <= 0 && (
-                    <span className="text-xs text-red-500 mt-1 block">
-                      Fora de estoque
-                    </span>
-                  )}
-                </div>
-              </Card>
-            ))}
+
+                    {/* Add to Cart Button */}
+                    <div className="mt-auto pt-3">
+                      {isOutOfStock ? (
+                        <Button variant="secondary" disabled className="w-full">
+                          Indisponível
+                        </Button>
+                      ) : inCart ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(product.id, quantity - 1)}
+                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            <RemoveIcon className="w-5 h-5" />
+                          </button>
+                          <span className="flex-1 text-center font-semibold text-lg">
+                            {quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(product.id, quantity + 1)}
+                            disabled={quantity >= product.stock}
+                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                          >
+                            <AddIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => addItem(product)}
+                          icon={<AddShoppingCartIcon />}
+                          className="w-full"
+                        >
+                          Adicionar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </main>
@@ -219,6 +307,31 @@ export function CatalogPage() {
           Powered by <span className="font-semibold text-primary-600">Ejym</span>
         </div>
       </footer>
+
+      {/* Floating Cart Button (Mobile) */}
+      {itemCount > 0 && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-6 right-6 sm:hidden flex items-center gap-2 px-5 py-3 rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 transition-all hover:scale-105"
+        >
+          <ShoppingCartIcon className="w-5 h-5" />
+          <span className="font-semibold">{itemCount}</span>
+        </button>
+      )}
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onCheckout={handleCheckout}
+      />
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        company={company}
+      />
     </div>
   );
 }

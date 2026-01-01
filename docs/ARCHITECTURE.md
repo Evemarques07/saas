@@ -9,10 +9,11 @@ Este documento descreve a arquitetura tecnica do Ejym SaaS.
 3. [Arquitetura Frontend](#arquitetura-frontend)
 4. [Arquitetura Backend](#arquitetura-backend)
 5. [Edge Functions](#edge-functions)
-6. [Multi-Tenancy](#multi-tenancy)
-7. [Fluxo de Autenticacao](#fluxo-de-autenticacao)
-8. [Padroes de Codigo](#padroes-de-codigo)
-9. [Seguranca](#seguranca)
+6. [Supabase Storage](#supabase-storage)
+7. [Multi-Tenancy](#multi-tenancy)
+8. [Fluxo de Autenticacao](#fluxo-de-autenticacao)
+9. [Padroes de Codigo](#padroes-de-codigo)
+10. [Seguranca](#seguranca)
 
 ---
 
@@ -106,19 +107,23 @@ src/
 │   └── feedback/       # Loading, Empty states
 ├── modules/            # Modulos de features
 │   ├── auth/          # Login, Registro, AcceptInvite
-│   ├── admin/         # Area do Super Admin
+│   ├── admin/         # Area do Super Admin (Dashboard, Users)
 │   ├── dashboard/     # Dashboard principal
 │   ├── products/      # Produtos
 │   ├── categories/    # Categorias
 │   ├── customers/     # Clientes
 │   ├── sales/         # Vendas
-│   ├── catalog/       # Catalogo publico
+│   ├── catalog-orders/# Pedidos do catalogo
+│   ├── catalog/       # Catalogo publico (CatalogPage, ProductPage)
 │   ├── companies/     # Empresas (Super Admin)
-│   └── users/         # Usuarios
+│   ├── users/         # Usuarios
+│   └── settings/      # Configuracoes (logo, senha, WhatsApp)
 ├── contexts/          # React Contexts globais
 ├── services/          # Servicos externos
 │   ├── firebase.ts   # Cliente Firebase Auth
-│   └── supabase.ts   # Cliente Supabase
+│   ├── supabase.ts   # Cliente Supabase
+│   ├── storage.ts    # Upload de imagens (Supabase Storage)
+│   └── email.ts      # Envio de emails (MailerSend)
 ├── routes/            # Sistema de rotas
 ├── types/             # TypeScript types
 └── hooks/             # Custom hooks
@@ -151,6 +156,14 @@ src/
 │  │         ThemeContext            │    │
 │  │  - theme (light/dark)           │    │
 │  │  - toggleTheme                  │    │
+│  └─────────────────────────────────┘    │
+│                                          │
+│  ┌─────────────────────────────────┐    │
+│  │         CartContext             │    │
+│  │  - items (carrinho)             │    │
+│  │  - addItem, removeItem          │    │
+│  │  - updateQuantity, clearCart    │    │
+│  │  - Persistencia localStorage    │    │
 │  └─────────────────────────────────┘    │
 └─────────────────────────────────────────┘
 ```
@@ -201,6 +214,8 @@ src/
 | `products` | Produtos por empresa | `id` (UUID) |
 | `sales` | Vendas | `id` (UUID) |
 | `sale_items` | Itens de cada venda | `id` (UUID) |
+| `catalog_orders` | Pedidos do catalogo publico | `id` (UUID) |
+| `catalog_order_items` | Itens de pedidos do catalogo | `id` (UUID) |
 
 ### Diferenca de UUID vs TEXT
 
@@ -276,6 +291,52 @@ npx supabase secrets set MAILERSEND_API_TOKEN=xxx
 # Ver logs
 npx supabase functions logs send-invite-email
 ```
+
+---
+
+## Supabase Storage
+
+O sistema utiliza Supabase Storage para armazenamento de arquivos.
+
+### Buckets
+
+| Bucket | Acesso | Descricao |
+|--------|--------|-----------|
+| `products` | Publico | Imagens de produtos |
+| `companies` | Publico | Logos das empresas |
+
+### Estrutura de Arquivos
+
+```
+products/
+  {company_id}/
+    {uuid}.jpg
+    {uuid}.png
+
+companies/
+  {company_id}/
+    logo-{uuid}.jpg
+```
+
+### Servico storage.ts
+
+```typescript
+// Upload de imagem de produto
+uploadProductImage(file: File, companyId: string): Promise<UploadResult>
+
+// Upload de logo da empresa
+uploadCompanyLogo(file: File, companyId: string): Promise<UploadResult>
+
+// Deletar imagem
+deleteProductImage(imageUrl: string): Promise<void>
+deleteCompanyLogo(imageUrl: string): Promise<void>
+```
+
+### Validacoes
+
+- Tipos aceitos: `image/jpeg`, `image/png`, `image/webp`
+- Tamanho maximo: 5MB
+- Nome unico gerado com UUID
 
 ---
 
@@ -458,6 +519,82 @@ export function ExamplePage() {
     </PageContainer>
   );
 }
+```
+
+---
+
+## Fluxo de Pedidos do Catalogo
+
+### Carrinho (Frontend)
+
+O carrinho utiliza localStorage para persistencia client-side:
+
+```
+┌─────────────────────────────────────────┐
+│              CartContext                 │
+│  - Key: ejym_cart_{slug}                │
+│  - items: CartItem[]                    │
+│  - Sincronizado com localStorage        │
+└─────────────────────────────────────────┘
+```
+
+### Checkout e Criacao de Pedido
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
+│  CartDrawer │────▶│CheckoutModal│────▶│ catalog_orders  │
+│             │     │   (form)    │     │ catalog_order_  │
+│             │     │             │     │ items           │
+└─────────────┘     └─────────────┘     └─────────────────┘
+                          │
+                          │ WhatsApp (wa.me)
+                          ▼
+                    ┌─────────────┐
+                    │  WhatsApp   │
+                    │  Notificacao│
+                    └─────────────┘
+```
+
+### Gestao de Pedidos (Empresa)
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                   CatalogOrdersPage                         │
+│                                                             │
+│  pending ──▶ confirmed ──▶ completed ──▶ [Venda criada]    │
+│     │                          │                            │
+│     └─── cancelled             │                            │
+│                                │                            │
+│                    convertOrderToSale()                     │
+│                    ┌───────────┴───────────┐                │
+│                    │  1. Criar venda       │                │
+│                    │  2. Criar sale_items  │                │
+│                    │  3. Baixar estoque    │                │
+│                    └───────────────────────┘                │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Conversao Pedido → Venda
+
+Quando um pedido e marcado como "completed" (entregue):
+
+1. **Cria venda**: Insere na tabela `sales` com `payment_method = 'Catalogo Online'`
+2. **Cria itens**: Insere cada item na tabela `sale_items`
+3. **Atualiza estoque**: Decrementa `products.stock` para cada item
+4. **Atualiza status**: Muda `catalog_orders.status` para `completed`
+
+### Pagina Individual de Produto
+
+```
+/catalogo/:slug/produto/:productId
+         │                │
+         │                └──▶ ProductPage.tsx
+         │                         │
+         │                         ├── Detalhes do produto
+         │                         ├── Adicionar ao carrinho
+         │                         └── Link "Ver Catalogo"
+         │
+         └──▶ Usado em company_members RLS
 ```
 
 ---

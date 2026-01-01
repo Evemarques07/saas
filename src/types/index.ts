@@ -8,6 +8,7 @@ export interface Company {
   slug: string;
   segments: string[];
   logo_url: string | null;
+  phone: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -165,4 +166,50 @@ export interface PaginationParams {
   page: number;
   limit: number;
   total: number;
+}
+
+// ============================================
+// Catalog Cart Types
+// ============================================
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl: string | null;
+  stock: number;
+}
+
+export interface Cart {
+  items: CartItem[];
+  companySlug: string;
+  updatedAt: string;
+}
+
+export type CatalogOrderStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
+export interface CatalogOrder {
+  id: string;
+  company_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_notes: string | null;
+  subtotal: number;
+  total: number;
+  status: CatalogOrderStatus;
+  created_at: string;
+  updated_at: string;
+  items?: CatalogOrderItem[];
+}
+
+export interface CatalogOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  product_price: number;
+  quantity: number;
+  total: number;
+  created_at: string;
 }

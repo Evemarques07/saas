@@ -53,9 +53,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           <CircularProgress className="w-4 h-4 animate-spin" />
         ) : (
           <>
-            {icon && iconPosition === 'left' && <span className="w-4 h-4">{icon}</span>}
+            {icon && iconPosition === 'left' && <span className="w-4 h-4 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4">{icon}</span>}
             {children}
-            {icon && iconPosition === 'right' && <span className="w-4 h-4">{icon}</span>}
+            {icon && iconPosition === 'right' && <span className="w-4 h-4 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4">{icon}</span>}
           </>
         )}
       </button>

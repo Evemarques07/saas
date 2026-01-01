@@ -20,6 +20,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/admin', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/admin/empresas', label: 'Empresas', icon: <BusinessIcon /> },
+  { path: '/admin/usuarios', label: 'Usuarios', icon: <PeopleIcon /> },
 ];
 
 export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {

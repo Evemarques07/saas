@@ -44,8 +44,18 @@ export function AdminHeader() {
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors"
             title="Ir para empresa"
           >
-            <StorefrontIcon className="w-5 h-5" />
-            <span className="text-sm hidden sm:block">Ir para Loja</span>
+            {companies[0].company?.logo_url ? (
+              <img
+                src={companies[0].company.logo_url}
+                alt={companies[0].company.name}
+                className="w-6 h-6 rounded object-cover"
+              />
+            ) : (
+              <StorefrontIcon className="w-5 h-5" />
+            )}
+            <span className="text-sm hidden sm:block">
+              {companies[0].company?.name || 'Ir para Loja'}
+            </span>
           </button>
         )}
 

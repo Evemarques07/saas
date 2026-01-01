@@ -11,12 +11,16 @@ import { ProductsPage } from '../modules/products/ProductsPage';
 import { CategoriesPage } from '../modules/categories/CategoriesPage';
 import { CustomersPage } from '../modules/customers/CustomersPage';
 import { SalesPage } from '../modules/sales/SalesPage';
+import { CatalogOrdersPage } from '../modules/catalog-orders/CatalogOrdersPage';
 import { CatalogPage } from '../modules/catalog/CatalogPage';
+import { ProductPage } from '../modules/catalog/ProductPage';
 import { CompaniesPage } from '../modules/companies/CompaniesPage';
 import { UsersPage } from '../modules/users/UsersPage';
+import { SettingsPage } from '../modules/settings/SettingsPage';
 
 // Admin Pages
 import { AdminDashboardPage } from '../modules/admin/AdminDashboardPage';
+import { AdminUsersPage } from '../modules/admin/AdminUsersPage';
 
 // Layouts
 import { TenantLayout } from '../components/layout/TenantLayout';
@@ -58,6 +62,7 @@ export function AppRoutes() {
 
       {/* Catalogo Publico */}
       <Route path="/catalogo/:slug" element={<CatalogPage />} />
+      <Route path="/catalogo/:slug/produto/:productId" element={<ProductPage />} />
 
       {/* Root - redireciona para /app/:slug ou /admin */}
       <Route
@@ -80,6 +85,7 @@ export function AppRoutes() {
       >
         <Route index element={<AdminDashboardPage />} />
         <Route path="empresas" element={<CompaniesPage />} />
+        <Route path="usuarios" element={<AdminUsersPage />} />
       </Route>
 
       {/* Rotas do Tenant - /app/:slug/* */}
@@ -93,10 +99,12 @@ export function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="vendas" element={<SalesPage />} />
+        <Route path="pedidos" element={<CatalogOrdersPage />} />
         <Route path="clientes" element={<CustomersPage />} />
         <Route path="produtos" element={<ProductsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="usuarios" element={<UsersPage />} />
+        <Route path="configuracoes" element={<SettingsPage />} />
       </Route>
 
       {/* Rotas legadas - redirecionam para novo formato */}

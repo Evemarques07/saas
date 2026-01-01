@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   AreaChart,
   Area,
@@ -17,6 +17,10 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import PendingIcon from '@mui/icons-material/Pending';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-hot-toast';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Card, Button } from '../../components/ui';
@@ -29,6 +33,13 @@ interface DashboardStats {
   totalRevenue: number;
   totalCustomers: number;
   totalProducts: number;
+}
+
+interface OrderStats {
+  pending: number;
+  confirmed: number;
+  completed: number;
+  cancelled: number;
 }
 
 interface SalesData {
@@ -50,9 +61,26 @@ export function DashboardPage() {
     totalCustomers: 0,
     totalProducts: 0,
   });
+  const [orderStats, setOrderStats] = useState<OrderStats>({
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+  });
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartsReady, setChartsReady] = useState(false);
+  const salesChartRef = useRef<HTMLDivElement>(null);
+  const productsChartRef = useRef<HTMLDivElement>(null);
+
+  // Delay chart rendering until container is mounted and has dimensions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setChartsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (currentCompany) {
@@ -67,7 +95,7 @@ export function DashboardPage() {
 
     try {
       // Fetch stats
-      const [salesResult, customersResult, productsResult] = await Promise.all([
+      const [salesResult, customersResult, productsResult, catalogOrdersResult] = await Promise.all([
         supabase
           .from('sales')
           .select('total')
@@ -83,6 +111,10 @@ export function DashboardPage() {
           .select('id', { count: 'exact' })
           .eq('company_id', currentCompany.id)
           .eq('is_active', true),
+        supabase
+          .from('catalog_orders')
+          .select('status')
+          .eq('company_id', currentCompany.id),
       ]);
 
       const totalRevenue = salesResult.data?.reduce((acc, sale) => acc + Number(sale.total), 0) || 0;
@@ -92,6 +124,15 @@ export function DashboardPage() {
         totalRevenue,
         totalCustomers: customersResult.count || 0,
         totalProducts: productsResult.count || 0,
+      });
+
+      // Count catalog orders by status
+      const orders = catalogOrdersResult.data || [];
+      setOrderStats({
+        pending: orders.filter((o) => o.status === 'pending').length,
+        confirmed: orders.filter((o) => o.status === 'confirmed').length,
+        completed: orders.filter((o) => o.status === 'completed').length,
+        cancelled: orders.filter((o) => o.status === 'cancelled').length,
       });
 
       // Fetch sales data for chart (last 30 days)
@@ -284,6 +325,54 @@ export function DashboardPage() {
         ))}
       </div>
 
+      {/* Catalog Orders Stats */}
+      <Card className="p-4 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <LocalShippingIcon className="text-primary-600" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Pedidos do Catálogo
+          </h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+            <PendingIcon className="text-yellow-600" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Pendentes</p>
+              <p className="text-xl font-bold text-yellow-600">
+                {loading ? '...' : orderStats.pending}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+            <CheckCircleIcon className="text-blue-600" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Confirmados</p>
+              <p className="text-xl font-bold text-blue-600">
+                {loading ? '...' : orderStats.confirmed}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+            <LocalShippingIcon className="text-green-600" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Entregues</p>
+              <p className="text-xl font-bold text-green-600">
+                {loading ? '...' : orderStats.completed}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+            <CancelIcon className="text-red-600" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Cancelados</p>
+              <p className="text-xl font-bold text-red-600">
+                {loading ? '...' : orderStats.cancelled}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Chart */}
@@ -291,9 +380,13 @@ export function DashboardPage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Vendas nos últimos 30 dias
           </h3>
-          <div className="h-64">
-            {salesData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div ref={salesChartRef} className="h-64" style={{ minHeight: 256 }}>
+            {!chartsReady ? (
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="animate-pulse">Carregando gráfico...</div>
+              </div>
+            ) : salesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
                   <XAxis dataKey="date" tick={{ fill: chartColors.text, fontSize: 12 }} />
@@ -332,9 +425,13 @@ export function DashboardPage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Produtos mais vendidos
           </h3>
-          <div className="h-64">
-            {topProducts.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div ref={productsChartRef} className="h-64" style={{ minHeight: 256 }}>
+            {!chartsReady ? (
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="animate-pulse">Carregando gráfico...</div>
+              </div>
+            ) : topProducts.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topProducts} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
                   <XAxis type="number" tick={{ fill: chartColors.text, fontSize: 12 }} />

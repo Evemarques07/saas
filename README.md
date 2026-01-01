@@ -13,7 +13,7 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 | **Recharts** | 2.x | Graficos e visualizacoes |
 | **Firebase** | 11.x | Autenticacao (Auth) |
 | **Supabase** | 2.x | Backend (Database, RLS, Storage) |
-| **xlsx** | 0.18.x | Exportacao para Excel |
+| **xlsx** | 0.18.x | Importacao e exportacao Excel |
 | **jsPDF** | 2.x | Exportacao para PDF |
 | **React Router** | 6.x | Roteamento SPA |
 | **React Hot Toast** | 2.x | Notificacoes |
@@ -53,6 +53,22 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] **Modais de confirmacao (ConfirmModal)**
 - [x] **Modal de link de convite (InviteLinkModal)**
 - [x] **Firebase Hosting com CI/CD (GitHub Actions)**
+- [x] **Upload de logo da empresa (Supabase Storage)**
+- [x] **Alteracao de senha do usuario**
+- [x] **Pagina de Configuracoes**
+- [x] **Lista de usuarios do sistema agrupados por empresa (Super Admin)**
+- [x] **Foto do produto na lista de produtos**
+- [x] **SKU automatico ao cadastrar produto (PROD-00001)**
+- [x] **Importacao em massa de produtos via Excel**
+- [x] **Download de modelo Excel para importacao**
+- [x] **Carrinho de compras no catalogo publico (localStorage)**
+- [x] **Pedidos do catalogo salvos no Supabase**
+- [x] **Integracao WhatsApp para pedidos**
+- [x] **Pagina de gestao de pedidos do catalogo**
+- [x] **Conversao automatica de pedido em venda (com baixa de estoque)**
+- [x] **Estatisticas de pedidos no dashboard**
+- [x] **Pagina individual de produto no catalogo (link compartilhavel)**
+- [x] **Botao de copiar/abrir link do produto na lista de produtos**
 
 ### Proximos Passos
 
@@ -60,7 +76,6 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [ ] Integracao com pagamentos
 - [ ] App mobile (React Native)
 - [ ] Notificacoes push
-- [ ] Upload de logo da empresa
 
 ---
 
@@ -93,14 +108,18 @@ O sistema utiliza uma arquitetura hibrida:
 | `/registro` | Pagina de registro | Publico |
 | `/aceitar-convite?token=xxx` | Aceitar convite | Publico |
 | `/catalogo/:slug` | Catalogo publico | Publico |
+| `/catalogo/:slug/produto/:productId` | Pagina individual de produto | Publico |
 | `/admin` | Dashboard admin | Super Admin |
 | `/admin/empresas` | Gestao de empresas | Super Admin |
+| `/admin/usuarios` | Lista de usuarios do sistema | Super Admin |
 | `/app/:slug` | Dashboard da empresa | Autenticado |
 | `/app/:slug/vendas` | Gestao de vendas | Autenticado |
+| `/app/:slug/pedidos` | Pedidos do catalogo | Autenticado |
 | `/app/:slug/clientes` | Gestao de clientes | Autenticado |
 | `/app/:slug/produtos` | Gestao de produtos | Autenticado |
 | `/app/:slug/categorias` | Gestao de categorias | Autenticado |
 | `/app/:slug/usuarios` | Gestao de usuarios | Admin |
+| `/app/:slug/configuracoes` | Configuracoes da empresa | Autenticado |
 
 ---
 
@@ -118,19 +137,22 @@ src/
 │   └── feedback/        # Skeleton, EmptyState
 ├── modules/             # Modulos funcionais
 │   ├── auth/            # Login, Registro, Convites
-│   ├── admin/           # AdminDashboardPage
+│   ├── admin/           # AdminDashboardPage, AdminUsersPage
 │   ├── dashboard/       # Dashboard principal
 │   ├── sales/           # Gestao de vendas
+│   ├── catalog-orders/  # Pedidos do catalogo
 │   ├── customers/       # Gestao de clientes
 │   ├── products/        # Gestao de produtos
 │   ├── categories/      # Gestao de categorias
-│   ├── catalog/         # Catalogo publico
+│   ├── catalog/         # Catalogo publico (CatalogPage, ProductPage)
 │   ├── companies/       # Gestao de empresas (Super Admin)
-│   └── users/           # Gestao de usuarios
+│   ├── users/           # Gestao de usuarios
+│   └── settings/        # Configuracoes (logo, senha, WhatsApp)
 ├── contexts/            # React Contexts
 │   ├── AuthContext.tsx  # Autenticacao Firebase + Supabase
 │   ├── TenantContext.tsx # Empresa ativa (multi-tenant)
-│   └── ThemeContext.tsx # Tema claro/escuro
+│   ├── ThemeContext.tsx # Tema claro/escuro
+│   └── CartContext.tsx  # Carrinho do catalogo (localStorage)
 ├── routes/              # Sistema de rotas
 │   ├── paths.ts         # Constantes e helpers de rotas
 │   ├── guards.tsx       # ProtectedRoute, PublicRoute, SuperAdminRoute
@@ -292,6 +314,8 @@ Acesse: http://localhost:5173
 | `products` | Produtos por empresa | `company_id` (UUID) |
 | `sales` | Vendas | `company_id` (UUID) |
 | `sale_items` | Itens de cada venda | `sale_id` (UUID) |
+| `catalog_orders` | Pedidos do catalogo | `company_id` (UUID) |
+| `catalog_order_items` | Itens de pedidos | `order_id` (UUID) |
 
 ### Diagrama de Relacionamento
 
@@ -376,6 +400,117 @@ const { theme, toggleTheme } = useTheme();
 | `Skeleton` | Placeholder de carregamento |
 | `EmptyState` | Estado vazio com icone e acao |
 | `ImageUpload` | Upload de imagens com drag & drop e preview |
+
+---
+
+## Gestao de Produtos
+
+### SKU Automatico
+
+Ao criar um novo produto, o sistema gera automaticamente um SKU unico no formato:
+
+```
+PROD-00001
+PROD-00002
+...
+PROD-99999
+```
+
+O SKU e baseado no contador de produtos da empresa e pode ser editado manualmente se necessario.
+
+### Importacao em Massa
+
+O sistema permite importar produtos em massa via planilha Excel:
+
+1. Clique em **"Importar"** na pagina de produtos
+2. Baixe o **modelo Excel** clicando em "Baixar Modelo Excel"
+3. Preencha a planilha com os dados dos produtos
+4. Selecione o arquivo preenchido
+5. Visualize o preview dos produtos
+6. Clique em **"Importar"** para confirmar
+
+**Campos do modelo Excel:**
+
+| Campo | Obrigatorio | Descricao |
+|-------|-------------|-----------|
+| Nome * | Sim | Nome do produto |
+| Descricao | Nao | Descricao detalhada |
+| Preco * | Sim | Preco de venda |
+| Preco de Custo | Nao | Preco de custo |
+| Estoque | Nao | Quantidade em estoque (padrao: 0) |
+| Estoque Minimo | Nao | Alerta de estoque baixo (padrao: 0) |
+| Categoria | Nao | Nome da categoria (vincula automaticamente) |
+| Ativo (S/N) | Nao | Se o produto esta ativo (padrao: S) |
+| Exibir no Catalogo (S/N) | Nao | Se exibe no catalogo publico (padrao: S) |
+
+> O SKU e gerado automaticamente para cada produto importado.
+
+---
+
+## Carrinho e Pedidos do Catalogo
+
+### Carrinho de Compras
+
+O catalogo publico possui um sistema completo de carrinho de compras:
+
+- **Persistencia**: Carrinho salvo em localStorage (por empresa/slug)
+- **Operacoes**: Adicionar, remover, alterar quantidade
+- **Validacao**: Respeita estoque disponivel
+- **Checkout**: Formulario com nome, telefone e observacoes
+
+### Fluxo de Pedidos
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Cliente   │────▶│  Carrinho   │────▶│  Checkout   │
+│  adiciona   │     │ localStorage│     │  Formulario │
+│  produtos   │     │             │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+                                               ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Empresa    │◀────│   Pedido    │◀────│   Supabase  │
+│  recebe     │     │  "pending"  │     │ catalog_orders│
+│  notificacao│     │             │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+### Gestao de Pedidos
+
+A empresa gerencia pedidos em `/app/:slug/pedidos`:
+
+| Status | Descricao | Acao |
+|--------|-----------|------|
+| **pending** | Pedido recebido | Confirmar ou Cancelar |
+| **confirmed** | Em preparacao | Marcar como Entregue |
+| **completed** | Entregue | Convertido em venda |
+| **cancelled** | Cancelado | - |
+
+### Conversao em Venda
+
+Ao marcar um pedido como "Entregue":
+
+1. Cria registro na tabela `sales`
+2. Cria itens na tabela `sale_items`
+3. Atualiza estoque dos produtos (baixa automatica)
+4. Forma de pagamento: "Catalogo Online"
+5. Faturamento unificado com vendas manuais
+
+### Integracao WhatsApp
+
+- Botao para contatar cliente via WhatsApp
+- Mensagem pre-formatada com dados do pedido
+- Numero do cliente formatado automaticamente (55 + DDD + numero)
+
+### Pagina Individual de Produto
+
+Cada produto possui uma pagina unica compartilhavel:
+
+- Rota: `/catalogo/:slug/produto/:productId`
+- Detalhes completos do produto
+- Adicionar ao carrinho
+- Link "Ver Catalogo Completo"
+- Botao de copiar/abrir link na lista de produtos
 
 ---
 

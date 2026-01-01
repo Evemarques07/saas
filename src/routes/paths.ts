@@ -13,11 +13,13 @@ export const PATHS = {
   // Rotas dentro do tenant (relativas)
   DASHBOARD: '',
   VENDAS: '/vendas',
+  PEDIDOS_CATALOGO: '/pedidos',
   CLIENTES: '/clientes',
   PRODUTOS: '/produtos',
   CATEGORIAS: '/categorias',
   USUARIOS: '/usuarios',
   EMPRESAS: '/empresas',
+  CONFIGURACOES: '/configuracoes',
 } as const;
 
 // Helper para construir path com slug

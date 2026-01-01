@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SendIcon from '@mui/icons-material/Send';
 import SearchIcon from '@mui/icons-material/Search';
 import EmailIcon from '@mui/icons-material/Email';
+import BusinessIcon from '@mui/icons-material/Business';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Card, InviteLinkModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -333,6 +334,23 @@ export function CompaniesPage() {
   };
 
   const columns: TableColumn<CompanyWithMembers>[] = [
+    {
+      key: 'logo',
+      label: '',
+      render: (c) => (
+        c.logo_url ? (
+          <img
+            src={c.logo_url}
+            alt={c.name}
+            className="w-10 h-10 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            <BusinessIcon className="text-gray-400" />
+          </div>
+        )
+      ),
+    },
     { key: 'name', label: 'Nome', sortable: true },
     { key: 'slug', label: 'Slug' },
     {

@@ -5,6 +5,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import ImageIcon from '@mui/icons-material/Image';
+import LinkIcon from '@mui/icons-material/Link';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import * as XLSX from 'xlsx';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ImageUpload, ConfirmModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -31,6 +36,10 @@ export function ProductsPage() {
     product: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<Array<Record<string, string | number>>>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -81,7 +90,166 @@ export function ProductsPage() {
     setLoading(false);
   };
 
-  const handleOpenModal = (product?: Product) => {
+  // Gerar SKU automatico baseado no contador de produtos
+  const generateSKU = async (): Promise<string> => {
+    if (!currentCompany) return '';
+
+    // Buscar o maior SKU numerico existente
+    const { data } = await supabase
+      .from('products')
+      .select('sku')
+      .eq('company_id', currentCompany.id)
+      .like('sku', 'PROD-%')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    let nextNumber = 1;
+    if (data && data.length > 0 && data[0].sku) {
+      const match = data[0].sku.match(/PROD-(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
+
+    // Se nao encontrou com padrao, contar todos os produtos
+    if (nextNumber === 1) {
+      const { count } = await supabase
+        .from('products')
+        .select('id', { count: 'exact' })
+        .eq('company_id', currentCompany.id);
+      nextNumber = (count || 0) + 1;
+    }
+
+    return `PROD-${String(nextNumber).padStart(5, '0')}`;
+  };
+
+  // Download do template Excel para importacao
+  const handleDownloadTemplate = () => {
+    const template = [
+      {
+        'Nome *': 'Produto Exemplo',
+        'Descrição': 'Descrição do produto',
+        'Preço *': 99.90,
+        'Preço de Custo': 50.00,
+        'Estoque': 10,
+        'Estoque Mínimo': 2,
+        'Categoria': 'Nome da Categoria',
+        'Ativo (S/N)': 'S',
+        'Exibir no Catálogo (S/N)': 'S',
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 25 }, // Nome
+      { wch: 35 }, // Descricao
+      { wch: 12 }, // Preco
+      { wch: 15 }, // Preco de Custo
+      { wch: 10 }, // Estoque
+      { wch: 15 }, // Estoque Minimo
+      { wch: 20 }, // Categoria
+      { wch: 12 }, // Ativo
+      { wch: 22 }, // Exibir no Catalogo
+    ];
+
+    XLSX.writeFile(wb, 'modelo_produtos.xlsx');
+    toast.success('Modelo baixado com sucesso!');
+  };
+
+  // Processar arquivo Excel para preview
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target?.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, string | number>>(worksheet);
+      setImportPreview(jsonData);
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // Importar produtos do Excel
+  const handleImportProducts = async () => {
+    if (!currentCompany || importPreview.length === 0) return;
+
+    setImporting(true);
+
+    try {
+      // Mapear categorias por nome
+      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of importPreview) {
+        const name = String(row['Nome *'] || row['Nome'] || '').trim();
+        const price = parseFloat(String(row['Preço *'] || row['Preço'] || row['Preco *'] || row['Preco'] || 0));
+
+        if (!name || !price) {
+          errors++;
+          continue;
+        }
+
+        const categoryName = String(row['Categoria'] || '').toLowerCase().trim();
+        const categoryId = categoryMap.get(categoryName) || null;
+
+        const sku = await generateSKU();
+
+        const productData = {
+          company_id: currentCompany.id,
+          name,
+          description: String(row['Descrição'] || row['Descricao'] || '').trim() || null,
+          sku,
+          price,
+          cost_price: parseFloat(String(row['Preço de Custo'] || row['Preco de Custo'] || 0)) || null,
+          stock: parseInt(String(row['Estoque'] || 0)) || 0,
+          min_stock: parseInt(String(row['Estoque Mínimo'] || row['Estoque Minimo'] || 0)) || 0,
+          category_id: categoryId,
+          is_active: String(row['Ativo (S/N)'] || 'S').toUpperCase() === 'S',
+          show_in_catalog: String(row['Exibir no Catálogo (S/N)'] || row['Exibir no Catalogo (S/N)'] || 'S').toUpperCase() === 'S',
+        };
+
+        const { error } = await supabase.from('products').insert(productData);
+
+        if (error) {
+          console.error('Erro ao importar produto:', error);
+          errors++;
+        } else {
+          imported++;
+        }
+      }
+
+      if (imported > 0) {
+        toast.success(`${imported} produto(s) importado(s) com sucesso!`);
+      }
+      if (errors > 0) {
+        toast.error(`${errors} produto(s) com erro na importação`);
+      }
+
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportPreview([]);
+      fetchData();
+    } catch (err) {
+      console.error('Erro na importação:', err);
+      toast.error('Erro ao importar produtos');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleOpenModal = async (product?: Product) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -98,11 +266,13 @@ export function ProductsPage() {
       });
       setCurrentImageUrl(product.image_url || null);
     } else {
+      // Gerar SKU automatico para novo produto
+      const newSku = await generateSKU();
       setEditingProduct(null);
       setFormData({
         name: '',
         description: '',
-        sku: '',
+        sku: newSku,
         price: '',
         cost_price: '',
         stock: '0',
@@ -254,12 +424,44 @@ export function ProductsPage() {
     }
   };
 
+  const getProductCatalogUrl = (productId: string) => {
+    return `${window.location.origin}/catalogo/${currentCompany?.slug}/produto/${productId}`;
+  };
+
+  const handleCopyProductLink = async (productId: string) => {
+    const url = getProductCatalogUrl(productId);
+    await navigator.clipboard.writeText(url);
+    toast.success('Link do produto copiado!');
+  };
+
+  const handleOpenProductLink = (productId: string) => {
+    const url = getProductCatalogUrl(productId);
+    window.open(url, '_blank');
+  };
+
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.sku?.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns: TableColumn<Product>[] = [
+    {
+      key: 'image',
+      label: '',
+      render: (p) => (
+        p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={p.name}
+            className="w-12 h-12 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            <ImageIcon className="w-6 h-6 text-gray-400" />
+          </div>
+        )
+      ),
+    },
     { key: 'name', label: 'Nome', sortable: true },
     { key: 'sku', label: 'SKU', render: (p) => p.sku || '-' },
     {
@@ -297,9 +499,28 @@ export function ProductsPage() {
       label: 'Ações',
       render: (p) => (
         <div className="flex items-center gap-2">
+          {p.show_in_catalog && p.is_active && (
+            <>
+              <button
+                onClick={() => handleCopyProductLink(p.id)}
+                className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                title="Copiar link do produto"
+              >
+                <LinkIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleOpenProductLink(p.id)}
+                className="p-1 text-gray-500 hover:text-green-600 transition-colors"
+                title="Abrir página do produto"
+              >
+                <OpenInNewIcon className="w-4 h-4" />
+              </button>
+            </>
+          )}
           <button
             onClick={() => handleOpenModal(p)}
             className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+            title="Editar produto"
           >
             <EditIcon className="w-4 h-4" />
           </button>
@@ -307,6 +528,7 @@ export function ProductsPage() {
             <button
               onClick={() => handleOpenDeleteModal(p)}
               className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+              title="Excluir produto"
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -332,7 +554,7 @@ export function ProductsPage() {
       title="Produtos"
       subtitle={`${filteredProducts.length} produtos cadastrados`}
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => handleExport('excel')}>
             <FileDownloadIcon className="w-4 h-4" />
             Excel
@@ -340,6 +562,10 @@ export function ProductsPage() {
           <Button variant="secondary" onClick={() => handleExport('pdf')}>
             <FileDownloadIcon className="w-4 h-4" />
             PDF
+          </Button>
+          <Button variant="secondary" onClick={() => setShowImportModal(true)}>
+            <FileUploadIcon className="w-4 h-4" />
+            Importar
           </Button>
           <Button onClick={() => handleOpenModal()}>
             <AddIcon className="w-4 h-4" />
@@ -490,6 +716,112 @@ export function ProductsPage() {
         variant="danger"
         loading={deleting}
       />
+
+      {/* Import Modal */}
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setImportFile(null);
+          setImportPreview([]);
+        }}
+        title="Importar Produtos"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              Importe produtos em massa usando uma planilha Excel.
+              O SKU será gerado automaticamente para cada produto.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-2"
+              onClick={handleDownloadTemplate}
+            >
+              <FileDownloadIcon className="w-4 h-4" />
+              Baixar Modelo Excel
+            </Button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Selecionar Arquivo
+            </label>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImportFileChange}
+              className="block w-full text-sm text-gray-500 dark:text-gray-400
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-lg file:border-0
+                file:text-sm file:font-medium
+                file:bg-primary-50 file:text-primary-700
+                hover:file:bg-primary-100
+                dark:file:bg-primary-900/20 dark:file:text-primary-400
+                dark:hover:file:bg-primary-900/30
+                cursor-pointer"
+            />
+          </div>
+
+          {importPreview.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Preview ({importPreview.length} produtos)
+              </p>
+              <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Nome</th>
+                      <th className="px-3 py-2 text-left">Preço</th>
+                      <th className="px-3 py-2 text-left">Categoria</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {importPreview.slice(0, 10).map((row, idx) => (
+                      <tr key={idx}>
+                        <td className="px-3 py-2">{row['Nome *'] || row['Nome']}</td>
+                        <td className="px-3 py-2">
+                          R$ {parseFloat(String(row['Preço *'] || row['Preço'] || row['Preco *'] || row['Preco'] || 0)).toFixed(2)}
+                        </td>
+                        <td className="px-3 py-2">{row['Categoria'] || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {importPreview.length > 10 && (
+                  <p className="text-xs text-gray-500 p-2 text-center">
+                    ... e mais {importPreview.length - 10} produtos
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowImportModal(false);
+                setImportFile(null);
+                setImportPreview([]);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleImportProducts}
+              loading={importing}
+              disabled={importPreview.length === 0}
+            >
+              <FileUploadIcon className="w-4 h-4" />
+              Importar {importPreview.length > 0 ? `(${importPreview.length})` : ''}
+            </Button>
+          </ModalFooter>
+        </div>
+      </Modal>
     </PageContainer>
   );
 }

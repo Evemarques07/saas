@@ -33,7 +33,15 @@ export function Header() {
             onClick={() => setShowCompanyMenu(!showCompanyMenu)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <BusinessIcon className="w-5 h-5 text-gray-500" />
+            {currentCompany?.logo_url ? (
+              <img
+                src={currentCompany.logo_url}
+                alt={currentCompany.name}
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+            ) : (
+              <BusinessIcon className="w-5 h-5 text-gray-500" />
+            )}
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
               {currentCompany?.name || 'Selecionar empresa'}
             </span>
@@ -44,7 +52,7 @@ export function Header() {
         {showCompanyMenu && companies.length > 1 && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowCompanyMenu(false)} />
-            <div className="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+            <div className="absolute left-0 top-full mt-1 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
               {companies.map((membership) => (
                 <button
                   key={membership.company?.id}
@@ -55,14 +63,23 @@ export function Header() {
                     setShowCompanyMenu(false);
                   }}
                   className={`
-                    w-full text-left px-4 py-2 text-sm transition-colors
+                    w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
                     ${currentCompany?.id === membership.company?.id
                       ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
                       : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }
                   `}
                 >
-                  {membership.company?.name}
+                  {membership.company?.logo_url ? (
+                    <img
+                      src={membership.company.logo_url}
+                      alt={membership.company.name}
+                      className="w-6 h-6 rounded object-cover"
+                    />
+                  ) : (
+                    <BusinessIcon className="w-6 h-6 text-gray-400" />
+                  )}
+                  <span>{membership.company?.name}</span>
                 </button>
               ))}
             </div>
