@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BusinessIcon from '@mui/icons-material/Business';
 import PeopleIcon from '@mui/icons-material/People';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import CloseIcon from '@mui/icons-material/Close';
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { path: '/admin', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/admin/empresas', label: 'Empresas', icon: <BusinessIcon /> },
   { path: '/admin/usuarios', label: 'Usuarios', icon: <PeopleIcon /> },
+  { path: '/admin/whatsapp', label: 'WhatsApp', icon: <WhatsAppIcon /> },
 ];
 
 export function AdminSidebar({ collapsed, onToggle, isOpen = false, isMobile = false, onClose }: AdminSidebarProps) {
@@ -62,7 +64,7 @@ export function AdminSidebar({ collapsed, onToggle, isOpen = false, isMobile = f
       `}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
+      <div className={`h-16 flex items-center border-b border-gray-700 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {showLabel && (
           <div className="flex items-center gap-2">
             <AdminPanelSettingsIcon className="text-primary-400" />
@@ -71,7 +73,7 @@ export function AdminSidebar({ collapsed, onToggle, isOpen = false, isMobile = f
         )}
         <button
           onClick={isMobile ? onClose : onToggle}
-          className={`p-2 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors ${!isMobile && collapsed ? 'mx-auto' : ''}`}
+          className="p-2 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors"
         >
           {isMobile ? <CloseIcon /> : collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
         </button>

@@ -24,17 +24,23 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  FASE 1 (MVP)       FASE 2           FASE 3       FASE 4       FASE 5        │
 │  ────────────────────────────────────────────────────────────────────────    │
 │                                                                               │
-│  [x] Auth Firebase  [x] Dashboard    [x] Email    [ ] Planos   [ ] Cod.Barras│
-│  [x] Google OAuth   [x] Produtos     [x] WhatsApp [ ] Stripe   [ ] QR Code   │
-│  [x] Multi-tenant   [x] Clientes     [ ] Relat.   [ ] Mobile   [ ] PDV       │
-│  [x] Empresas       [x] Vendas       [x] Storage  [ ] API      [ ] NFCe      │
+│  [x] Auth Firebase  [x] Dashboard    [x] Email    [ ] Planos   [ ] QR Code   │
+│  [x] Google OAuth   [x] Produtos     [x] WhatsApp [ ] Stripe   [ ] PDV       │
+│  [x] Multi-tenant   [x] Clientes     [ ] Relat.   [ ] Mobile   [ ] NFCe      │
+│  [x] Empresas       [x] Vendas       [x] Storage  [ ] API                    │
 │  [x] Convites       [x] Catalogo     [x] PWA      [x] Logo                   │
 │  [x] RLS            [x] Exportacao   [x] Edge Fn  [x] Config                 │
 │  [x] Mobile-First   [x] Categorias   [x] Hosting  [x] Senha                  │
 │  [x] Sidebar Drawer [x] Import Excel [x] SKU Auto [x] Filtros                │
 │  [x] Cards Mobile   [x] Carrinho     [x] Pedidos  [x] Cancel                 │
+│  [x] Layout Arred.  [x] EAN/Barcode  [x] Layout   [x] Header                 │
+│  [x] Sticky Filter  [x] Catalog UI   [x] Clear X  [x] Multi-Img              │
+│  [x] Persist State  [x] Multi-Imagens[x] Carousel [x] Lightbox               │
+│  [x] Table Tablet   [x] Paginacao   [x] Realtime [x] Barcode                │
+│  [x] Filtro Status  [x] Valid.Phone [x] Notific. [x] Badge                  │
+│  [x] Area Cliente   [x] Cupons      [x] Fidelidde[x] Promocoes               │
 │                                                                               │
-│  ██████████████████ ██████████████   ████████░░   ░░░░░░░░     ░░░░░░░░      │
+│  ██████████████████ ██████████████   ██████████   ░░░░░░░░     ░░░░░░░░      │
 │      CONCLUIDO         CONCLUIDO      EM PROG      FUTURO       PLANEJADO    │
 │                                                                               │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -185,14 +191,26 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 - [x] Estrutura de Edge Functions
 - [x] `send-invite-email` - Envio de emails via MailerSend
+- [x] `wuzapi-admin` - Operacoes admin do WuzAPI com validacao Firebase
 - [x] Secrets configurados no Supabase
+- [x] Validacao de Firebase ID Token em Edge Functions
 
-### Integracao WhatsApp
+### Integracao WhatsApp (WuzAPI)
 
 - [x] **Botao de contato no catalogo (pedidos)**
 - [x] **Mensagem pre-formatada com dados do pedido**
 - [x] **Formatacao automatica do numero (55 + DDD)**
-- [ ] Notificacao de nova venda (push)
+- [x] **WuzAPI instalado na VPS** (substitui Evolution API)
+- [x] **Servico `src/services/whatsapp.ts`** com API completa
+- [x] **Componente `WhatsAppConnectModal`** para conexao via QR Code
+- [x] **Secao de automacao em Configuracoes**
+- [x] **Verificacao de telefone com `/user/check`** (resolve 9o digito)
+- [x] **Envio de mensagem de teste funcionando**
+- [x] **Notificacoes automaticas de pedidos** (Janeiro 2026)
+  - [x] Notificacao para CLIENTE quando pedido criado
+  - [x] Notificacao para EMPRESA quando pedido criado
+  - [x] Notificacao para CLIENTE quando status muda
+- [ ] Edge Function para envio via trigger (opcional)
 - [ ] Lembrete de pagamento
 
 ### Relatorios Avancados
@@ -207,6 +225,9 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 - [x] Upload de logo da empresa (Supabase Storage)
 - [x] Upload de imagens de produtos (Supabase Storage)
+- [x] **Multiplas imagens por produto (ate 4)**
+- [x] **Carrossel de imagens no catalogo**
+- [x] **Lightbox para visualizacao em tela cheia**
 - [ ] Compressao automatica
 - [ ] CDN para entrega
 
@@ -227,8 +248,28 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 - [x] Preview de PRs automatico
 - [x] Deploy manual disponivel
 
+### Supabase Realtime
+
+- [x] **Habilitado Realtime nas tabelas principais**
+- [x] **Hook useRealtimeSubscription para subscricoes**
+- [x] **Hook useRealtimeRefresh simplificado**
+- [x] **Filtros por company_id para multi-tenancy**
+- [x] **Notificacoes de novos pedidos (toast + som + badge)**
+- [x] **Atualizacao automatica da lista de pedidos**
+- [ ] Push notifications nativas
+- [ ] Atualizacao automatica de dashboard
+
+### Persistencia de Estado
+
+- [x] **Estado da sidebar salvo no localStorage**
+- [x] **Preferencia mantida apos refresh da pagina**
+- [x] **Separado por layout (app e admin)**
+
 ### Melhorias de Seguranca
 
+- [x] **Token admin WuzAPI protegido via Edge Function**
+- [x] **Validacao de Firebase Token sem SDK Admin**
+- [x] **Verificacao de `is_super_admin` no Supabase**
 - [ ] RLS mais restritivo para producao
 - [ ] Auditoria de acoes
 - [ ] Logs de acesso
@@ -280,7 +321,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ## Fase 5 - Automacao de Vendas e Fiscal
 
-**Status: Planejado**
+**Status: Em Progresso**
 
 ### Leitor de Codigo de Barras e QR Code
 
@@ -288,30 +329,29 @@ Implementar leitura de codigos para agilizar cadastro de produtos e registro de 
 
 #### Cadastro de Produtos
 
-- [ ] Leitura de codigo de barras EAN-13/EAN-8 via camera
-- [ ] Leitura de QR Code para importar dados
+- [x] **Leitura de codigo de barras EAN-13/EAN-8 via camera**
+- [x] **Leitura de QR Code para importar dados**
 - [ ] Consulta automatica em APIs de produtos (ex: Cosmos, Open Food Facts)
 - [ ] Preenchimento automatico de nome, marca, categoria
-- [ ] Suporte a leitor USB/Bluetooth externo
-- [ ] Cadastro rapido com scanner
+- [x] **Suporte a leitor USB/Bluetooth externo (funciona automaticamente)**
+- [x] **Cadastro rapido com scanner**
 
 #### Registro de Vendas (PDV)
 
 - [ ] Modo PDV (Ponto de Venda) em tela cheia
-- [ ] Leitura continua de produtos via camera
-- [ ] Som de confirmacao ao adicionar produto
-- [ ] Busca por codigo de barras no carrinho
-- [ ] Suporte a leitor de mesa USB
+- [x] **Leitura de produtos via camera**
+- [x] **Som de confirmacao ao adicionar produto**
+- [x] **Busca por codigo de barras (EAN) no carrinho**
+- [x] **Suporte a leitor USB/Bluetooth (funciona automaticamente)**
 - [ ] Modo offline com sincronizacao
 
-#### Tecnologias Sugeridas
+#### Tecnologias Utilizadas
 
-| Biblioteca | Uso |
-|------------|-----|
-| `@zxing/browser` | Leitura de codigo via camera (Web) |
-| `quagga2` | Alternativa para codigo de barras |
-| `html5-qrcode` | QR Code e codigos 1D/2D |
-| React Native Camera | Para app mobile futuro |
+| Biblioteca | Uso | Status |
+|------------|-----|--------|
+| `@zxing/library` | Decodificacao de codigos de barras | **Implementado** |
+| `@zxing/browser` | Leitura de codigo via camera (Web) | **Implementado** |
+| React Native Camera | Para app mobile futuro | Planejado |
 
 ### Emissao de NFCe (Nota Fiscal de Consumidor Eletronica)
 
@@ -378,8 +418,8 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 | Consulta produto por EAN | Media | Baixa |
 | Comissao de vendedor | Baixa | Media |
 | Metas de vendas | Baixa | Media |
-| Promocoes/descontos | Media | Alta |
-| Programa de fidelidade | Baixa | Alta |
+| Promocoes/descontos | ~~Media~~ | ~~Alta~~ | **Concluido** |
+| Programa de fidelidade | ~~Baixa~~ | ~~Alta~~ | **Concluido** |
 | Multi-moeda | Baixa | Media |
 | Multi-idioma | Baixa | Media |
 | Backup automatico | Alta | Baixa |
@@ -394,6 +434,700 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 ---
 
 ## Changelog
+
+### v0.19.1 (Janeiro 2026)
+
+- **Aplicacao Automatica de Promocoes no Checkout**
+  - Sistema busca promocoes ativas ao abrir checkout
+  - Verifica elegibilidade por tipo de promocao:
+    - `birthday`: Mes de aniversario do cliente
+    - `loyalty_level`: Nivel de fidelidade especifico
+    - `first_purchase`: Primeiro pedido do cliente
+    - `reactivation`: Cliente inativo ha X dias
+    - `category_discount`: Produtos de categorias especificas
+    - `product_discount`: Produtos especificos
+    - `seasonal` / `flash_sale`: Periodo de validade
+  - Calcula desconto respeitando `max_discount`
+  - Exibe promocoes aplicadas no resumo (cor roxa)
+  - Registra uso em `promotion_usages` ao finalizar pedido
+
+- **Descontos Detalhados no WhatsApp**
+  - Mensagens agora mostram todos os descontos aplicados
+  - Nova interface `OrderDiscountInfo` para passar dados de desconto
+  - Secao de descontos mostra:
+    - Cupom (codigo e valor)
+    - Pontos (quantidade e valor)
+    - Promocoes (nome e valor)
+  - Atualizado `formatOrderMessageForCustomer` e `formatOrderMessageForCompany`
+
+- **Descontos Detalhados nos Detalhes do Pedido**
+  - `OrderDetailModal` exibe cada tipo de desconto separadamente
+  - Cores diferenciadas: cupom (verde), pontos (ambar), promocao (roxo)
+  - Removida linha generica "Descontos" em favor de linhas especificas
+
+- **Suporte a Categoria no Carrinho**
+  - `CartItem` agora inclui `categoryId` opcional
+  - `CartContext` salva `categoryId` do produto ao adicionar
+  - Permite funcionamento de promocoes por categoria
+
+- **Arquivos Criados**
+  - Nenhum
+
+- **Arquivos Modificados**
+  - `src/services/whatsapp.ts` - Interface `OrderDiscountInfo` e mensagens com descontos
+  - `src/modules/catalog/components/CheckoutModal.tsx` - Aplicacao automatica de promocoes
+  - `src/modules/catalog/components/OrderDetailModal.tsx` - Exibicao de descontos detalhados
+  - `src/contexts/CartContext.tsx` - Salva `categoryId` no item do carrinho
+  - `src/types/index.ts` - `categoryId` em `CartItem`
+  - `docs/CUSTOMER_AREA.md` - Documentacao de promocoes automaticas e WhatsApp
+
+### v0.19.0 (Janeiro 2026)
+
+- **Area do Cliente no Catalogo Publico**
+  - Login de cliente via telefone + CPF (sem senha)
+  - Sessao persistida no localStorage (30 dias)
+  - Contexto `CatalogCustomerContext` para gerenciar autenticacao
+  - Modal de login (`CustomerLoginModal`)
+  - Drawer de conta (`CustomerAccountDrawer`) com abas
+
+- **Historico de Pedidos**
+  - Visualizacao de todos os pedidos do cliente
+  - Detalhes completos do pedido
+  - Funcao "Repetir Pedido" adiciona itens ao carrinho
+  - Status com cores diferenciadas
+
+- **Sistema de Cupons de Desconto**
+  - CRUD completo de cupons (`/app/:slug/cupons`)
+  - Tipos: percentual ou valor fixo
+  - Validacoes: pedido minimo, limite de uso, primeira compra
+  - Input de cupom no checkout com validacao em tempo real
+  - Lista de cupons disponiveis para o cliente
+
+- **Programa de Fidelidade**
+  - Configuracao do programa (`/app/:slug/fidelidade`)
+  - Pontos por R$ gasto (configuravel)
+  - Valor do ponto em R$ (configuravel)
+  - Niveis de fidelidade com multiplicadores
+  - Slider para usar pontos no checkout
+  - Card de fidelidade na area do cliente
+
+- **Sistema de Promocoes**
+  - CRUD completo de promocoes (`/app/:slug/promocoes`)
+  - 8 tipos de promocao:
+    - Aniversario
+    - Nivel de fidelidade
+    - Primeira compra
+    - Reativacao de cliente
+    - Desconto por categoria
+    - Desconto por produto
+    - Sazonal
+    - Flash sale
+  - Condicoes em JSONB para flexibilidade
+
+- **Integracao no Checkout**
+  - Auto-preenchimento de dados se cliente logado
+  - Aplicacao de cupom com validacao
+  - Resgate de pontos de fidelidade
+  - Calculo de descontos no resumo
+  - Novos campos em `catalog_orders`:
+    - `coupon_id`, `coupon_code`, `coupon_discount`
+    - `points_used`, `points_discount`, `points_earned`
+    - `promotion_id`, `promotion_discount`
+
+- **Novas Rotas**
+  - `/app/:slug/cupons` - Gerenciar cupons
+  - `/app/:slug/fidelidade` - Configurar fidelidade
+  - `/app/:slug/promocoes` - Gerenciar promocoes
+
+- **Menu Lateral Atualizado**
+  - Cupons (LocalOfferIcon)
+  - Fidelidade (StarsIcon)
+  - Promocoes (CampaignIcon)
+
+- **Banco de Dados**
+  - Migrations: `20260120000001` ate `20260120000006`
+  - Novas tabelas: `coupons`, `coupon_usages`, `loyalty_config`, `loyalty_levels`, `loyalty_points`, `promotions`, `promotion_usages`
+  - Campos adicionados em `customers` e `catalog_orders`
+
+- **Documentacao**
+  - `docs/CUSTOMER_AREA.md` - Documentacao completa da area do cliente
+
+- **Arquivos Criados**
+  - `src/contexts/CatalogCustomerContext.tsx`
+  - `src/modules/catalog/components/CustomerLoginModal.tsx`
+  - `src/modules/catalog/components/CustomerAccountDrawer.tsx`
+  - `src/modules/catalog/components/OrderHistoryList.tsx`
+  - `src/modules/catalog/components/OrderDetailModal.tsx`
+  - `src/modules/catalog/components/CouponInput.tsx`
+  - `src/modules/catalog/components/CouponsList.tsx`
+  - `src/modules/catalog/components/LoyaltyCard.tsx`
+  - `src/modules/catalog/components/PointsRedeemSlider.tsx`
+  - `src/modules/coupons/CouponsPage.tsx`
+  - `src/modules/loyalty/LoyaltyPage.tsx`
+  - `src/modules/promotions/PromotionsPage.tsx`
+
+- **Arquivos Modificados**
+  - `src/types/index.ts` - Novos tipos
+  - `src/routes/index.tsx` - Novas rotas
+  - `src/routes/paths.ts` - Novos paths
+  - `src/components/layout/Sidebar.tsx` - Novos itens de menu
+  - `src/modules/catalog/CatalogPage.tsx` - Integracao com area do cliente
+  - `src/modules/catalog/components/CheckoutModal.tsx` - Cupons e fidelidade
+
+### v0.18.0 (Janeiro 2026)
+
+- **Filtro de Busca em Pedidos do Catalogo**
+  - Campo de busca por nome ou telefone do cliente
+  - Filtragem em tempo real combinada com filtro de status
+  - Icone de limpar busca (X)
+  - EmptyState diferenciado para busca sem resultados
+
+- **Link "Ver Detalhes" no Catalogo Publico**
+  - Nome do produto agora e clicavel (abre pagina de detalhes)
+  - Botao "Ver Detalhes" com icone de olho em cada produto
+  - Responsivo: texto completo no desktop, "Detalhes" no mobile
+  - Mantido botao "Adicionar ao Carrinho" existente
+
+- **Cadastro Opcional de Cliente no Checkout**
+  - Checkbox "Quero me cadastrar para facilitar proximas compras"
+  - Campos CPF e Email aparecem apenas quando checkbox marcado
+  - CPF obrigatorio para quem quer se cadastrar
+  - Email opcional para contato adicional
+  - Validacao de CPF com algoritmo completo (11 digitos)
+  - Formatacao automatica do CPF: 000.000.000-00
+  - Busca automatica de cliente existente pelo telefone
+  - Auto-preenchimento de dados se cliente ja cadastrado
+
+- **Estrutura de Dados para Clientes do Catalogo**
+  - Nova coluna `phone_has_whatsapp` em customers
+  - Nova coluna `source` (manual/catalog) para origem do cadastro
+  - Nova coluna `total_orders` para contagem de pedidos
+  - Nova coluna `total_spent` para valor total gasto
+  - Nova coluna `last_order_at` para data do ultimo pedido
+  - Indice unico por telefone+empresa (evita duplicatas)
+  - Indice unico por CPF+empresa (evita duplicatas)
+  - Coluna `customer_id` em catalog_orders (vinculo opcional)
+
+- **LGPD: Consentimento para WhatsApp**
+  - Checkbox de consentimento para receber mensagens
+  - Campo `whatsapp_consent` em catalog_orders
+  - Campo `consent_at` com data/hora do consentimento
+  - Texto explicativo sobre uso do numero
+
+- **Arquivos Criados**
+  - `supabase/migrations/20260119100000_catalog_customer_registration.sql`
+
+- **Arquivos Modificados**
+  - `src/types/index.ts` - CustomerSource, novos campos em Customer e CatalogOrder
+  - `src/modules/catalog-orders/CatalogOrdersPage.tsx` - Filtro de busca
+  - `src/modules/catalog/CatalogPage.tsx` - Link e botao Ver Detalhes
+  - `src/modules/catalog/components/CheckoutModal.tsx` - Cadastro de cliente
+
+### v0.17.5 (Janeiro 2026)
+
+- **UX: Interface Unificada de WhatsApp nas Configuracoes**
+  - Dois cards separados (WhatsApp + Automacao) unificados em um unico card
+  - Indicadores visuais claros de "Modo Automatico" e "Modo Manual"
+  - Badge "ATIVO" mostra qual modo esta em uso
+  - Cores diferenciadas: Verde (automatico), Amarelo (manual), Cinza (inativo)
+  - Caixas de informacao explicando como cada modo funciona
+
+- **Sincronizacao Automatica de Numero**
+  - Ao conectar WhatsApp via QR Code, numero e sincronizado automaticamente
+  - Campo `company.phone` atualizado junto com `whatsapp_settings`
+  - Toast de confirmacao: "WhatsApp conectado! O numero foi sincronizado automaticamente."
+
+- **Novo Layout quando Conectado**
+  - Card verde com status de conexao e numero conectado
+  - Icone de telefone com nome do perfil WhatsApp
+  - Caixa azul explicando beneficios do modo automatico
+  - Grid de notificacoes automaticas (4 cards interativos)
+  - Secao de teste de mensagem
+
+- **Novo Layout quando Desconectado**
+  - Destaque visual para "Ative o Modo Automatico"
+  - Gradiente verde no botao de conectar
+  - Secao de modo manual como fallback
+  - Caixa amarela explicando como funciona o modo manual
+  - Campo de telefone para configurar numero de contato
+
+- **Novos Icones**
+  - `AutoModeIcon` - Indicador de modo automatico
+  - `TouchAppIcon` - Indicador de modo manual
+  - `InfoOutlinedIcon` - Caixas informativas
+  - `PhoneIphoneIcon` - Numero do telefone conectado
+
+- **Arquivos Modificados**
+  - `src/modules/settings/SettingsPage.tsx` - Card unificado de WhatsApp
+  - `docs/WHATSAPP_AUTOMATION.md` - Documentacao da nova interface
+  - `docs/ROADMAP.md` - Este changelog
+
+### v0.17.4 (Janeiro 2026)
+
+- **UI: Cards de Notificacao WhatsApp Redesenhados**
+  - Checkboxes simples substituidos por cards interativos
+  - Grid responsivo 2x2 (1 coluna no mobile)
+  - Icones especificos para cada tipo de notificacao:
+    - `NotificationsActiveIcon` - Novo pedido (verde)
+    - `InventoryIcon` - Pedido confirmado (azul)
+    - `LocalShippingIcon` - Pedido entregue (esmeralda)
+    - `CancelIcon` - Pedido cancelado (vermelho)
+  - Cores distintas quando ativado/desativado
+  - Checkmark de confirmacao no canto superior direito
+  - Descricao curta explicando cada notificacao
+  - Transicoes suaves ao interagir
+
+- **UI: Deteccao de Provider de Autenticacao**
+  - Nova secao mostrando metodos de login vinculados
+  - Badges visuais para Google e Email/Senha
+  - Deteccao automatica via `auth.currentUser.providerData`
+  - Se usuario tem senha: mostra formulario de alteracao
+  - Se usuario so usa Google: mostra mensagem orientando usar "Esqueci senha"
+  - Titulo dinamico: "Alterar Senha" vs "Configurar Senha"
+
+- **Arquivos Modificados**
+  - `src/modules/settings/SettingsPage.tsx`
+    - Novos imports: `NotificationsActiveIcon`, `InventoryIcon`, `LocalShippingIcon`, `CancelIcon`, `GoogleIcon`, `AddIcon`
+    - Novo `useMemo` para `authProviders` (hasPassword, hasGoogle, providers)
+    - Cards de notificacao redesenhados com grid e icones
+    - Secao de senha condicional baseada no provider
+
+### v0.17.3 (Janeiro 2026)
+
+- **Correcao: Empresas podem conectar WhatsApp**
+  - Edge Function `wuzapi-admin` agora permite que empresas conectem WhatsApp
+  - Antes: Apenas super admins podiam executar `create-user`
+  - Depois: Qualquer membro da empresa pode executar `create-user` para sua propria empresa
+  - Verificacao de membership via `company_members` + `companies.slug`
+
+- **Permissoes da Edge Function `wuzapi-admin`**
+  | Acao | Permissao |
+  |------|-----------|
+  | `create-user` | Membro da empresa OU super admin |
+  | `list-users` | Apenas super admin |
+  | `delete-user` | Apenas super admin |
+  | `get-user-status` | Qualquer usuario autenticado |
+
+- **Arquivos Modificados**
+  - `supabase/functions/wuzapi-admin/index.ts` - Nova logica de permissoes
+  - `docs/ROADMAP.md` - Changelog atualizado
+  - `docs/WHATSAPP_AUTOMATION.md` - Documentacao de permissoes
+  - `docs/ARCHITECTURE.md` - Secao de Edge Functions atualizada
+
+### v0.17.2 (Janeiro 2026)
+
+- **Seguranca: Token Admin WuzAPI Protegido**
+  - Token admin NUNCA exposto no frontend (removido de `.env.local`)
+  - Nova Edge Function `wuzapi-admin` para operacoes administrativas
+  - Validacao de Firebase ID Token sem SDK Admin (decodifica JWT manualmente)
+  - Verificacao de `is_super_admin` no Supabase antes de autorizar
+  - Deploy com `--no-verify-jwt` para aceitar tokens Firebase
+
+- **Edge Function `wuzapi-admin`**
+  - Acoes: `list-users`, `get-user-status`, `delete-user`, `force-reconnect`
+  - Secrets configurados: `WUZAPI_ADMIN_TOKEN`, `WUZAPI_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+  - Validacao de claims Firebase: `iss`, `aud`, `exp`
+  - Projeto Firebase: `saas-af55a`
+
+- **Correcoes**
+  - Corrigido erro "Invalid JWT" (401) - flag `--no-verify-jwt` necessaria
+  - Corrigido erro "column profiles.role does not exist" - usando `is_super_admin`
+  - Debounce no `WhatsAppConnectModal` para evitar race conditions
+  - Timeout de health check reduzido de 30s para 5s
+
+- **Documentacao Atualizada**
+  - `WHATSAPP_AUTOMATION.md` - Secao de seguranca completa
+  - `ARCHITECTURE.md` - Secao de Edge Functions e tokens
+  - `SETUP.md` - Configuracao do WuzAPI e troubleshooting
+  - `ROADMAP.md` - Changelog atualizado
+
+- **Arquivos Modificados**
+  - `supabase/functions/wuzapi-admin/index.ts` - Edge Function completa
+  - `src/services/whatsapp.ts` - Chamadas via Edge Function para admin
+  - `src/components/ui/WhatsAppConnectModal.tsx` - Debounce adicionado
+  - `.env.local` - Token admin removido (apenas URL publica)
+
+### v0.17.1 (Janeiro 2026)
+
+- **Melhorias de Seguranca e Resiliencia no WhatsApp**
+  - Token deterministico por empresa (evita usuarios duplicados no WuzAPI)
+  - Timeout de 30s em todas as requisicoes (evita travamentos)
+  - Retry automatico (3x) para erros 500 e de rede
+  - Delay progressivo entre tentativas (1s, 2s, 3s)
+  - Verificacao de conexao antes de enviar mensagem
+  - Mensagem de erro clara quando WhatsApp desconectado
+
+- **Correcoes na Pagina Admin WhatsApp**
+  - Busca de instancia por token salvo (mais confiavel)
+  - Fallback para busca por nome
+  - Correcao: empresas conectadas agora aparecem corretamente
+  - Correcao da deteccao de usuarios orfaos
+
+- **Melhorias no Modal de Conexao**
+  - Limite de 5 erros consecutivos no polling
+  - Para o polling e mostra erro claro ao usuario
+  - Evita consumo infinito de recursos
+
+- **Edge Function Preparada (Supabase)**
+  - Criado `supabase/functions/wuzapi-admin/index.ts`
+  - Acoes: create-user, list-users, delete-user, get-user-status
+  - Secrets configurados no Supabase
+  - Preparado para uso futuro com autenticacao Firebase
+
+- **Documentacao Atualizada**
+  - Nova secao "Melhorias de Seguranca e Resiliencia" no WHATSAPP_AUTOMATION.md
+  - Comandos uteis para debug do WuzAPI
+  - Proximas melhorias planejadas
+
+- **Arquivos Criados**
+  - `supabase/functions/wuzapi-admin/index.ts`
+
+- **Arquivos Modificados**
+  - `src/services/whatsapp.ts` - Timeout, retry, verificacao de conexao
+  - `src/components/ui/WhatsAppConnectModal.tsx` - Limite de erros no polling
+  - `src/modules/admin/WhatsAppAdminPage.tsx` - Busca por token
+  - `docs/WHATSAPP_AUTOMATION.md` - Documentacao de seguranca
+  - `.env.local` - Token CLI Supabase
+
+### v0.17.0 (Janeiro 2026)
+
+- **Painel de Administracao WhatsApp (Super Admin)**
+  - Nova pagina `/admin/whatsapp` para gerenciar todas as instancias WuzAPI
+  - Visualizacao de status da API (online/offline)
+  - Lista todas as empresas com integracao WhatsApp
+  - Deteccao de instancias orfas (existem no WuzAPI mas nao no sistema)
+  - Cards de estatisticas: total de instancias, conectadas, desconectadas, orfas
+  - Funcoes de gerenciamento por instancia:
+    - Ver status de conexao em tempo real
+    - Forcar reconexao (gera novo QR Code)
+    - Desconectar sessao (logout)
+    - Excluir instancia completamente
+  - Modais de confirmacao para acoes destrutivas (desconectar e excluir)
+
+- **API WhatsApp Atualizada**
+  - Nova funcao `listAllUsers()` para listar todas as instancias
+  - Nova funcao `getUserStatus()` para verificar status individual
+  - Nova funcao `forceReconnect()` para reconectar instancias
+  - Nova funcao `deleteUserById()` para deletar por ID (hash)
+  - Correcao do delete: WuzAPI espera ID (hash) e nao o nome
+  - Interface `WuzAPIUser` com campo `id` adicionado
+
+- **Navegacao Admin Atualizada**
+  - Link "WhatsApp" adicionado na sidebar do Admin
+  - Botao "WhatsApp" nas acoes rapidas do Dashboard Admin
+
+- **Arquivos Criados**
+  - `src/modules/admin/WhatsAppAdminPage.tsx` - Pagina completa do painel
+
+- **Arquivos Modificados**
+  - `src/services/whatsapp.ts` - Novas funcoes admin e correcao delete
+  - `src/routes/index.tsx` - Nova rota `/admin/whatsapp`
+  - `src/components/layout/AdminSidebar.tsx` - Link WhatsApp
+  - `src/modules/admin/AdminDashboardPage.tsx` - Botao WhatsApp
+
+### v0.16.1 (Janeiro 2026)
+
+- **WhatsApp Non-Blocking (Fire and Forget)**
+  - Envio de WhatsApp NAO bloqueia mais o sistema
+  - Se WhatsApp falhar, pedido continua normalmente
+  - Mensagens de sucesso agora sao neutras (nao prometem WhatsApp)
+  - Preparacao para WhatsApp ser feature premium no futuro
+
+- **Mensagem de Sucesso Atualizada**
+  - Antes: "Voce recebera uma confirmacao no WhatsApp"
+  - Depois: "A empresa recebeu seu pedido. Se voce informou corretamente seu contato, poderemos mante-lo informado sobre a situacao do seu pedido por mensagem."
+
+### v0.16.0 (Janeiro 2026)
+
+- **Notificacoes Automaticas de Pedidos via WhatsApp**
+  - Cliente recebe confirmacao automatica ao fazer pedido no catalogo
+  - Empresa recebe alerta de novo pedido no WhatsApp
+  - Cliente notificado em todas mudancas de status (confirmado, entregue, cancelado)
+  - Fallback para wa.me se WhatsApp nao estiver configurado
+  - Botao do checkout mudou de "Enviar via WhatsApp" para "Enviar Pedido"
+
+- **Arquivos Modificados**
+  - `src/modules/catalog/components/CheckoutModal.tsx` - Envio automatico de notificacoes
+  - `docs/WHATSAPP_AUTOMATION.md` - Documentacao completa do fluxo
+  - `docs/ROADMAP.md` - Changelog atualizado
+
+### v0.15.0 (Janeiro 2026)
+
+- **Integracao WhatsApp com WuzAPI**
+  - Substituicao do Evolution API pelo WuzAPI (Go + whatsmeow)
+  - Instalacao na VPS KingHost (evertonapi.vps-kinghost.net)
+  - Servico `src/services/whatsapp.ts` com API completa
+  - Multi-tenant: cada empresa tem seu proprio usuario/token
+  - Modal de conexao com QR Code
+  - Verificacao de telefone via `/user/check` (resolve problema do 9o digito brasileiro)
+  - Envio de mensagem de teste funcionando
+  - Secao de automacao na pagina de Configuracoes
+
+- **Arquivos Criados**
+  - `src/services/whatsapp.ts` - Servico completo para WuzAPI
+  - `src/components/ui/WhatsAppConnectModal.tsx` - Modal de conexao
+  - `supabase/migrations/20260118000003_add_whatsapp_settings.sql` - Migration
+
+- **Arquivos Modificados**
+  - `src/types/index.ts` - Interface WhatsAppSettings atualizada para WuzAPI
+  - `src/modules/settings/SettingsPage.tsx` - Secao de automacao WhatsApp
+  - `src/modules/catalog-orders/CatalogOrdersPage.tsx` - Notificacoes de pedidos
+  - `src/components/ui/index.ts` - Export do WhatsAppConnectModal
+
+### v0.14.0 (Janeiro 2026)
+
+- **Filtros de Status em Pedidos**
+  - Botoes de filtro: Todos, Pendentes, Confirmados, Entregues
+  - Cores correspondentes ao status de cada filtro
+  - Contagem de pedidos por status em cada botao
+  - Badge destacado para pedidos pendentes
+  - Mensagem de empty state dinamica por filtro
+
+- **Validacao de WhatsApp**
+  - Formatacao automatica: (XX) XXXXX-XXXX
+  - Validacao em tempo real com icone de status
+  - Verifica DDD valido (11-99)
+  - Celular deve comecar com 9
+  - Aceita fixo (10 digitos) ou celular (11 digitos)
+  - Botao "Testar WhatsApp" para verificar numero
+  - Mensagens de erro especificas
+
+- **Table Responsivo para Tablets**
+  - Cards agora aparecem em tablets (< 1024px) alem de mobile
+  - Prop `cardBreakpoint` para customizar breakpoint
+  - Antes: cards apenas em < 768px, agora: < 1024px
+
+- **Paginacao Automatica para Cards**
+  - 10 itens por pagina por padrao
+  - Navegacao com setas e contador de paginas
+  - Exibe "1-10 de 50" para indicar posicao
+  - Reset automatico ao filtrar/buscar
+  - Prop `pageSize` para customizar quantidade
+  - Prop `disablePagination` para desabilitar
+
+- **Performance Otimizada**
+  - Usa `useMemo` para dados paginados
+  - Renderiza apenas itens da pagina atual
+  - Menos DOM nodes = scroll mais suave
+
+- **Tela de Configuracoes Melhorada**
+  - Campo de logo em layout lateral (compacto)
+  - Botao de lixo removido do ImageUpload
+  - Layout responsivo (empilha no mobile)
+
+- **ImageUpload com Novas Props**
+  - `compact`: Modo compacto (quadrado, menor)
+  - `showRemoveButton`: Controla botao de delete
+
+### v0.13.0 (Janeiro 2026)
+
+- **Sistema de Notificacoes de Pedidos**
+  - Novo contexto `NotificationContext` para gerenciar notificacoes
+  - Escuta novos pedidos via Supabase Realtime
+  - Toast customizado com nome do cliente e valor do pedido
+  - Som de notificacao usando Web Audio API (dois beeps)
+  - Badge vermelho na Sidebar mostrando pedidos pendentes
+  - Animacao pulse no badge quando ha novos pedidos
+  - Auto-dismiss ao visitar pagina de pedidos
+
+- **Hook useNotifications**
+  - `pendingOrdersCount`: Quantidade de pedidos pendentes
+  - `hasNewOrders`: Flag se ha pedidos nao vistos
+  - `refreshPendingCount()`: Atualizar contagem manualmente
+  - `markOrdersAsSeen()`: Marcar pedidos como vistos
+
+- **Persistencia do Estado da Sidebar**
+  - Estado colapsado/expandido salvo no localStorage
+  - Preferencia mantida apos refresh da pagina
+  - Chave `ejym_sidebar_collapsed` para AppLayout
+  - Chave `ejym_admin_sidebar_collapsed` para AdminLayout
+
+- **Atualizacao Automatica de Pedidos**
+  - CatalogOrdersPage usa Realtime para atualizar lista
+  - Sincronizacao automatica ao mudar status de pedidos
+
+- **Comando de Deploy**
+  - Novo script `npm run deploy` no package.json
+  - Executa build + firebase deploy em sequencia
+
+- **Arquivos Criados**
+  - `src/contexts/NotificationContext.tsx`
+
+- **Arquivos Modificados**
+  - `src/components/layout/AppLayout.tsx` - NotificationProvider + persistencia sidebar
+  - `src/components/layout/AdminLayout.tsx` - Persistencia sidebar
+  - `src/components/layout/Sidebar.tsx` - Badge de pedidos + useNotifications
+  - `src/modules/catalog-orders/CatalogOrdersPage.tsx` - Realtime + notificacoes
+  - `package.json` - Script deploy
+
+### v0.12.0 (Janeiro 2026)
+
+- **Multiplas Imagens por Produto (ate 4)**
+  - Nova coluna `images` JSONB na tabela `products`
+  - Migration automatica de `image_url` existente para array `images`
+  - Interface `ProductImage` com `url`, `order`, `isPrimary`
+  - Compatibilidade retroativa com campo `image_url`
+
+- **Novos Componentes UI**
+  - `ImageCarousel`: Carrossel com suporte a swipe touch (mobile) e setas (desktop)
+  - `ImageLightbox`: Visualizacao em tela cheia com navegacao por teclado/swipe
+  - `MultiImageUpload`: Upload multiplo com drag & drop para reordenar imagens
+
+- **Funcionalidades do ImageCarousel**
+  - Navegacao por swipe no mobile
+  - Setas de navegacao no desktop
+  - Indicadores de pontos
+  - Callback ao clicar para abrir lightbox
+
+- **Funcionalidades do ImageLightbox**
+  - Tela cheia com fundo escuro
+  - Navegacao por setas/teclado/swipe
+  - Contador de imagens (1/4)
+  - Miniaturas na parte inferior
+  - Tecla ESC para fechar
+
+- **Funcionalidades do MultiImageUpload**
+  - Grid 2x2 (mobile) ou 4 colunas (desktop)
+  - Drag & drop HTML5 para reordenar
+  - Botao de deletar em cada imagem
+  - Indicador de imagem principal (estrela)
+  - Limite de 4 imagens
+
+- **Servicos de Storage Atualizados**
+  - `uploadProductImages()`: Upload em lote
+  - `deleteProductImages()`: Delete em lote
+
+- **Paginas Atualizadas**
+  - ProductsPage: Formulario com `MultiImageUpload`
+  - CatalogPage: Cards com `ImageCarousel` e `ImageLightbox`
+  - ProductPage: Detalhe com `ImageCarousel` e `ImageLightbox`
+
+- **Arquivos Criados**
+  - `supabase/migrations/20260118000001_add_product_images.sql`
+  - `src/components/ui/ImageCarousel.tsx`
+  - `src/components/ui/ImageLightbox.tsx`
+  - `src/components/ui/MultiImageUpload.tsx`
+
+- **Arquivos Modificados**
+  - `src/types/index.ts` - Interface ProductImage e campo images em Product
+  - `src/services/storage.ts` - Funcoes de upload/delete em lote
+  - `src/components/ui/index.ts` - Exports dos novos componentes
+  - `src/modules/products/ProductsPage.tsx` - MultiImageUpload no formulario
+  - `src/modules/catalog/CatalogPage.tsx` - ImageCarousel + ImageLightbox
+  - `src/modules/catalog/ProductPage.tsx` - ImageCarousel + ImageLightbox
+
+- **Supabase Realtime**
+  - Migration para habilitar Realtime nas tabelas principais
+  - Tabelas habilitadas: `products`, `sales`, `sale_items`, `catalog_orders`, `catalog_order_items`, `categories`, `customers`
+  - Hook `useRealtimeSubscription` para subscricoes com callbacks granulares
+  - Hook `useRealtimeRefresh` simplificado para recarregar dados
+  - Suporte a filtros por `company_id` para multi-tenancy
+  - Eventos: INSERT, UPDATE, DELETE ou todos (*)
+
+- **Arquivos Criados (Realtime)**
+  - `supabase/migrations/20260118000002_enable_realtime.sql`
+  - `src/hooks/useRealtimeSubscription.ts`
+
+- **Scanner de Codigo de Barras**
+  - Componente `BarcodeScanner` para leitura via camera
+  - Suporte a EAN-13, EAN-8, UPC, Code 128, Code 39, QR Code
+  - Preferencia automatica para camera traseira
+  - Som de confirmacao ao escanear
+  - Botao de scanner no campo EAN (ProductsPage)
+  - Botao de scanner na busca de produtos (SalesPage)
+  - Busca automatica por EAN e adicao ao carrinho
+  - Suporte automatico a leitores USB/Bluetooth
+
+- **Arquivos Criados (Barcode)**
+  - `src/components/ui/BarcodeScanner.tsx`
+
+- **Arquivos Modificados (Barcode)**
+  - `src/components/ui/index.ts` - Export do BarcodeScanner
+  - `src/modules/products/ProductsPage.tsx` - Botao de scan no EAN
+  - `src/modules/sales/SalesPage.tsx` - Botao de scan e busca por EAN
+  - `vite.config.ts` - Aumento do limite de cache PWA para 3MB
+
+- **Dependencias Adicionadas**
+  - `@zxing/browser` - Leitura de codigos via camera
+  - `@zxing/library` - Decodificacao de codigos de barras
+
+### v0.11.0 (Janeiro 2026)
+
+- **Toolbar Sticky nas Paginas de Listagem**
+  - PageContainer agora suporta prop `toolbar` para filtros fixos
+  - Titulo e subtitulo rolam junto com o conteudo
+  - Filtros/buscas ficam fixos no topo durante o scroll
+  - Implementado em todas as paginas de listagem:
+    - ProductsPage (busca + filtro de categoria)
+    - CustomersPage (busca por nome, email, telefone)
+    - SalesPage (busca + filtro de status)
+    - CategoriesPage (busca por nome)
+    - UsersPage (busca por nome ou email)
+    - CompaniesPage (busca de empresas)
+
+- **Novo Layout do Catalogo Publico**
+  - Header arredondado com bordas e sombra
+  - Container principal arredondado com scroll interno
+  - Filtros (busca + categoria) fixos no topo
+  - Produtos rolam independentemente
+  - Footer movido para dentro do container de scroll
+  - Grid de 2 colunas no mobile para melhor aproveitamento
+  - Textos e botoes responsivos (menores no mobile)
+
+- **Botao Limpar no Campo de Busca do Catalogo**
+  - Icone X discreto aparece quando ha texto digitado
+  - Limpa o campo de busca ao clicar
+  - Posicionado a direita dentro do input
+
+- **Arquivos Modificados**
+  - `src/components/layout/PageContainer.tsx` - Nova prop `toolbar` com sticky
+  - `src/modules/products/ProductsPage.tsx` - Filtros movidos para toolbar
+  - `src/modules/customers/CustomersPage.tsx` - Busca movida para toolbar
+  - `src/modules/sales/SalesPage.tsx` - Filtros movidos para toolbar
+  - `src/modules/categories/CategoriesPage.tsx` - Busca movida para toolbar
+  - `src/modules/users/UsersPage.tsx` - Busca movida para toolbar
+  - `src/modules/companies/CompaniesPage.tsx` - Busca movida para toolbar
+  - `src/modules/catalog/CatalogPage.tsx` - Novo layout arredondado com filtro fixo
+
+### v0.10.0 (Janeiro 2026)
+
+- **Campo EAN (Codigo de Barras) nos Produtos**
+  - Nova coluna `ean` na tabela `products` (migration `20260117000001_add_ean_to_products.sql`)
+  - Indice para buscas rapidas por codigo de barras
+  - Campo EAN no formulario de criar/editar produto
+  - Busca por nome, SKU ou EAN na lista de produtos
+  - Exportacao Excel/PDF inclui coluna EAN
+  - Importacao via Excel suporta coluna EAN
+  - Modelo de importacao atualizado com exemplo de EAN
+
+- **Novo Layout com Areas Arredondadas**
+  - Sidebar arredondada (ja existia)
+  - Header arredondado e fixo no topo
+  - Area principal arredondada com scroll proprio
+  - Scroll apenas na area de conteudo (header e sidebar ficam fixos)
+  - Estrutura: container com `overflow-hidden` + area interna com `overflow-auto`
+  - Conteudo clipado nas bordas arredondadas durante scroll
+
+- **Melhorias no Header**
+  - Seletor de empresa mostra seta apenas quando ha mais de 1 empresa
+  - Com 1 empresa: exibe apenas logo + nome (sem dropdown)
+  - Com multiplas empresas: exibe logo + nome + seta com dropdown
+
+- **Correcao na Sidebar Colapsada**
+  - Botao de menu centralizado corretamente quando sidebar esta colapsada
+  - Container usa `justify-center` quando colapsado
+  - Padding ajustado para melhor centralizacao
+
+- **Arquivos Modificados**
+  - `src/types/index.ts` - Adicionado campo `ean` na interface Product
+  - `src/modules/products/ProductsPage.tsx` - Campo EAN no formulario, busca e exportacao
+  - `src/components/layout/AppLayout.tsx` - Novo layout com scroll proprio
+  - `src/components/layout/AdminLayout.tsx` - Novo layout com scroll proprio
+  - `src/components/layout/Header.tsx` - Seletor de empresa condicional
+  - `src/components/layout/AdminHeader.tsx` - Ajustes de layout
+  - `src/components/layout/Sidebar.tsx` - Centralizacao do botao quando colapsado
+  - `src/components/layout/AdminSidebar.tsx` - Centralizacao do botao quando colapsado
+  - `supabase/migrations/20260117000001_add_ean_to_products.sql` - Nova migration
 
 ### v0.9.0 (Janeiro 2026)
 

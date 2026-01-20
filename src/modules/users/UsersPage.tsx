@@ -341,17 +341,17 @@ export function UsersPage() {
           <span className="sm:hidden">Convidar</span>
         </Button>
       }
+      toolbar={
+        <Card className="p-3 md:p-4">
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<SearchIcon className="w-5 h-5" />}
+          />
+        </Card>
+      }
     >
-      {/* Search */}
-      <Card className="p-4 mb-4">
-        <Input
-          placeholder="Buscar por nome ou email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          leftIcon={<SearchIcon className="w-5 h-5" />}
-        />
-      </Card>
-
       {/* Table */}
       <Table
         columns={columns}

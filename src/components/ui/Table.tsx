@@ -1,6 +1,8 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useMemo } from 'react';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { TableColumn } from '../../types';
 
 interface TableProps<T> {
@@ -13,6 +15,12 @@ interface TableProps<T> {
   emptyMessage?: string;
   loading?: boolean;
   mobileCardRender?: (item: T) => ReactNode;
+  /** Breakpoint em pixels para mostrar cards ao inves de tabela (default: 1024 para incluir tablets) */
+  cardBreakpoint?: number;
+  /** Quantidade de itens por pagina (default: 10 para cards, sem limite para tabela) */
+  pageSize?: number;
+  /** Desabilitar paginacao */
+  disablePagination?: boolean;
 }
 
 export function Table<T>({
@@ -25,15 +33,25 @@ export function Table<T>({
   emptyMessage = 'Nenhum registro encontrado',
   loading,
   mobileCardRender,
+  cardBreakpoint = 1024,
+  pageSize = 10,
+  disablePagination = false,
 }: TableProps<T>) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isCardView, setIsCardView] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Detectar se deve mostrar cards
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    const checkCardView = () => setIsCardView(window.innerWidth < cardBreakpoint);
+    checkCardView();
+    window.addEventListener('resize', checkCardView);
+    return () => window.removeEventListener('resize', checkCardView);
+  }, [cardBreakpoint]);
+
+  // Reset page when data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data.length]);
 
   const handleSort = (column: TableColumn<T>) => {
     if (!column.sortable || !onSort) return;
@@ -55,9 +73,27 @@ export function Table<T>({
     return (item as Record<string, unknown>)[key as string] as ReactNode;
   };
 
+  // Paginacao para cards
+  const shouldPaginate = isCardView && mobileCardRender && !disablePagination && data.length > pageSize;
+  const totalPages = shouldPaginate ? Math.ceil(data.length / pageSize) : 1;
+
+  const paginatedData = useMemo(() => {
+    if (!shouldPaginate) return data;
+    const start = (currentPage - 1) * pageSize;
+    return data.slice(start, start + pageSize);
+  }, [data, currentPage, pageSize, shouldPaginate]);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
   // Loading state
   if (loading) {
-    if (isMobile && mobileCardRender) {
+    if (isCardView && mobileCardRender) {
       return (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -93,8 +129,8 @@ export function Table<T>({
     );
   }
 
-  // Mobile card view
-  if (isMobile && mobileCardRender) {
+  // Card view (mobile e tablet)
+  if (isCardView && mobileCardRender) {
     if (data.length === 0) {
       return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-500 dark:text-gray-400">
@@ -105,15 +141,56 @@ export function Table<T>({
 
     return (
       <div className="space-y-3">
-        {data.map((item) => (
+        {/* Cards */}
+        {paginatedData.map((item) => (
           <div key={keyExtractor(item)}>
             {mobileCardRender(item)}
           </div>
         ))}
+
+        {/* Paginacao */}
+        {shouldPaginate && totalPages > 1 && (
+          <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 mt-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, data.length)} de {data.length}
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg transition-colors ${
+                  currentPage === 1
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </button>
+
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg transition-colors ${
+                  currentPage === totalPages
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  // Table view (desktop)
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="overflow-x-auto">

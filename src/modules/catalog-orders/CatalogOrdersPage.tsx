@@ -6,14 +6,19 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Card, Button, Badge, Modal, ModalFooter } from '../../components/ui';
+import { Card, Button, Badge, Modal, ModalFooter, Input } from '../../components/ui';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { supabase } from '../../services/supabase';
+import { sendTextMessage, formatOrderMessageForCustomer, WhatsAppSettings, defaultWhatsAppSettings } from '../../services/whatsapp';
 import { CatalogOrder, CatalogOrderItem, CatalogOrderStatus } from '../../types';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 
 interface OrderWithItems extends CatalogOrder {
   items: CatalogOrderItem[];
@@ -26,19 +31,41 @@ const statusConfig: Record<CatalogOrderStatus, { label: string; variant: 'warnin
   completed: { label: 'Entregue', variant: 'success' },
 };
 
+type StatusFilter = 'all' | CatalogOrderStatus;
+
 export function CatalogOrdersPage() {
   const { currentCompany } = useTenant();
   const { user } = useAuth();
+  const { refreshPendingCount, markOrdersAsSeen } = useNotifications();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (currentCompany) {
       fetchOrders();
+      // Marcar como visto ao entrar na pagina
+      markOrdersAsSeen();
     }
-  }, [currentCompany]);
+  }, [currentCompany, markOrdersAsSeen]);
+
+  // Realtime subscription para atualizar lista automaticamente
+  useRealtimeSubscription<CatalogOrder>({
+    table: 'catalog_orders',
+    filter: currentCompany ? `company_id=eq.${currentCompany.id}` : undefined,
+    enabled: !!currentCompany,
+    onInsert: () => {
+      // Novo pedido - recarregar lista
+      fetchOrders();
+    },
+    onUpdate: () => {
+      // Status atualizado - recarregar lista
+      fetchOrders();
+    },
+  });
 
   const fetchOrders = async () => {
     if (!currentCompany) return;
@@ -79,7 +106,9 @@ export function CatalogOrdersPage() {
         discount: 0,
         total: order.total,
         payment_method: 'Catálogo Online',
-        notes: `Pedido do catálogo - Cliente: ${order.customer_name} - Tel: ${order.customer_phone}${order.customer_notes ? ` - Obs: ${order.customer_notes}` : ''}`,
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        notes: order.customer_notes || null,
       })
       .select()
       .single();
@@ -159,11 +188,100 @@ export function CatalogOrdersPage() {
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
+
+      // Atualizar contagem de pedidos pendentes
+      refreshPendingCount();
+
+      // Send WhatsApp notification if enabled
+      if (order && currentCompany) {
+        await sendWhatsAppNotification(order, newStatus);
+      }
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error('Erro ao atualizar pedido');
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const sendWhatsAppNotification = async (order: OrderWithItems, newStatus: CatalogOrderStatus) => {
+    try {
+      // LGPD: Verificar consentimento do cliente
+      if (!order.whatsapp_consent) {
+        console.log('[WhatsApp] Skipping - customer did not consent to WhatsApp messages');
+        return;
+      }
+
+      console.log('[WhatsApp] sendWhatsAppNotification called', { orderId: order.id, newStatus, customerPhone: order.customer_phone });
+
+      // Get company WhatsApp settings
+      const rawSettings = currentCompany?.whatsapp_settings;
+      console.log('[WhatsApp] Raw settings:', rawSettings);
+
+      const whatsAppSettings: WhatsAppSettings = rawSettings
+        ? (rawSettings as WhatsAppSettings)
+        : defaultWhatsAppSettings;
+
+      console.log('[WhatsApp] Settings:', {
+        enabled: whatsAppSettings.enabled,
+        connected: whatsAppSettings.connected,
+        hasToken: !!whatsAppSettings.user_token,
+        notify_on_confirm: whatsAppSettings.notify_on_confirm,
+        notify_on_complete: whatsAppSettings.notify_on_complete,
+        notify_on_cancel: whatsAppSettings.notify_on_cancel
+      });
+
+      // Check if WhatsApp is enabled and connected
+      if (!whatsAppSettings.enabled || !whatsAppSettings.connected || !whatsAppSettings.user_token) {
+        console.log('[WhatsApp] Skipping - not enabled/connected');
+        return;
+      }
+
+      // Check if notification is enabled for this status
+      const shouldNotify =
+        (newStatus === 'confirmed' && whatsAppSettings.notify_on_confirm) ||
+        (newStatus === 'completed' && whatsAppSettings.notify_on_complete) ||
+        (newStatus === 'cancelled' && whatsAppSettings.notify_on_cancel);
+
+      console.log('[WhatsApp] Should notify:', shouldNotify);
+
+      if (!shouldNotify) {
+        console.log('[WhatsApp] Notification disabled for this status');
+        return;
+      }
+
+      // Map status to message type
+      const messageType = newStatus === 'cancelled' ? 'cancelled' :
+        newStatus === 'confirmed' ? 'confirmed' : 'completed';
+
+      // Format the message
+      const message = formatOrderMessageForCustomer(
+        order.customer_name,
+        currentCompany?.name || '',
+        order.id,
+        order.items.map((item) => ({
+          quantity: item.quantity,
+          product_name: item.product_name,
+          subtotal: item.total,
+        })),
+        order.total,
+        messageType
+      );
+
+      // Send the message
+      const result = await sendTextMessage(
+        whatsAppSettings.user_token,
+        order.customer_phone,
+        message
+      );
+
+      if (result.success) {
+        console.log(`[WhatsApp] Notification sent for order ${order.id} - status: ${newStatus}`);
+      } else {
+        console.error(`[WhatsApp] Failed to send notification:`, result.error);
+      }
+    } catch (error) {
+      console.error('[WhatsApp] Error sending notification:', error);
     }
   };
 
@@ -206,7 +324,23 @@ export function CatalogOrdersPage() {
     window.open(url, '_blank');
   };
 
-  const pendingCount = orders.filter((o) => o.status === 'pending').length;
+  // Contadores por status
+  const statusCounts = {
+    all: orders.length,
+    pending: orders.filter((o) => o.status === 'pending').length,
+    confirmed: orders.filter((o) => o.status === 'confirmed').length,
+    completed: orders.filter((o) => o.status === 'completed').length,
+    cancelled: orders.filter((o) => o.status === 'cancelled').length,
+  };
+
+  // Filtrar pedidos por status e nome
+  const filteredOrders = orders.filter((o) => {
+    const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+    const matchesSearch = searchTerm === '' ||
+      o.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.customer_phone.includes(searchTerm);
+    return matchesStatus && matchesSearch;
+  });
 
   if (loading) {
     return <PageLoader />;
@@ -215,22 +349,109 @@ export function CatalogOrdersPage() {
   return (
     <PageContainer
       title="Pedidos do Catálogo"
-      subtitle={pendingCount > 0 ? `${pendingCount} pedido(s) pendente(s)` : 'Pedidos recebidos pelo catálogo público'}
+      subtitle={statusCounts.pending > 0 ? `${statusCounts.pending} pedido(s) pendente(s)` : 'Pedidos recebidos pelo catálogo público'}
       action={
         <Button variant="secondary" onClick={fetchOrders} icon={<RefreshIcon />}>
           Atualizar
         </Button>
       }
+      toolbar={
+        <Card className="p-3">
+          <div className="flex flex-col gap-3">
+            {/* Campo de busca */}
+            <div className="relative">
+              <Input
+                placeholder="Buscar por nome ou telefone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                leftIcon={<SearchIcon className="w-5 h-5" />}
+                rightIcon={
+                  searchTerm ? (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                    >
+                      <ClearIcon className="w-4 h-4 text-gray-400" />
+                    </button>
+                  ) : undefined
+                }
+              />
+            </div>
+            {/* Filtros de status */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'all'
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                Todos ({statusCounts.all})
+              </button>
+              <button
+                onClick={() => setStatusFilter('pending')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                  statusFilter === 'pending'
+                    ? 'bg-yellow-500 text-white'
+                    : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50'
+                }`}
+              >
+                Pendentes
+                {statusCounts.pending > 0 && (
+                  <span className={`min-w-[20px] h-5 flex items-center justify-center text-xs font-bold rounded-full px-1 ${
+                    statusFilter === 'pending' ? 'bg-white/20' : 'bg-yellow-500 text-white'
+                  }`}>
+                    {statusCounts.pending}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setStatusFilter('confirmed')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'confirmed'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'
+                }`}
+              >
+                Confirmados ({statusCounts.confirmed})
+              </button>
+              <button
+                onClick={() => setStatusFilter('completed')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'completed'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                }`}
+              >
+                Entregues ({statusCounts.completed})
+              </button>
+            </div>
+          </div>
+        </Card>
+      }
     >
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <EmptyState
-          title="Nenhum pedido"
-          description="Quando clientes fizerem pedidos pelo catálogo, eles aparecerão aqui"
+          title={
+            searchTerm
+              ? "Nenhum pedido encontrado"
+              : statusFilter === 'all'
+                ? "Nenhum pedido"
+                : `Nenhum pedido ${statusConfig[statusFilter].label.toLowerCase()}`
+          }
+          description={
+            searchTerm
+              ? `Não encontramos pedidos para "${searchTerm}"`
+              : statusFilter === 'all'
+                ? "Quando clientes fizerem pedidos pelo catálogo, eles aparecerão aqui"
+                : "Não há pedidos com este status no momento"
+          }
           icon={<LocalShippingIcon className="w-12 h-12" />}
         />
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <Card key={order.id} className="p-4">
               <div className="flex flex-col gap-4">
                 {/* Order Header */}

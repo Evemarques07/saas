@@ -4,8 +4,9 @@ import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, BarcodeScanner } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -47,6 +48,7 @@ export function SalesPage() {
   const [cancelingSale, setCancelingSale] = useState<Sale | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   useEffect(() => {
     if (currentCompany) {
@@ -100,15 +102,31 @@ export function SalesPage() {
     setShowNewSaleModal(true);
   };
 
-  // Filtrar produtos pela pesquisa
+  // Filtrar produtos pela pesquisa (inclui EAN)
   const filteredProducts = products.filter((p) => {
     const searchLower = productSearch.toLowerCase();
     return (
       p.name.toLowerCase().includes(searchLower) ||
       (p.description?.toLowerCase().includes(searchLower) ?? false) ||
-      (p.sku?.toLowerCase().includes(searchLower) ?? false)
+      (p.sku?.toLowerCase().includes(searchLower) ?? false) ||
+      (p.ean?.toLowerCase().includes(searchLower) ?? false)
     );
   });
+
+  // Buscar produto por EAN (para scanner)
+  const findProductByEan = (ean: string): Product | undefined => {
+    return products.find((p) => p.ean === ean);
+  };
+
+  const handleBarcodeScan = (code: string) => {
+    const product = findProductByEan(code);
+    if (product) {
+      handleAddToCart(product.id);
+      toast.success(`${product.name} adicionado ao carrinho`);
+    } else {
+      toast.error(`Produto com EAN ${code} não encontrado`);
+    }
+  };
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -282,10 +300,23 @@ export function SalesPage() {
     }
   };
 
+  // Helper para obter nome do cliente (cadastrado ou do catálogo)
+  const getCustomerName = (sale: Sale): string => {
+    if (sale.customer?.name) return sale.customer.name;
+    if (sale.customer_name) return sale.customer_name;
+    return 'Sem cliente';
+  };
+
+  // Helper para verificar se venda é do catálogo
+  const isCatalogSale = (sale: Sale): boolean => {
+    return !sale.customer_id && !!sale.customer_name;
+  };
+
   const handleExport = (format: 'excel' | 'pdf') => {
     const data = filteredSales.map((s) => ({
       Data: new Date(s.created_at).toLocaleDateString('pt-BR'),
-      Cliente: s.customer?.name || 'Sem cliente',
+      Cliente: getCustomerName(s),
+      Origem: isCatalogSale(s) ? 'Catálogo' : 'Balcão',
       Total: `R$ ${s.total.toFixed(2)}`,
       Status: getStatusLabel(s.status),
     }));
@@ -316,9 +347,12 @@ export function SalesPage() {
   };
 
   const filteredSales = sales.filter((s) => {
+    const searchLower = search.toLowerCase();
     const matchesSearch =
-      s.customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.id.toLowerCase().includes(search.toLowerCase());
+      s.customer?.name?.toLowerCase().includes(searchLower) ||
+      s.customer_name?.toLowerCase().includes(searchLower) ||
+      s.customer_phone?.toLowerCase().includes(searchLower) ||
+      s.id.toLowerCase().includes(searchLower);
     const matchesStatus = !statusFilter || s.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -333,7 +367,16 @@ export function SalesPage() {
     {
       key: 'customer.name',
       label: 'Cliente',
-      render: (s) => s.customer?.name || 'Sem cliente',
+      render: (s) => (
+        <div className="flex items-center gap-2">
+          <span>{getCustomerName(s)}</span>
+          {isCatalogSale(s) && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+              Catálogo
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'seller_id',
@@ -409,33 +452,33 @@ export function SalesPage() {
           </Button>
         </div>
       }
+      toolbar={
+        <Card className="p-3 md:p-4">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar por cliente ou ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                leftIcon={<SearchIcon className="w-5 h-5" />}
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as SaleStatus | '')}
+                options={[
+                  { value: '', label: 'Todos os status' },
+                  { value: 'pending', label: 'Pendente' },
+                  { value: 'completed', label: 'Concluída' },
+                  { value: 'cancelled', label: 'Cancelada' },
+                ]}
+              />
+            </div>
+          </div>
+        </Card>
+      }
     >
-      {/* Filters */}
-      <Card className="p-4 mb-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Buscar por cliente ou ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              leftIcon={<SearchIcon className="w-5 h-5" />}
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as SaleStatus | '')}
-              options={[
-                { value: '', label: 'Todos os status' },
-                { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluída' },
-                { value: 'cancelled', label: 'Cancelada' },
-              ]}
-            />
-          </div>
-        </div>
-      </Card>
-
       {/* Table */}
       <Table
         columns={columns}
@@ -450,9 +493,16 @@ export function SalesPage() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {s.customer?.name || 'Sem cliente'}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {getCustomerName(s)}
+                  </p>
+                  {isCatalogSale(s) && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 whitespace-nowrap">
+                      Catálogo
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(s.created_at).toLocaleDateString('pt-BR')} - {new Date(s.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -509,12 +559,23 @@ export function SalesPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Adicionar Produto
             </label>
-            <Input
-              placeholder="Pesquisar por nome, descricao ou SKU..."
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              leftIcon={<SearchIcon className="w-5 h-5" />}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Pesquisar por nome, SKU ou EAN..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                leftIcon={<SearchIcon className="w-5 h-5" />}
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => setShowBarcodeScanner(true)}
+                className="px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center gap-1"
+                title="Escanear código de barras"
+              >
+                <QrCodeScannerIcon className="w-5 h-5" />
+              </button>
+            </div>
             {productSearch && (
               <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 {filteredProducts.length > 0 ? (
@@ -719,9 +780,21 @@ export function SalesPage() {
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
-                <p className="font-medium">
-                  {viewingSale.customer?.name || 'Sem cliente'}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">
+                    {getCustomerName(viewingSale)}
+                  </p>
+                  {isCatalogSale(viewingSale) && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                      Catálogo
+                    </span>
+                  )}
+                </div>
+                {viewingSale.customer_phone && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Tel: {viewingSale.customer_phone}
+                  </p>
+                )}
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Vendedor:</span>
@@ -866,7 +939,7 @@ export function SalesPage() {
             </p>
             {cancelingSale && (
               <p className="text-sm text-red-600 dark:text-red-400 font-medium mt-2">
-                Venda de {formatCurrency(cancelingSale.total)} - {cancelingSale.customer?.name || 'Sem cliente'}
+                Venda de {formatCurrency(cancelingSale.total)} - {getCustomerName(cancelingSale)}
               </p>
             )}
           </div>
@@ -905,6 +978,14 @@ export function SalesPage() {
           </ModalFooter>
         </div>
       </Modal>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScan={handleBarcodeScan}
+        title="Escanear Produto"
+      />
     </PageContainer>
   );
 }

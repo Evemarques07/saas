@@ -17,10 +17,14 @@ import { ProductPage } from '../modules/catalog/ProductPage';
 import { CompaniesPage } from '../modules/companies/CompaniesPage';
 import { UsersPage } from '../modules/users/UsersPage';
 import { SettingsPage } from '../modules/settings/SettingsPage';
+import { CouponsPage } from '../modules/coupons/CouponsPage';
+import { LoyaltyPage } from '../modules/loyalty/LoyaltyPage';
+import { PromotionsPage } from '../modules/promotions/PromotionsPage';
 
 // Admin Pages
 import { AdminDashboardPage } from '../modules/admin/AdminDashboardPage';
 import { AdminUsersPage } from '../modules/admin/AdminUsersPage';
+import { WhatsAppAdminPage } from '../modules/admin/WhatsAppAdminPage';
 
 // Layouts
 import { TenantLayout } from '../components/layout/TenantLayout';
@@ -86,6 +90,7 @@ export function AppRoutes() {
         <Route index element={<AdminDashboardPage />} />
         <Route path="empresas" element={<CompaniesPage />} />
         <Route path="usuarios" element={<AdminUsersPage />} />
+        <Route path="whatsapp" element={<WhatsAppAdminPage />} />
       </Route>
 
       {/* Rotas do Tenant - /app/:slug/* */}
@@ -103,6 +108,9 @@ export function AppRoutes() {
         <Route path="clientes" element={<CustomersPage />} />
         <Route path="produtos" element={<ProductsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
+        <Route path="cupons" element={<CouponsPage />} />
+        <Route path="fidelidade" element={<LoyaltyPage />} />
+        <Route path="promocoes" element={<PromotionsPage />} />
         <Route path="usuarios" element={<UsersPage />} />
         <Route path="configuracoes" element={<SettingsPage />} />
       </Route>

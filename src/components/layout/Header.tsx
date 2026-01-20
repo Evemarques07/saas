@@ -31,7 +31,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-2 md:relative md:top-0 z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+    <header className="z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 mb-2 md:mb-4 flex-shrink-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
       {/* Left Side - Menu button (mobile) + Company Selector */}
       <div className="flex items-center gap-1 md:gap-2">
         {/* Mobile Menu Button */}
@@ -48,24 +48,41 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         {/* Company Selector */}
         <div className="relative">
           {companies.length > 0 && (
-            <button
-              onClick={() => setShowCompanyMenu(!showCompanyMenu)}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              {currentCompany?.logo_url ? (
-                <img
-                  src={currentCompany.logo_url}
-                  alt={currentCompany.name}
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-lg object-cover"
-                />
-              ) : (
-                <BusinessIcon className="w-5 h-5 text-gray-500" />
-              )}
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[120px] md:max-w-none truncate">
-                {currentCompany?.name || 'Selecionar empresa'}
-              </span>
-              <KeyboardArrowDownIcon className="w-4 h-4 text-gray-400" />
-            </button>
+            companies.length > 1 ? (
+              <button
+                onClick={() => setShowCompanyMenu(!showCompanyMenu)}
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {currentCompany?.logo_url ? (
+                  <img
+                    src={currentCompany.logo_url}
+                    alt={currentCompany.name}
+                    className="w-7 h-7 md:w-8 md:h-8 rounded-lg object-cover"
+                  />
+                ) : (
+                  <BusinessIcon className="w-5 h-5 text-gray-500" />
+                )}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[120px] md:max-w-none truncate">
+                  {currentCompany?.name || 'Selecionar empresa'}
+                </span>
+                <KeyboardArrowDownIcon className="w-4 h-4 text-gray-400" />
+              </button>
+            ) : (
+              <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2">
+                {currentCompany?.logo_url ? (
+                  <img
+                    src={currentCompany.logo_url}
+                    alt={currentCompany.name}
+                    className="w-7 h-7 md:w-8 md:h-8 rounded-lg object-cover"
+                  />
+                ) : (
+                  <BusinessIcon className="w-5 h-5 text-gray-500" />
+                )}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[120px] md:max-w-none truncate">
+                  {currentCompany?.name}
+                </span>
+              </div>
+            )
           )}
 
         {showCompanyMenu && companies.length > 1 && (

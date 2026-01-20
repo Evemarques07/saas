@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import CloseIcon from '@mui/icons-material/Close';
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
@@ -8,10 +9,14 @@ export function PWAInstallPrompt() {
   const { isInstallable, isInstalled, showPrompt, installApp, dismissPrompt } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const location = useLocation();
+
+  // Don't show on catalog pages - they have their own PWA install
+  const isCatalogPage = location.pathname.startsWith('/catalogo/');
 
   // Handle visibility with animation
   useEffect(() => {
-    if (showPrompt && isInstallable && !isInstalled) {
+    if (showPrompt && isInstallable && !isInstalled && !isCatalogPage) {
       // Small delay before showing for better UX
       const showTimer = setTimeout(() => {
         setIsVisible(true);
@@ -24,7 +29,7 @@ export function PWAInstallPrompt() {
       const hideTimer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(hideTimer);
     }
-  }, [showPrompt, isInstallable, isInstalled]);
+  }, [showPrompt, isInstallable, isInstalled, isCatalogPage]);
 
   const handleInstall = async () => {
     setIsAnimating(false);

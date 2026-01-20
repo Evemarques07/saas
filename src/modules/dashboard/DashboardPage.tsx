@@ -92,32 +92,39 @@ export function DashboardPage() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Helper: retorna o final do dia (23:59:59.999)
+    const endOfDay = (date: Date): Date => {
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    };
+
     switch (periodFilter) {
       case 'today':
-        return { startDate: today, endDate: now };
+        return { startDate: today, endDate: endOfDay(today) };
       case 'yesterday': {
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        return { startDate: yesterday, endDate: today };
+        return { startDate: yesterday, endDate: endOfDay(yesterday) };
       }
       case 'last7days': {
         const last7 = new Date(today);
-        last7.setDate(last7.getDate() - 7);
-        return { startDate: last7, endDate: now };
+        last7.setDate(last7.getDate() - 6); // -6 para incluir hoje (7 dias no total)
+        return { startDate: last7, endDate: endOfDay(today) };
       }
       case 'last30days': {
         const last30 = new Date(today);
-        last30.setDate(last30.getDate() - 30);
-        return { startDate: last30, endDate: now };
+        last30.setDate(last30.getDate() - 29); // -29 para incluir hoje (30 dias no total)
+        return { startDate: last30, endDate: endOfDay(today) };
       }
       case 'thisMonth': {
         const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { startDate: firstDayThisMonth, endDate: now };
+        return { startDate: firstDayThisMonth, endDate: endOfDay(today) };
       }
       case 'lastMonth': {
         const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-        return { startDate: firstDayLastMonth, endDate: lastDayLastMonth };
+        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); // Dia 0 do mes atual = ultimo dia do mes anterior
+        return { startDate: firstDayLastMonth, endDate: endOfDay(lastDayLastMonth) };
       }
       case 'all':
       default:

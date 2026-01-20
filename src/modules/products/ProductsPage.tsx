@@ -9,14 +9,15 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ImageIcon from '@mui/icons-material/Image';
 import LinkIcon from '@mui/icons-material/Link';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import * as XLSX from 'xlsx';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ImageUpload, ConfirmModal } from '../../components/ui';
+import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, MultiImageUpload, ConfirmModal, BarcodeScanner } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
-import { uploadProductImage, deleteProductImage, StorageError } from '../../services/storage';
-import { Product, Category, TableColumn } from '../../types';
+import { uploadProductImage, deleteProductImages, StorageError } from '../../services/storage';
+import { Product, Category, TableColumn, ProductImage } from '../../types';
 import { exportToExcel, exportToPDF } from '../../services/export';
 
 export function ProductsPage() {
@@ -28,9 +29,10 @@ export function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; product: Product | null }>({
     open: false,
     product: null,
@@ -40,12 +42,14 @@ export function ProductsPage() {
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<Array<Record<string, string | number>>>([]);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     sku: '',
+    ean: '',
     price: '',
     cost_price: '',
     stock: '0',
@@ -129,6 +133,7 @@ export function ProductsPage() {
       {
         'Nome *': 'Produto Exemplo',
         'Descrição': 'Descrição do produto',
+        'EAN': '7891234567890',
         'Preço *': 99.90,
         'Preço de Custo': 50.00,
         'Estoque': 10,
@@ -147,6 +152,7 @@ export function ProductsPage() {
     ws['!cols'] = [
       { wch: 25 }, // Nome
       { wch: 35 }, // Descricao
+      { wch: 15 }, // EAN
       { wch: 12 }, // Preco
       { wch: 15 }, // Preco de Custo
       { wch: 10 }, // Estoque
@@ -211,6 +217,7 @@ export function ProductsPage() {
           name,
           description: String(row['Descrição'] || row['Descricao'] || '').trim() || null,
           sku,
+          ean: String(row['EAN'] || row['Ean'] || row['ean'] || '').trim() || null,
           price,
           cost_price: parseFloat(String(row['Preço de Custo'] || row['Preco de Custo'] || 0)) || null,
           stock: parseInt(String(row['Estoque'] || 0)) || 0,
@@ -256,6 +263,7 @@ export function ProductsPage() {
         name: product.name,
         description: product.description || '',
         sku: product.sku || '',
+        ean: product.ean || '',
         price: String(product.price),
         cost_price: product.cost_price ? String(product.cost_price) : '',
         stock: String(product.stock),
@@ -264,7 +272,15 @@ export function ProductsPage() {
         is_active: product.is_active,
         show_in_catalog: product.show_in_catalog,
       });
-      setCurrentImageUrl(product.image_url || null);
+      // Load images from product or fallback to image_url
+      if (product.images && product.images.length > 0) {
+        setProductImages(product.images);
+      } else if (product.image_url) {
+        // Fallback: convert legacy image_url to images array
+        setProductImages([{ url: product.image_url, order: 0, isPrimary: true }]);
+      } else {
+        setProductImages([]);
+      }
     } else {
       // Gerar SKU automatico para novo produto
       const newSku = await generateSKU();
@@ -273,6 +289,7 @@ export function ProductsPage() {
         name: '',
         description: '',
         sku: newSku,
+        ean: '',
         price: '',
         cost_price: '',
         stock: '0',
@@ -281,9 +298,10 @@ export function ProductsPage() {
         is_active: true,
         show_in_catalog: true,
       });
-      setCurrentImageUrl(null);
+      setProductImages([]);
     }
-    setImageFile(null);
+    setNewImageFiles([]);
+    setDeletedImageUrls([]);
     setShowModal(true);
   };
 
@@ -298,38 +316,59 @@ export function ProductsPage() {
     setSubmitting(true);
 
     try {
-      let imageUrl = currentImageUrl;
+      let finalImages = [...productImages];
 
-      // Upload da nova imagem se houver
-      if (imageFile) {
-        setUploadingImage(true);
+      // Upload new images
+      if (newImageFiles.length > 0) {
+        setUploadingImages(true);
         try {
-          // Se ja tinha imagem, remover a antiga
-          if (editingProduct?.image_url) {
-            await deleteProductImage(editingProduct.image_url).catch(() => {
-              // Ignora erro ao deletar imagem antiga
-            });
+          for (const file of newImageFiles) {
+            const result = await uploadProductImage(file, currentCompany!.id);
+            // Find the matching image by its blob URL and replace with the real URL
+            const blobUrlIndex = finalImages.findIndex(img => img.url.startsWith('blob:'));
+            if (blobUrlIndex !== -1) {
+              finalImages[blobUrlIndex] = {
+                ...finalImages[blobUrlIndex],
+                url: result.url,
+              };
+            }
           }
-          const result = await uploadProductImage(imageFile, currentCompany!.id);
-          imageUrl = result.url;
         } catch (err) {
           if (err instanceof StorageError) {
             toast.error(err.message);
           } else {
-            toast.error('Erro ao enviar imagem');
+            toast.error('Erro ao enviar imagens');
           }
-          setUploadingImage(false);
+          setUploadingImages(false);
           setSubmitting(false);
           return;
         }
-        setUploadingImage(false);
+        setUploadingImages(false);
       }
+
+      // Delete removed images
+      if (deletedImageUrls.length > 0) {
+        await deleteProductImages(deletedImageUrls).catch(() => {
+          // Ignore errors when deleting images
+        });
+      }
+
+      // Normalize order values
+      finalImages = finalImages.map((img, index) => ({
+        ...img,
+        order: index,
+      }));
+
+      // Get primary image URL for backwards compatibility
+      const primaryImage = finalImages.find(img => img.isPrimary) || finalImages[0];
+      const imageUrl = primaryImage?.url || null;
 
       const productData = {
         company_id: currentCompany!.id,
         name: formData.name,
         description: formData.description || null,
         sku: formData.sku || null,
+        ean: formData.ean || null,
         price: parseFloat(formData.price),
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         stock: parseInt(formData.stock) || 0,
@@ -338,6 +377,7 @@ export function ProductsPage() {
         is_active: formData.is_active,
         show_in_catalog: formData.show_in_catalog,
         image_url: imageUrl,
+        images: finalImages,
       };
 
       if (editingProduct) {
@@ -379,10 +419,17 @@ export function ProductsPage() {
 
     setDeleting(true);
     try {
-      // Remover imagem do storage se existir
-      if (deleteModal.product.image_url) {
-        await deleteProductImage(deleteModal.product.image_url).catch(() => {
-          // Ignora erro ao deletar imagem
+      // Remover todas as imagens do storage
+      const imagesToDelete: string[] = [];
+      if (deleteModal.product.images && deleteModal.product.images.length > 0) {
+        imagesToDelete.push(...deleteModal.product.images.map(img => img.url));
+      } else if (deleteModal.product.image_url) {
+        imagesToDelete.push(deleteModal.product.image_url);
+      }
+
+      if (imagesToDelete.length > 0) {
+        await deleteProductImages(imagesToDelete).catch(() => {
+          // Ignora erro ao deletar imagens
         });
       }
 
@@ -402,15 +449,17 @@ export function ProductsPage() {
     }
   };
 
-  const handleRemoveImage = () => {
-    setCurrentImageUrl(null);
-    setImageFile(null);
+  const handleImagesChange = (images: ProductImage[], newFiles: File[], deletedUrls: string[]) => {
+    setProductImages(images);
+    setNewImageFiles(newFiles);
+    setDeletedImageUrls(deletedUrls);
   };
 
   const handleExport = (format: 'excel' | 'pdf') => {
     const data = filteredProducts.map((p) => ({
       Nome: p.name,
       SKU: p.sku || '-',
+      EAN: p.ean || '-',
       Categoria: p.category?.name || '-',
       Preço: `R$ ${p.price.toFixed(2)}`,
       Estoque: p.stock,
@@ -441,7 +490,8 @@ export function ProductsPage() {
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku?.toLowerCase().includes(search.toLowerCase())
+    p.sku?.toLowerCase().includes(search.toLowerCase()) ||
+    p.ean?.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns: TableColumn<Product>[] = [
@@ -574,17 +624,17 @@ export function ProductsPage() {
           </Button>
         </div>
       }
+      toolbar={
+        <Card className="p-3 md:p-4">
+          <Input
+            placeholder="Buscar por nome, SKU ou EAN..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<SearchIcon className="w-5 h-5" />}
+          />
+        </Card>
+      }
     >
-      {/* Search */}
-      <Card className="p-4 mb-4">
-        <Input
-          placeholder="Buscar por nome ou SKU..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          leftIcon={<SearchIcon className="w-5 h-5" />}
-        />
-      </Card>
-
       {/* Table */}
       <Table
         columns={columns}
@@ -682,19 +732,41 @@ export function ProductsPage() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Nome *"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Nome do produto"
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Nome *"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nome do produto"
-            />
             <Input
               label="SKU"
               value={formData.sku}
               onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
               placeholder="Código SKU"
             />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                EAN (Código de Barras)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={formData.ean}
+                  onChange={(e) => setFormData({ ...formData, ean: e.target.value })}
+                  placeholder="Ex: 7891234567890"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center gap-1"
+                  title="Escanear código de barras"
+                >
+                  <QrCodeScannerIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <Input
@@ -704,13 +776,12 @@ export function ProductsPage() {
             placeholder="Descricao do produto"
           />
 
-          <ImageUpload
-            label="Imagem do Produto"
-            value={currentImageUrl}
-            onChange={(file) => setImageFile(file)}
-            onRemove={handleRemoveImage}
-            loading={uploadingImage}
-            helperText="A imagem sera exibida no catalogo"
+          <MultiImageUpload
+            label="Imagens do Produto"
+            value={productImages}
+            onChange={handleImagesChange}
+            loading={uploadingImages}
+            helperText="Adicione ate 4 imagens. A imagem principal sera exibida como thumbnail."
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -903,6 +974,17 @@ export function ProductsPage() {
           </ModalFooter>
         </div>
       </Modal>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScan={(code) => {
+          setFormData({ ...formData, ean: code });
+          toast.success(`Código escaneado: ${code}`);
+        }}
+        title="Escanear EAN do Produto"
+      />
     </PageContainer>
   );
 }

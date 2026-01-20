@@ -72,6 +72,7 @@ export function CartProvider({ children, companySlug }: CartProviderProps) {
           quantity: 1,
           imageUrl: product.image_url,
           stock: product.stock,
+          categoryId: product.category_id || undefined,
         },
       ];
     });

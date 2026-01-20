@@ -4,6 +4,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AddIcon from '@mui/icons-material/Add';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Card, Button } from '../../components/ui';
 import { supabase } from '../../services/supabase';
@@ -125,6 +126,10 @@ export function AdminDashboardPage() {
           <Button onClick={() => navigate('/admin/usuarios')}>
             <PeopleIcon className="w-4 h-4" />
             Gerenciar Usuarios
+          </Button>
+          <Button onClick={() => navigate('/admin/whatsapp')}>
+            <WhatsAppIcon className="w-4 h-4" />
+            WhatsApp
           </Button>
           <Button
             variant="secondary"

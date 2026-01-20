@@ -33,7 +33,7 @@ export function AdminHeader({ onMenuClick, isMobile = false }: AdminHeaderProps)
   };
 
   return (
-    <header className="sticky top-2 md:relative md:top-0 z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 bg-gray-800 border border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+    <header className="z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 mb-2 md:mb-4 flex-shrink-0 bg-gray-800 border border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
       {/* Left Side - Menu button (mobile) + Title */}
       <div className="flex items-center gap-2">
         {/* Mobile Menu Button */}

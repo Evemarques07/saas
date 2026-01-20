@@ -1,2 +1,11 @@
 export { CartDrawer } from './CartDrawer';
 export { CheckoutModal } from './CheckoutModal';
+export { CustomerLoginModal } from './CustomerLoginModal';
+export { CustomerAccountDrawer } from './CustomerAccountDrawer';
+export { OrderHistoryList } from './OrderHistoryList';
+export { OrderDetailModal } from './OrderDetailModal';
+export { LoyaltyCard } from './LoyaltyCard';
+export { CouponsList } from './CouponsList';
+export { CouponInput } from './CouponInput';
+export { PointsRedeemSlider } from './PointsRedeemSlider';
+export { CatalogInstallPrompt, CatalogInstallButton } from './CatalogInstallPrompt';

@@ -5,6 +5,9 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import StarsIcon from '@mui/icons-material/Stars';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -15,6 +18,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
   buildAppPath,
   buildCatalogoPath,
@@ -35,16 +39,20 @@ interface NavItemConfig {
   icon: React.ReactNode;
   adminOnly?: boolean;
   superAdminOnly?: boolean;
+  badgeKey?: 'pendingOrders';
 }
 
 // Configuracao de itens de navegacao (rotas relativas)
 const navItemsConfig: NavItemConfig[] = [
   { route: PATHS.DASHBOARD, label: 'Dashboard', icon: <DashboardIcon /> },
   { route: PATHS.VENDAS, label: 'Vendas', icon: <ShoppingCartIcon /> },
-  { route: PATHS.PEDIDOS_CATALOGO, label: 'Pedidos', icon: <LocalShippingIcon /> },
+  { route: PATHS.PEDIDOS_CATALOGO, label: 'Pedidos', icon: <LocalShippingIcon />, badgeKey: 'pendingOrders' },
   { route: PATHS.CLIENTES, label: 'Clientes', icon: <PeopleIcon /> },
   { route: PATHS.PRODUTOS, label: 'Produtos', icon: <InventoryIcon /> },
   { route: PATHS.CATEGORIAS, label: 'Categorias', icon: <CategoryIcon /> },
+  { route: PATHS.CUPONS, label: 'Cupons', icon: <LocalOfferIcon /> },
+  { route: PATHS.FIDELIDADE, label: 'Fidelidade', icon: <StarsIcon /> },
+  { route: PATHS.PROMOCOES, label: 'Promocoes', icon: <CampaignIcon /> },
   { route: PATHS.USUARIOS, label: 'Usuarios', icon: <GroupIcon />, adminOnly: true },
   { route: PATHS.CONFIGURACOES, label: 'Configuracoes', icon: <SettingsIcon /> },
 ];
@@ -54,6 +62,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
   const navigate = useNavigate();
   const { isSuperAdmin } = useAuth();
   const { isAdmin, currentCompany } = useTenant();
+  const { pendingOrdersCount, hasNewOrders, markOrdersAsSeen } = useNotifications();
 
   // Se nao tem empresa, nao renderiza
   if (!currentCompany) {
@@ -67,6 +76,12 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
 
   const slug = currentCompany.slug;
 
+  // Funcao para obter o valor do badge
+  const getBadgeValue = (badgeKey?: 'pendingOrders'): number => {
+    if (badgeKey === 'pendingOrders') return pendingOrdersCount;
+    return 0;
+  };
+
   // Construir itens de navegacao com paths dinamicos
   const navItems = navItemsConfig
     .filter((item) => {
@@ -77,6 +92,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
     .map((item) => ({
       ...item,
       path: buildAppPath(slug, item.route),
+      badge: getBadgeValue(item.badgeKey),
     }));
 
   const catalogUrl = `${window.location.origin}${buildCatalogoPath(slug)}`;
@@ -97,7 +113,11 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
   };
 
   // Funcao para fechar sidebar ao navegar (mobile)
-  const handleNavClick = () => {
+  const handleNavClick = (badgeKey?: 'pendingOrders') => {
+    // Se clicou em Pedidos, marcar como visto
+    if (badgeKey === 'pendingOrders') {
+      markOrdersAsSeen();
+    }
     if (isMobile && onClose) {
       onClose();
     }
@@ -115,13 +135,13 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
       `}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
+      <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-700 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {(isMobile || !collapsed) && (
           <span className="logo-text text-2xl font-bold text-primary-600">EJYM</span>
         )}
         <button
           onClick={isMobile ? onClose : onToggle}
-          className={`p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${!isMobile && collapsed ? 'mx-auto' : ''}`}
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           {isMobile ? <CloseIcon /> : collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
         </button>
@@ -132,24 +152,44 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
         {navItems.map((item) => {
           const isActive = isActiveRoute(item.path, item.route);
           const showLabel = isMobile || !collapsed;
+          const showBadge = item.badge > 0;
 
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              onClick={handleNavClick}
+              onClick={() => handleNavClick(item.badgeKey)}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative
                 ${isActive
                   ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
                   : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }
               `}
-              title={!showLabel ? item.label : undefined}
+              title={!showLabel ? `${item.label}${showBadge ? ` (${item.badge})` : ''}` : undefined}
             >
-              <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+              <span className="w-5 h-5 flex-shrink-0 relative">
+                {item.icon}
+                {/* Badge no icone quando sidebar colapsada */}
+                {showBadge && !showLabel && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </span>
               {showLabel && (
-                <span className="text-sm font-medium">{item.label}</span>
+                <>
+                  <span className="text-sm font-medium flex-1">{item.label}</span>
+                  {/* Badge ao lado do label */}
+                  {showBadge && (
+                    <span className={`
+                      min-w-[20px] h-5 flex items-center justify-center text-xs font-bold text-white rounded-full px-1.5
+                      ${hasNewOrders && item.badgeKey === 'pendingOrders' ? 'bg-red-500 animate-pulse' : 'bg-red-500'}
+                    `}>
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </>
               )}
             </NavLink>
           );

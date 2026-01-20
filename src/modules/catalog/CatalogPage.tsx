@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import PersonIcon from '@mui/icons-material/Person';
+import LoginIcon from '@mui/icons-material/Login';
+import GetAppIcon from '@mui/icons-material/GetApp';
 import { supabase } from '../../services/supabase';
 import { Company, Product, Category } from '../../types';
-import { Input, Select, Card, Button } from '../../components/ui';
+import { Input, Select, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { CartProvider, useCart } from '../../contexts/CartContext';
-import { CartDrawer, CheckoutModal } from './components';
+import { CatalogCustomerProvider, useCatalogCustomer } from '../../contexts/CatalogCustomerContext';
+import { CartDrawer, CheckoutModal, CustomerLoginModal, CustomerAccountDrawer, CatalogInstallPrompt } from './components';
+import { useCatalogPWA } from '../../hooks/useCatalogPWA';
 
 export function CatalogPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -86,11 +93,13 @@ export function CatalogPage() {
 
   return (
     <CartProvider companySlug={company.slug}>
-      <CatalogContent
-        company={company}
-        products={products}
-        categories={categories}
-      />
+      <CatalogCustomerProvider companyId={company.id} companySlug={company.slug}>
+        <CatalogContent
+          company={company}
+          products={products}
+          categories={categories}
+        />
+      </CatalogCustomerProvider>
     </CartProvider>
   );
 }
@@ -103,10 +112,23 @@ interface CatalogContentProps {
 
 function CatalogContent({ company, products, categories }: CatalogContentProps) {
   const { itemCount, addItem, isInCart, getItemQuantity, updateQuantity } = useCart();
+  const { customer, isAuthenticated, isLoading: customerLoading } = useCatalogCustomer();
+  const {
+    isInstallable,
+    isInstalled,
+    isIOS,
+    installApp,
+    showIOSInstructions,
+    setShowIOSInstructions,
+  } = useCatalogPWA({ company });
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [accountDrawerOpen, setAccountDrawerOpen] = useState(false);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
@@ -125,13 +147,23 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
     setCheckoutOpen(true);
   };
 
+  const handleOpenLightbox = (product: Product, index: number) => {
+    setLightboxProduct(product);
+    setLightboxIndex(index);
+  };
+
+  const handleCloseLightbox = () => {
+    setLightboxProduct(null);
+    setLightboxIndex(0);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex flex-col p-2 md:p-4">
+      {/* Header - Arredondado */}
+      <header className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 mb-2 md:mb-4 flex-shrink-0">
+        <div className="px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
               {company.logo_url && (
                 <img
                   src={company.logo_url}
@@ -140,173 +172,225 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                 />
               )}
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
                   {company.name}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                   Catálogo de Produtos
                 </p>
               </div>
             </div>
 
-            {/* Cart Button (Desktop) */}
-            <button
-              onClick={() => setCartOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-            >
-              <ShoppingCartIcon className="w-5 h-5" />
-              <span className="font-medium">Carrinho</span>
-              {itemCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-bold bg-white text-primary-600 rounded-full">
-                  {itemCount}
-                </span>
+            {/* Account & Cart Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Account Button */}
+              {customerLoading ? (
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse" />
+              ) : isAuthenticated ? (
+                <button
+                  onClick={() => setAccountDrawerOpen(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title={customer?.name || 'Minha Conta'}
+                >
+                  <PersonIcon className="w-5 h-5" />
+                  <span className="hidden sm:inline font-medium max-w-[120px] truncate">{customer?.name?.split(' ')[0]}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setLoginModalOpen(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title="Entrar"
+                >
+                  <LoginIcon className="w-5 h-5" />
+                  <span className="hidden sm:inline font-medium">Entrar</span>
+                </button>
               )}
-            </button>
+
+              {/* Install Button - Only when installable */}
+              {isInstallable && !isInstalled && (
+                <button
+                  onClick={installApp}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                  title="Instalar App"
+                >
+                  <GetAppIcon className="w-5 h-5" />
+                  <span className="font-medium">Instalar</span>
+                </button>
+              )}
+
+              {/* Cart Button - Desktop only (mobile has floating button) */}
+              <button
+                onClick={() => setCartOpen(true)}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+              >
+                <ShoppingCartIcon className="w-5 h-5" />
+                <span className="font-medium">Carrinho</span>
+                {itemCount > 0 && (
+                  <span className="px-2 py-0.5 text-xs font-bold bg-white text-primary-600 rounded-full">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar produtos..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                leftIcon={<SearchIcon className="w-5 h-5" />}
-              />
+      {/* Main Content - Container arredondado com scroll interno */}
+      <main className="flex-1 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
+        {/* Filters - Sticky no topo */}
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 px-3 md:px-4 pt-3 md:pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+          <Card className="p-3 md:p-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  leftIcon={<SearchIcon className="w-5 h-5" />}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    type="button"
+                    aria-label="Limpar busca"
+                  >
+                    <CloseIcon className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="w-full md:w-64">
+                <Select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  options={[
+                    { value: '', label: 'Todas as categorias' },
+                    ...categories.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                />
+              </div>
             </div>
-            <div className="w-full md:w-64">
-              <Select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                options={[
-                  { value: '', label: 'Todas as categorias' },
-                  ...categories.map((c) => ({ value: c.id, label: c.name })),
-                ]}
-              />
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
-          <EmptyState
-            title="Nenhum produto encontrado"
-            description="Tente ajustar os filtros de busca"
-          />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => {
-              const inCart = isInCart(product.id);
-              const quantity = getItemQuantity(product.id);
-              const isOutOfStock = product.stock <= 0;
+        {/* Products Grid - Área com scroll */}
+        <div className="flex-1 overflow-auto px-3 md:px-4 py-3 md:py-4">
+          {filteredProducts.length === 0 ? (
+            <EmptyState
+              title="Nenhum produto encontrado"
+              description="Tente ajustar os filtros de busca"
+            />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+              {filteredProducts.map((product) => {
+                const inCart = isInCart(product.id);
+                const quantity = getItemQuantity(product.id);
+                const isOutOfStock = product.stock <= 0;
 
-              return (
-                <Card key={product.id} padding="none" className="overflow-hidden flex flex-col">
-                  {/* Product Image */}
-                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 relative">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
+                return (
+                  <Card key={product.id} padding="none" className="overflow-hidden flex flex-col">
+                    {/* Product Image */}
+                    <div className="relative">
+                      <ImageCarousel
+                        images={product.images || []}
+                        fallbackUrl={product.image_url}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        onImageClick={(index) => handleOpenLightbox(product, index)}
+                        className="bg-gray-100 dark:bg-gray-700"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <svg
-                          className="w-16 h-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                    {isOutOfStock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white font-semibold text-lg">Esgotado</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="p-4 flex-1 flex flex-col">
-                    {product.category && (
-                      <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
-                        {product.category.name}
-                      </span>
-                    )}
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1 line-clamp-2">
-                      {product.name}
-                    </h3>
-                    {product.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                        {product.description}
-                      </p>
-                    )}
-                    <p className="text-lg font-bold text-primary-600 mt-2">
-                      {formatCurrency(product.price)}
-                    </p>
-
-                    {/* Add to Cart Button */}
-                    <div className="mt-auto pt-3">
-                      {isOutOfStock ? (
-                        <Button variant="secondary" disabled className="w-full">
-                          Indisponível
-                        </Button>
-                      ) : inCart ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updateQuantity(product.id, quantity - 1)}
-                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                          >
-                            <RemoveIcon className="w-5 h-5" />
-                          </button>
-                          <span className="flex-1 text-center font-semibold text-lg">
-                            {quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(product.id, quantity + 1)}
-                            disabled={quantity >= product.stock}
-                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                          >
-                            <AddIcon className="w-5 h-5" />
-                          </button>
+                      {isOutOfStock && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
+                          <span className="text-white font-semibold text-sm md:text-lg">Esgotado</span>
                         </div>
-                      ) : (
-                        <Button
-                          onClick={() => addItem(product)}
-                          icon={<AddShoppingCartIcon />}
-                          className="w-full"
-                        >
-                          Adicionar
-                        </Button>
                       )}
                     </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-8">
-        <div className="max-w-7xl mx-auto px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          Powered by <span className="font-semibold text-primary-600">Ejym</span>
+                    {/* Product Info */}
+                    <div className="p-3 md:p-4 flex-1 flex flex-col">
+                      {product.category && (
+                        <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
+                          {product.category.name}
+                        </span>
+                      )}
+                      <Link
+                        to={`/catalogo/${company.slug}/produto/${product.id}`}
+                        className="block mt-1"
+                      >
+                        <h3 className="text-xs md:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                          {product.name}
+                        </h3>
+                      </Link>
+                      {product.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 hidden md:block">
+                          {product.description}
+                        </p>
+                      )}
+                      <p className="text-base md:text-lg font-bold text-primary-600 mt-2">
+                        {formatCurrency(product.price)}
+                      </p>
+
+                      {/* Actions */}
+                      <div className="mt-auto pt-2 md:pt-3 space-y-2">
+                        {/* Ver Detalhes Button */}
+                        <Link to={`/catalogo/${company.slug}/produto/${product.id}`} className="block">
+                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                            <VisibilityIcon className="w-4 h-4" />
+                            <span className="hidden md:inline">Ver Detalhes</span>
+                            <span className="md:hidden">Detalhes</span>
+                          </button>
+                        </Link>
+
+                        {/* Add to Cart Button */}
+                        <div>
+                          {isOutOfStock ? (
+                            <Button variant="secondary" disabled className="w-full text-xs md:text-sm">
+                              Indisponível
+                            </Button>
+                          ) : inCart ? (
+                            <div className="flex items-center gap-1 md:gap-2">
+                              <button
+                                onClick={() => updateQuantity(product.id, quantity - 1)}
+                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                              >
+                                <RemoveIcon className="w-4 h-4 md:w-5 md:h-5" />
+                              </button>
+                              <span className="flex-1 text-center font-semibold text-base md:text-lg">
+                                {quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(product.id, quantity + 1)}
+                                disabled={quantity >= product.stock}
+                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                              >
+                                <AddIcon className="w-4 h-4 md:w-5 md:h-5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => addItem(product)}
+                              icon={<AddShoppingCartIcon className="w-4 h-4 md:w-5 md:h-5" />}
+                              className="w-full text-xs md:text-sm"
+                            >
+                              <span className="hidden md:inline">Adicionar</span>
+                              <span className="md:hidden">Add</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Footer dentro do container */}
+          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+            Powered by <span className="font-semibold text-primary-600">Ejym</span>
+          </div>
         </div>
-      </footer>
+      </main>
 
       {/* Floating Cart Button (Mobile) */}
       {itemCount > 0 && (
@@ -331,6 +415,51 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
         company={company}
+      />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxProduct !== null}
+        onClose={handleCloseLightbox}
+        images={lightboxProduct?.images || []}
+        fallbackUrl={lightboxProduct?.image_url}
+        initialIndex={lightboxIndex}
+        alt={lightboxProduct?.name || ''}
+      />
+
+      {/* Customer Login Modal */}
+      <CustomerLoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onSuccess={() => setAccountDrawerOpen(true)}
+      />
+
+      {/* Customer Account Drawer */}
+      <CustomerAccountDrawer
+        isOpen={accountDrawerOpen}
+        onClose={() => setAccountDrawerOpen(false)}
+        onRepeatOrder={(items) => {
+          items.forEach(({ productId, quantity }) => {
+            const product = products.find((p) => p.id === productId);
+            if (product) {
+              for (let i = 0; i < quantity; i++) {
+                addItem(product);
+              }
+            }
+          });
+          setAccountDrawerOpen(false);
+          setCartOpen(true);
+        }}
+      />
+
+      {/* PWA Install Prompt */}
+      <CatalogInstallPrompt
+        company={company}
+        isInstallable={isInstallable}
+        isIOS={isIOS}
+        onInstall={installApp}
+        showIOSInstructions={showIOSInstructions}
+        onCloseIOSInstructions={() => setShowIOSInstructions(false)}
       />
     </div>
   );

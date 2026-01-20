@@ -257,17 +257,17 @@ export function CustomersPage() {
           </Button>
         </div>
       }
+      toolbar={
+        <Card className="p-3 md:p-4">
+          <Input
+            placeholder="Buscar por nome, email ou telefone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<SearchIcon className="w-5 h-5" />}
+          />
+        </Card>
+      }
     >
-      {/* Search */}
-      <Card className="p-4 mb-4">
-        <Input
-          placeholder="Buscar por nome, email ou telefone..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          leftIcon={<SearchIcon className="w-5 h-5" />}
-        />
-      </Card>
-
       {/* Table */}
       <Table
         columns={columns}

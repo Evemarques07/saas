@@ -14,6 +14,8 @@ interface ImageUploadProps {
   maxSize?: number;
   disabled?: boolean;
   loading?: boolean;
+  showRemoveButton?: boolean;
+  compact?: boolean;
 }
 
 export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
@@ -29,6 +31,8 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
       maxSize = 5 * 1024 * 1024,
       disabled = false,
       loading = false,
+      showRemoveButton = true,
+      compact = false,
     },
     ref
   ) => {
@@ -118,7 +122,7 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
     };
 
     return (
-      <div className="w-full">
+      <div className={compact ? 'w-48' : 'w-full'}>
         {label && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {label}
@@ -131,11 +135,11 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
-            relative w-full border-2 border-dashed rounded-lg transition-colors cursor-pointer
+            relative border-2 border-dashed rounded-lg transition-colors cursor-pointer
             ${isDragging ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : ''}
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary-400'}
-            ${displayImage ? 'p-2' : 'p-6'}
+            ${displayImage ? 'p-2' : compact ? 'p-4' : 'p-6'}
           `}
         >
           <input
@@ -162,39 +166,43 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
               </p>
             </div>
           ) : displayImage ? (
-            <div className="relative aspect-video w-full max-w-xs mx-auto">
+            <div className={`relative ${compact ? 'aspect-square w-full' : 'aspect-video w-full max-w-xs mx-auto'}`}>
               <img
                 src={displayImage}
                 alt="Preview"
                 className="w-full h-full object-contain rounded-lg"
               />
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={disabled}
-                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
-              >
-                <DeleteOutline className="w-4 h-4" style={{ fontSize: 16 }} />
-              </button>
+              {showRemoveButton && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={disabled}
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+                >
+                  <DeleteOutline className="w-4 h-4" style={{ fontSize: 16 }} />
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full mb-3">
+              <div className={`${compact ? 'p-2 mb-2' : 'p-3 mb-3'} bg-gray-100 dark:bg-gray-700 rounded-full`}>
                 {isDragging ? (
-                  <ImageOutlined className="w-6 h-6 text-primary-500" style={{ fontSize: 24 }} />
+                  <ImageOutlined className={compact ? 'w-5 h-5' : 'w-6 h-6'} style={{ fontSize: compact ? 20 : 24 }} />
                 ) : (
-                  <CloudUploadOutlined className="w-6 h-6 text-gray-400" style={{ fontSize: 24 }} />
+                  <CloudUploadOutlined className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} text-gray-400`} style={{ fontSize: compact ? 20 : 24 }} />
                 )}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className={`${compact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-300`}>
                 <span className="font-medium text-primary-600 dark:text-primary-400">
-                  Clique para enviar
-                </span>{' '}
-                ou arraste uma imagem
+                  {compact ? 'Enviar' : 'Clique para enviar'}
+                </span>
+                {!compact && ' ou arraste uma imagem'}
               </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                PNG, JPG ou WebP (max. {formatSize(maxSize)})
-              </p>
+              {!compact && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  PNG, JPG ou WebP (max. {formatSize(maxSize)})
+                </p>
+              )}
             </div>
           )}
         </div>

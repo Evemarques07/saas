@@ -168,6 +168,53 @@ export async function deleteCompanyLogo(logoUrl: string): Promise<void> {
 }
 
 /**
+ * Faz upload de multiplas imagens de produto em lote
+ * @param files - Array de arquivos a serem enviados
+ * @param companyId - ID da empresa
+ * @returns Array de resultados com URLs publicas
+ */
+export async function uploadProductImages(
+  files: File[],
+  companyId: string
+): Promise<UploadResult[]> {
+  const results: UploadResult[] = [];
+
+  for (const file of files) {
+    const result = await uploadProductImage(file, companyId);
+    results.push(result);
+  }
+
+  return results;
+}
+
+/**
+ * Remove multiplas imagens de produtos do Supabase Storage
+ * @param imageUrls - Array de URLs das imagens a remover
+ */
+export async function deleteProductImages(imageUrls: string[]): Promise<void> {
+  const paths: string[] = [];
+
+  for (const imageUrl of imageUrls) {
+    const urlParts = imageUrl.split(`/storage/v1/object/public/${PRODUCTS_BUCKET}/`);
+
+    if (urlParts.length === 2) {
+      paths.push(urlParts[1]);
+    }
+  }
+
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage
+    .from(PRODUCTS_BUCKET)
+    .remove(paths);
+
+  if (error) {
+    console.error('Delete error:', error);
+    throw new StorageError(`Erro ao remover imagens: ${error.message}`);
+  }
+}
+
+/**
  * Constantes exportadas para uso externo
  */
 export const STORAGE_CONFIG = {
