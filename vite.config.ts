@@ -10,13 +10,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Don't inject manifest link - we handle it dynamically for catalog pages
       injectManifest: undefined,
-      includeAssets: ['favicon.ico', 'logo.png', 'apple-touch-icon.png'],
+      includeAssets: ['mv64x64p.png', 'mv512x512p.png', 'mv512x512pretoFundoBranco.png', 'mv180x180p.png', 'og-image.png'],
       manifest: {
-        name: 'Ejym - Gestão de Vendas',
-        short_name: 'Ejym',
-        description: 'Sistema SaaS de gestão de vendas multi-tenant',
+        name: 'Mercado Virtual',
+        short_name: 'Mercado Virtual',
+        description: 'Seu catalogo online de produtos',
         theme_color: '#6366f1',
-        background_color: '#111827',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
@@ -24,20 +24,20 @@ export default defineConfig({
         id: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'mv192x192p.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'mv512x512p.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'mv512x512pretoFundoBranco.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'maskable'
           }
         ]
       },
