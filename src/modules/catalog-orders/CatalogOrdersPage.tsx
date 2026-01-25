@@ -14,7 +14,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { supabase } from '../../services/supabase';
-import { sendTextMessage, formatOrderMessageForCustomer, WhatsAppSettings, defaultWhatsAppSettings } from '../../services/whatsapp';
+import { sendTextMessage, formatOrderMessageForCustomer, WhatsAppSettings, defaultWhatsAppSettings, getConnectionState } from '../../services/whatsapp';
 import { CatalogOrder, CatalogOrderItem, CatalogOrderStatus } from '../../types';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -214,13 +214,19 @@ export function CatalogOrdersPage() {
 
       console.log('[WhatsApp] sendWhatsAppNotification called', { orderId: order.id, newStatus, customerPhone: order.customer_phone });
 
-      // Get company WhatsApp settings
-      const rawSettings = currentCompany?.whatsapp_settings;
+      // Get company WhatsApp settings (merge with defaults to handle missing fields)
+      const rawSettings = currentCompany?.whatsapp_settings as Partial<WhatsAppSettings> | null;
       console.log('[WhatsApp] Raw settings:', rawSettings);
 
-      const whatsAppSettings: WhatsAppSettings = rawSettings
-        ? (rawSettings as WhatsAppSettings)
-        : defaultWhatsAppSettings;
+      const whatsAppSettings: WhatsAppSettings = {
+        ...defaultWhatsAppSettings,
+        ...rawSettings,
+        // Ensure notification settings default to true if not explicitly set
+        notify_on_new_order: rawSettings?.notify_on_new_order ?? true,
+        notify_on_confirm: rawSettings?.notify_on_confirm ?? true,
+        notify_on_complete: rawSettings?.notify_on_complete ?? true,
+        notify_on_cancel: rawSettings?.notify_on_cancel ?? true,
+      };
 
       console.log('[WhatsApp] Settings:', {
         enabled: whatsAppSettings.enabled,
@@ -231,9 +237,42 @@ export function CatalogOrdersPage() {
         notify_on_cancel: whatsAppSettings.notify_on_cancel
       });
 
-      // Check if WhatsApp is enabled and connected
-      if (!whatsAppSettings.enabled || !whatsAppSettings.connected || !whatsAppSettings.user_token) {
-        console.log('[WhatsApp] Skipping - not enabled/connected');
+      // Check if WhatsApp is enabled and has token
+      if (!whatsAppSettings.enabled || !whatsAppSettings.user_token) {
+        console.log('[WhatsApp] Skipping - not enabled or no token');
+        return;
+      }
+
+      // Check real-time connection status (don't rely on cached value in database)
+      const connectionState = await getConnectionState(whatsAppSettings.user_token);
+      console.log('[WhatsApp] Real-time connection state:', connectionState.state);
+
+      const isConnected = connectionState.state === 'open';
+
+      // Sync database if connection status differs from cached value (fire-and-forget)
+      if (isConnected !== whatsAppSettings.connected && currentCompany) {
+        console.log('[WhatsApp] Syncing connection status to database:', isConnected);
+        (async () => {
+          try {
+            await supabase
+              .from('companies')
+              .update({
+                whatsapp_settings: {
+                  ...rawSettings,
+                  connected: isConnected,
+                  connected_at: isConnected ? new Date().toISOString() : null,
+                },
+              })
+              .eq('id', currentCompany.id);
+            console.log('[WhatsApp] Database synced');
+          } catch (err) {
+            console.error('[WhatsApp] Failed to sync database:', err);
+          }
+        })();
+      }
+
+      if (!isConnected) {
+        console.log('[WhatsApp] Skipping - WhatsApp not connected (real-time check)');
         return;
       }
 

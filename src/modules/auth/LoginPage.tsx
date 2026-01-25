@@ -7,11 +7,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Button, Input, Card } from '../../components/ui';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { signIn, signInWithGoogle } = useAuth();
+  const { theme } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,8 +76,12 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-600">Ejym</h1>
+        <div className="flex flex-col items-center mb-8">
+          <img
+            src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
+            alt="Mercado Virtual"
+            className="h-20 w-auto object-contain"
+          />
           <p className="text-gray-500 dark:text-gray-400 mt-2">
             Sistema de Gestao de Vendas
           </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import BusinessIcon from '@mui/icons-material/Business';
+import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -24,7 +25,7 @@ import { Card, Button, Input, ImageUpload, WhatsAppConnectModal } from '../../co
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { uploadCompanyLogo, deleteCompanyLogo } from '../../services/storage';
+import { uploadCompanyLogo, deleteCompanyLogo, uploadUserAvatar, deleteUserAvatar } from '../../services/storage';
 import { auth } from '../../services/firebase';
 import {
   getConnectionState,
@@ -88,12 +89,17 @@ const validatePhoneNumber = (value: string): { valid: boolean; message: string }
 
 export function SettingsPage() {
   const { currentCompany, isAdmin } = useTenant();
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
 
   // Company Logo State
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(currentCompany?.logo_url || null);
   const [savingLogo, setSavingLogo] = useState(false);
+
+  // User Avatar State
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || user?.photoURL || null);
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   // Company Phone/WhatsApp State
   const [companyPhone, setCompanyPhone] = useState(currentCompany?.phone || '');
@@ -107,6 +113,11 @@ export function SettingsPage() {
   const [savingWhatsAppSettings, setSavingWhatsAppSettings] = useState(false);
   const [testingMessage, setTestingMessage] = useState(false);
   const [testPhone, setTestPhone] = useState('');
+
+  // Sync avatar preview when profile changes
+  useEffect(() => {
+    setAvatarPreview(profile?.avatar_url || user?.photoURL || null);
+  }, [profile?.avatar_url, user?.photoURL]);
 
   // Sync company phone when currentCompany changes
   useEffect(() => {
@@ -277,6 +288,85 @@ export function SettingsPage() {
       toast.error('Erro ao remover logo');
     } finally {
       setSavingLogo(false);
+    }
+  };
+
+  // Avatar handlers
+  const handleAvatarChange = (file: File | null) => {
+    setAvatarFile(file);
+    if (file) {
+      setAvatarPreview(URL.createObjectURL(file));
+    } else {
+      setAvatarPreview(profile?.avatar_url || user?.photoURL || null);
+    }
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!profile || !avatarFile) return;
+
+    setSavingAvatar(true);
+
+    try {
+      // Deleta avatar antigo se existir (apenas se for do Supabase)
+      if (profile.avatar_url && profile.avatar_url.includes('supabase.co')) {
+        try {
+          await deleteUserAvatar(profile.avatar_url);
+        } catch (e) {
+          console.warn('Erro ao deletar avatar antigo:', e);
+        }
+      }
+
+      const result = await uploadUserAvatar(avatarFile, profile.id);
+
+      // Atualiza no banco
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: result.url })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      toast.success('Foto de perfil atualizada!');
+      setAvatarFile(null);
+      await refreshProfile();
+    } catch (error) {
+      console.error('Erro ao salvar avatar:', error);
+      toast.error('Erro ao salvar foto de perfil');
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!profile || !profile.avatar_url) return;
+
+    // Nao permite remover se for foto do Google (usuario pode nao ter como voltar)
+    if (!profile.avatar_url.includes('supabase.co')) {
+      toast.error('Nao e possivel remover a foto do Google');
+      return;
+    }
+
+    setSavingAvatar(true);
+
+    try {
+      await deleteUserAvatar(profile.avatar_url);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      toast.success('Foto de perfil removida!');
+      setAvatarPreview(user?.photoURL || null);
+      setAvatarFile(null);
+      await refreshProfile();
+    } catch (error) {
+      console.error('Erro ao remover avatar:', error);
+      toast.error('Erro ao remover foto de perfil');
+    } finally {
+      setSavingAvatar(false);
     }
   };
 
@@ -566,6 +656,74 @@ export function SettingsPage() {
             </div>
           </Card>
         )}
+
+        {/* User Avatar - All Users */}
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <PersonIcon className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Foto de Perfil
+              </h2>
+              <p className="text-sm text-gray-500">
+                Personalize sua foto de perfil
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-6">
+            {/* Avatar Preview */}
+            <div className="flex-shrink-0">
+              <ImageUpload
+                label="Sua Foto"
+                value={avatarPreview}
+                onChange={handleAvatarChange}
+                showRemoveButton={false}
+                compact
+                rounded
+              />
+            </div>
+
+            {/* Info and Actions */}
+            <div className="flex-1 flex flex-col justify-between">
+              <div className="space-y-2">
+                {user?.photoURL && !profile?.avatar_url?.includes('supabase.co') && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <GoogleIcon className="w-4 h-4 text-red-500" />
+                    <span>Usando foto do Google</span>
+                  </div>
+                )}
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  A foto sera exibida no cabecalho e em suas atividades.
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  Recomendado: imagem quadrada (200x200px ou maior). Formatos: PNG, JPG ou WebP.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Button
+                  onClick={handleSaveAvatar}
+                  loading={savingAvatar}
+                  disabled={!avatarFile}
+                >
+                  Salvar Foto
+                </Button>
+                {profile?.avatar_url?.includes('supabase.co') && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleRemoveAvatar}
+                    loading={savingAvatar}
+                  >
+                    Remover Foto
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
 
         {/* WhatsApp Unificado - Admin Only */}
         {isAdmin && (

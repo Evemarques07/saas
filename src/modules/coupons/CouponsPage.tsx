@@ -322,7 +322,91 @@ export function CouponsPage() {
         />
       ) : (
         <Card>
-          <Table data={coupons} columns={columns} keyExtractor={(coupon) => coupon.id} />
+          <Table
+            data={coupons}
+            columns={columns}
+            keyExtractor={(coupon) => coupon.id}
+            mobileCardRender={(coupon) => {
+              const isExpired = coupon.valid_until && new Date(coupon.valid_until) < new Date();
+              const status = !coupon.is_active
+                ? { label: 'Inativo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }
+                : isExpired
+                  ? { label: 'Expirado', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+                  : { label: 'Ativo', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex-shrink-0">
+                        <LocalOfferIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-primary-600 dark:text-primary-400">
+                            {coupon.code}
+                          </span>
+                          <button
+                            onClick={() => handleCopyCode(coupon.code)}
+                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            <ContentCopyIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {coupon.description && (
+                          <p className="text-xs text-gray-500 truncate">{coupon.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-500">Desconto</p>
+                      <p className="font-medium text-green-600 dark:text-green-400">
+                        {coupon.discount_type === 'percentage'
+                          ? `${coupon.discount_value}%`
+                          : formatCurrency(coupon.discount_value)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Uso</p>
+                      <p className="font-medium">
+                        {coupon.usage_count}{coupon.usage_limit ? ` / ${coupon.usage_limit}` : ''}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Válido até</p>
+                      <p className={`font-medium ${isExpired ? 'text-red-500' : ''}`}>
+                        {formatDate(coupon.valid_until)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                    <button
+                      onClick={() => openEditModal(coupon)}
+                      className="p-2 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    >
+                      <EditIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCouponToDelete(coupon);
+                        setDeleteModalOpen(true);
+                      }}
+                      className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <DeleteIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }}
+          />
         </Card>
       )}
 

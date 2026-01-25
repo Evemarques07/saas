@@ -510,18 +510,18 @@ export function PromotionsPage() {
       }
     >
       {/* Promotion Types Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         {PROMOTION_TYPES.slice(0, 4).map((type) => {
           const count = promotions.filter((p) => p.promotion_type === type.value && p.is_active).length;
           return (
-            <Card key={type.value} className="p-4">
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            <Card key={type.value} className="p-2.5 sm:p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <span className="p-2 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 self-start sm:self-auto">
                   {type.icon}
                 </span>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{type.label}</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{count} ativas</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 leading-tight">{type.label}</p>
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{count} ativas</p>
                 </div>
               </div>
             </Card>
@@ -541,7 +541,81 @@ export function PromotionsPage() {
         />
       ) : (
         <Card>
-          <Table data={promotions} columns={columns} keyExtractor={(promotion) => promotion.id} />
+          <Table
+            data={promotions}
+            columns={columns}
+            keyExtractor={(promotion) => promotion.id}
+            mobileCardRender={(promotion) => {
+              const typeInfo = getPromotionTypeInfo(promotion.promotion_type);
+              const isExpired = promotion.valid_until && new Date(promotion.valid_until) < new Date();
+              const status = !promotion.is_active
+                ? { label: 'Inativo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }
+                : isExpired
+                  ? { label: 'Expirado', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+                  : { label: 'Ativo', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex-shrink-0">
+                        <span className="text-primary-600 dark:text-primary-400">{typeInfo.icon}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">{promotion.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{typeInfo.label}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-500">Desconto</p>
+                      <p className="font-medium text-green-600 dark:text-green-400">
+                        {promotion.discount_type === 'percentage'
+                          ? `${promotion.discount_value}%`
+                          : formatCurrency(promotion.discount_value)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Uso</p>
+                      <p className="font-medium">
+                        {promotion.usage_count}{promotion.usage_limit ? ` / ${promotion.usage_limit}` : ''}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Período</p>
+                      <p className="font-medium text-xs">
+                        {formatDate(promotion.valid_from)}
+                        {promotion.valid_until && <span className="text-gray-400"> - {formatDate(promotion.valid_until)}</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                    <button
+                      onClick={() => openEditModal(promotion)}
+                      className="p-2 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    >
+                      <EditIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPromotionToDelete(promotion);
+                        setDeleteModalOpen(true);
+                      }}
+                      className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <DeleteIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }}
+          />
         </Card>
       )}
 
