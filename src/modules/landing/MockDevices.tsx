@@ -441,7 +441,7 @@ export function MockDevices() {
   return (
     <div className="relative w-full h-full flex items-end justify-center gap-4 sm:gap-6 lg:gap-8 pb-8">
       {/* Connection Lines SVG */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" style={{ zIndex: 5 }}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 5 }}>
         <defs>
           <linearGradient id="lineGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#6366f1" stopOpacity="0" />
@@ -451,19 +451,19 @@ export function MockDevices() {
         </defs>
         {/* Curved connection lines */}
         <path
-          d="M 25% 60% Q 37% 40% 50% 50%"
+          d="M 25 60 Q 37 40 50 50"
           fill="none"
           stroke="url(#lineGradient1)"
-          strokeWidth="2"
-          strokeDasharray="4,4"
+          strokeWidth="0.5"
+          strokeDasharray="1,1"
           className={syncPulse ? 'animate-pulse' : ''}
         />
         <path
-          d="M 75% 60% Q 63% 40% 50% 50%"
+          d="M 75 60 Q 63 40 50 50"
           fill="none"
           stroke="url(#lineGradient1)"
-          strokeWidth="2"
-          strokeDasharray="4,4"
+          strokeWidth="0.5"
+          strokeDasharray="1,1"
           className={syncPulse ? 'animate-pulse' : ''}
         />
       </svg>
