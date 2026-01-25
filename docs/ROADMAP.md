@@ -11,6 +11,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 5. [Fase 4 - Escala e Monetizacao](#fase-4---escala-e-monetizacao)
 6. [Fase 5 - Automacao de Vendas e Fiscal](#fase-5---automacao-de-vendas-e-fiscal)
 7. [Backlog Futuro](#backlog-futuro)
+   - [Agente de IA para WhatsApp](#agente-de-ia-para-whatsapp-planejado)
 
 ---
 
@@ -39,6 +40,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 │  [x] Table Tablet   [x] Paginacao   [x] Realtime [x] Barcode                │
 │  [x] Filtro Status  [x] Valid.Phone [x] Notific. [x] Badge                  │
 │  [x] Area Cliente   [x] Cupons      [x] Fidelidde[x] Promocoes               │
+│  [x] Graf. Funil    [x] Graf.Scatter[x] Responsiv [x] Overflow               │
 │                                                                               │
 │  ██████████████████ ██████████████   ██████████   ░░░░░░░░     ░░░░░░░░      │
 │      CONCLUIDO         CONCLUIDO      EM PROG      FUTURO       PLANEJADO    │
@@ -108,6 +110,16 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
   - Produtos
 - [x] Link para catalogo publico
 - [x] **Filtro de periodo dinamico**
+- [x] **Grafico de vendas nos ultimos 30 dias** (AreaChart)
+- [x] **Grafico Top 5 Produtos** (BarChart horizontal)
+- [x] **Cards de pedidos do catalogo** (por status)
+- [x] **Grafico de Funil de Pedidos** (FunnelChart)
+  - Etapas: Total → Confirmados → Entregues
+  - Metricas de conversao e cancelamento
+- [x] **Grafico de Dispersao - Perfil de Clientes** (ScatterChart)
+  - Frequencia de compras vs Ticket medio
+  - Identificacao de clientes VIP por quadrante
+  - Cores por perfil: VIP, Frequente, Potencial, Casual
 
 ### Gestao de Produtos
 
@@ -431,9 +443,204 @@ Integracao com sistemas de emissao fiscal para formalizar vendas.
 - **Analise de vendas**: Insights automaticos sobre performance
 - **Chatbot**: Atendimento automatizado no catalogo
 
+### Agente de IA para WhatsApp (Planejado)
+
+Implementar um agente de inteligencia artificial para responder automaticamente mensagens recebidas no WhatsApp conectado da empresa.
+
+#### Visao Geral
+
+Quando a empresa envia notificacoes automaticas (pedido confirmado, entregue, etc.), os clientes podem responder com duvidas. Atualmente essas mensagens ficam sem resposta automatica. O agente de IA responderia de forma inteligente usando dados da propria empresa.
+
+#### Arquitetura Proposta
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Cliente       │────▶│    WuzAPI       │────▶│    Webhook      │
+│   WhatsApp      │     │    (VPS)        │     │    (Backend)    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                        │
+                                                        ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Resposta      │◀────│    LLM API      │◀────│    Contexto     │
+│   Automatica    │     │ (Claude/OpenAI) │     │    da Empresa   │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+#### Funcionalidades Planejadas
+
+| Funcionalidade | Descricao | Prioridade |
+|----------------|-----------|------------|
+| **Resposta a duvidas de pedido** | Status, previsao de entrega, itens | Alta |
+| **Informacoes de produtos** | Preco, disponibilidade, detalhes | Alta |
+| **Horario de funcionamento** | Baseado em configuracao da empresa | Media |
+| **Politica de troca/devolucao** | Texto configuravel pela empresa | Media |
+| **Formas de pagamento** | Lista configuravel | Media |
+| **Escalonamento para humano** | Quando IA nao souber responder | Alta |
+
+#### Fontes de Contexto para a IA
+
+A IA tera acesso aos dados da empresa para responder com precisao:
+
+1. **Catalogo de Produtos**
+   - Nome, descricao, preco, disponibilidade
+   - Categorias e caracteristicas
+
+2. **Pedidos do Cliente**
+   - Status atual (pendente, confirmado, entregue)
+   - Itens do pedido, valor total
+   - Historico de pedidos anteriores
+
+3. **Configuracoes da Empresa**
+   - Horario de funcionamento
+   - Endereco e contato
+   - Politicas (troca, devolucao, garantia)
+   - Formas de pagamento aceitas
+
+4. **FAQ Personalizado**
+   - Perguntas e respostas configuradas pela empresa
+   - Informacoes especificas do segmento
+
+#### Fluxo de Resposta
+
+```
+1. Cliente envia mensagem para WhatsApp da empresa
+2. WuzAPI recebe e envia webhook para backend
+3. Backend identifica cliente pelo telefone
+4. Sistema busca contexto relevante (pedidos, produtos, config)
+5. Monta prompt com contexto + pergunta do cliente
+6. Envia para API de LLM (Claude/OpenAI)
+7. Recebe resposta e envia via WuzAPI para cliente
+8. Registra conversa no historico
+```
+
+#### Configuracoes da Empresa (Planejadas)
+
+Interface na pagina de Configuracoes para:
+
+- [ ] Ativar/desativar agente de IA
+- [ ] Definir horario de atendimento automatico
+- [ ] Configurar mensagem de boas-vindas
+- [ ] Configurar mensagem quando fora do horario
+- [ ] Definir limite de mensagens por cliente/dia
+- [ ] Configurar escalonamento (encaminhar para humano)
+- [ ] Personalizar tom de voz (formal/informal)
+- [ ] Adicionar FAQ personalizado
+
+#### Limites e Custos
+
+| Aspecto | Consideracao |
+|---------|--------------|
+| **Custo por mensagem** | ~$0.01-0.05 por resposta (depende do modelo) |
+| **Rate limiting** | Limite de mensagens por cliente para evitar abuso |
+| **Modelo de IA** | Claude Haiku (rapido e barato) ou GPT-3.5 |
+| **Fallback** | Encaminha para humano se IA nao souber |
+| **Privacidade** | Dados da empresa nunca expostos para outros clientes |
+
+#### Integracao com WuzAPI
+
+O WuzAPI suporta webhooks para receber mensagens:
+
+```typescript
+// Configurar webhook no WuzAPI
+// POST /webhook/set
+{
+  "webhookUrl": "https://api.ejym.com/whatsapp/incoming",
+  "events": ["Message"]
+}
+```
+
+#### Proximos Passos para Implementacao
+
+1. [ ] Configurar webhook no WuzAPI para receber mensagens
+2. [ ] Criar Edge Function para processar mensagens recebidas
+3. [ ] Integrar com API de LLM (Claude/OpenAI)
+4. [ ] Criar interface de configuracao para empresas
+5. [ ] Implementar historico de conversas
+6. [ ] Implementar escalonamento para humano
+7. [ ] Adicionar metricas e analytics
+8. [ ] Testar com empresa piloto
+
 ---
 
 ## Changelog
+
+### v0.20.0 (Janeiro 2026)
+
+- **Dashboard: Melhorias de Responsividade**
+  - Cards de estatisticas com layout vertical no mobile (< 640px)
+  - Fontes menores para caber em telas pequenas (`text-[10px]` para labels)
+  - Valores com `text-base` no mobile, crescendo para `text-2xl` no desktop
+  - Cards de pedidos do catalogo tambem ajustados
+  - Padding reduzido (`p-2.5`) para melhor aproveitamento de espaco
+
+- **Dashboard: Grafico Top 5 Produtos**
+  - Altura aumentada de `h-48/h-64` para `h-64/h-80`
+  - Mais espaco vertical para visualizar as barras
+  - Titulo alterado para "Top 5 Produtos" (mais claro)
+
+- **Dashboard: Grafico de Funil de Pedidos**
+  - Novo grafico mostrando conversao de pedidos
+  - Etapas: Total de Pedidos → Confirmados → Entregues
+  - Labels centralizados com nome + valor (ex: "Total de Pedidos: 10")
+  - Cards de metricas ao lado do funil:
+    - Total de Pedidos
+    - Pedidos Pendentes
+    - Taxa de Confirmacao (%)
+    - Taxa de Entrega (%)
+    - Pedidos Cancelados + Taxa de Cancelamento (%)
+  - Componentes: `FunnelChart`, `Funnel`, `LabelList`, `Cell`
+  - Icone `FilterAltIcon` no titulo
+
+- **Dashboard: Grafico de Dispersao - Perfil de Clientes**
+  - Novo grafico de dispersao (Scatter Chart)
+  - Eixo X: Numero de compras (frequencia)
+  - Eixo Y: Ticket medio (R$)
+  - Tamanho do ponto: Total gasto pelo cliente (ZAxis)
+  - Cores por quadrante:
+    - Verde: VIP (alta frequencia + alto ticket)
+    - Azul: Frequente (alta frequencia, ticket baixo)
+    - Amarelo: Potencial (ticket alto, baixa frequencia)
+    - Cinza: Casual (baixa frequencia + baixo ticket)
+  - Tooltip com nome do cliente e todas as metricas
+  - Cards laterais com legenda e contagem por categoria
+  - Dados buscados de vendas completadas agrupadas por cliente
+  - Limite de 50 clientes (ordenados por total gasto)
+  - Componentes: `ScatterChart`, `Scatter`, `ZAxis`, `Cell`
+  - Icone `BubbleChartIcon` no titulo
+
+- **Dashboard: Correcao de Warnings do Recharts**
+  - Adicionado `minWidth={0}` em todos os `ResponsiveContainer`
+  - Logica melhorada para `chartsReady`:
+    - Verifica dimensoes dos containers antes de renderizar
+    - Backoff exponencial entre tentativas (50ms, 100ms...)
+    - Limite de 20 tentativas com fallback automatico
+  - Eliminados warnings "width(-1) and height(-1) should be greater than 0"
+
+- **Layout: Remocao do Scroll Horizontal**
+  - `AppLayout.tsx`: `overflow-auto` → `overflow-y-auto overflow-x-hidden`
+  - `AdminLayout.tsx`: `overflow-auto` → `overflow-y-auto overflow-x-hidden`
+  - `PageContainer.tsx`: `overflow-auto` → `overflow-y-auto overflow-x-hidden`
+  - Scroll horizontal "fantasma" eliminado em todas as paginas
+
+- **Cupons e Promocoes: Cards Mobile**
+  - `CouponsPage`: Adicionado `mobileCardRender` na Table
+    - Card mostra codigo, descricao, status, desconto, uso e validade
+    - Botoes de editar/excluir no rodape
+    - Cores de status: Ativo (verde), Inativo (cinza), Expirado (vermelho)
+  - `PromotionsPage`: Adicionado `mobileCardRender` na Table
+    - Card mostra nome, tipo, status, desconto, uso e periodo
+    - Cards de overview tambem ajustados para mobile (layout vertical)
+
+- **Arquivos Criados**
+  - Nenhum
+
+- **Arquivos Modificados**
+  - `src/modules/dashboard/DashboardPage.tsx` - Graficos e responsividade
+  - `src/modules/coupons/CouponsPage.tsx` - Mobile cards
+  - `src/modules/promotions/PromotionsPage.tsx` - Mobile cards
+  - `src/components/layout/AppLayout.tsx` - Scroll horizontal fix
+  - `src/components/layout/AdminLayout.tsx` - Scroll horizontal fix
+  - `src/components/layout/PageContainer.tsx` - Scroll horizontal fix
 
 ### v0.19.1 (Janeiro 2026)
 

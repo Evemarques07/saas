@@ -9,6 +9,8 @@ Este documento detalha a implementacao real da automacao de mensagens de WhatsAp
 1. [Instalacao Realizada (VPS)](#instalacao-realizada-janeiro-2026)
 2. [Implementacao Frontend](#implementacao-frontend-janeiro-2026)
 3. [Notificacoes Automaticas de Pedidos](#notificacoes-automaticas-de-pedidos-janeiro-2026)
+   - [Verificacao de Conexao em Tempo Real](#verificacao-de-conexao-em-tempo-real-janeiro-2026)
+   - [Merge de Configuracoes com Defaults](#merge-de-configuracoes-com-defaults-janeiro-2026)
 4. [Painel de Administracao WhatsApp](#painel-de-administracao-whatsapp-super-admin)
 5. [Melhorias de Seguranca e Resiliencia](#melhorias-de-seguranca-e-resiliencia-janeiro-2026)
 6. [Interface Unificada de WhatsApp](#interface-unificada-de-whatsapp-janeiro-2026)
@@ -523,12 +525,75 @@ O sistema envia notificacoes automaticas quando TODAS as condicoes sao atendidas
 | Condicao | Campo | Descricao |
 |----------|-------|-----------|
 | WhatsApp habilitado | `whatsapp_settings.enabled` | Automacao ativada |
-| WhatsApp conectado | `whatsapp_settings.connected` | Sessao autenticada |
+| WhatsApp conectado | **Verificacao em tempo real** | Chama `getConnectionState()` da API |
 | Token configurado | `whatsapp_settings.user_token` | Token da empresa no WuzAPI |
-| Notificacao ativa | `whatsapp_settings.notify_on_new_order` | Opcao marcada nas configuracoes |
+| Notificacao ativa | `whatsapp_settings.notify_on_*` | Opcao marcada nas configuracoes |
 | Consentimento LGPD | `order.whatsapp_consent` | Cliente consentiu receber mensagens |
 
 Se alguma condicao nao for atendida, o sistema usa o **fallback**: abre `wa.me` no navegador (comportamento antigo).
+
+### Verificacao de Conexao em Tempo Real (Janeiro 2026)
+
+**Problema identificado:**
+O campo `connected` salvo no banco de dados podia ficar desatualizado, causando falhas no envio de notificacoes mesmo quando o WhatsApp estava conectado.
+
+**Solucao implementada:**
+O sistema agora verifica a conexao **em tempo real** usando a API do WuzAPI antes de enviar cada notificacao:
+
+```typescript
+// CatalogOrdersPage.tsx - sendWhatsAppNotification()
+
+// 1. Verifica conexao em tempo real (nao confia no cache do banco)
+const connectionState = await getConnectionState(whatsAppSettings.user_token);
+const isConnected = connectionState.state === 'open';
+
+// 2. Sincroniza banco automaticamente se status divergir
+if (isConnected !== whatsAppSettings.connected && currentCompany) {
+  await supabase
+    .from('companies')
+    .update({
+      whatsapp_settings: {
+        ...rawSettings,
+        connected: isConnected,
+        connected_at: isConnected ? new Date().toISOString() : null,
+      },
+    })
+    .eq('id', currentCompany.id);
+}
+
+// 3. Continua com envio apenas se conectado
+if (!isConnected) return;
+```
+
+**Beneficios:**
+- Notificacoes funcionam mesmo se `connected` estiver desatualizado no banco
+- Banco e sincronizado automaticamente quando status diverge
+- Logs detalhados para debug: `[WhatsApp] Real-time connection state: open`
+
+### Merge de Configuracoes com Defaults (Janeiro 2026)
+
+**Problema identificado:**
+Configuracoes salvas no banco sem os campos `notify_on_confirm`, `notify_on_complete`, etc. causavam falhas porque esses valores ficavam `undefined`.
+
+**Solucao implementada:**
+```typescript
+// CatalogOrdersPage.tsx
+
+const whatsAppSettings: WhatsAppSettings = {
+  ...defaultWhatsAppSettings,
+  ...rawSettings,
+  // Garante defaults para campos de notificacao
+  notify_on_new_order: rawSettings?.notify_on_new_order ?? true,
+  notify_on_confirm: rawSettings?.notify_on_confirm ?? true,
+  notify_on_complete: rawSettings?.notify_on_complete ?? true,
+  notify_on_cancel: rawSettings?.notify_on_cancel ?? true,
+};
+```
+
+**Beneficios:**
+- Campos faltantes assumem `true` por padrao
+- Compatibilidade com configuracoes antigas
+- Evita erros de `undefined`
 
 ### Mensagens Enviadas
 
@@ -1078,17 +1143,20 @@ const formatPhoneInput = (value: string): string => {
 15. [x] ~~Autenticacao Hibrida na Edge Function~~ - Janeiro 2026
 16. [x] ~~Checkbox de consentimento no checkout (LGPD)~~ - Janeiro 2026
 17. [x] ~~Validacao de telefone com verificacao de WhatsApp no checkout~~ - Janeiro 2026
+18. [x] ~~Verificacao de conexao em tempo real~~ - Janeiro 2026 (resolve problema de `connected` desatualizado)
+19. [x] ~~Sincronizacao automatica de status no banco~~ - Janeiro 2026
+20. [x] ~~Merge de configuracoes com defaults~~ - Janeiro 2026 (resolve `notify_on_*` undefined)
 
 ### Pendentes
 
-18. [ ] Implementar Edge Function `send-whatsapp` (para envio via trigger do banco - opcional)
-19. [ ] Historico de mensagens enviadas (tabela `whatsapp_messages`)
-20. [ ] **[FUTURO]** Tornar automacao WhatsApp exclusiva para planos pagos (premium feature)
-21. [ ] **[FUTURO]** Permitir opt-out de notificacoes (LGPD - link em cada mensagem)
-22. [ ] **[FUTURO]** Historico de consentimentos (auditoria LGPD)
-23. [ ] Cache de verificacao de numero
-24. [ ] Webhook para status de conexao
-25. [ ] Health check periodico
+21. [ ] Implementar Edge Function `send-whatsapp` (para envio via trigger do banco - opcional)
+22. [ ] Historico de mensagens enviadas (tabela `whatsapp_messages`)
+23. [ ] **[FUTURO]** Tornar automacao WhatsApp exclusiva para planos pagos (premium feature)
+24. [ ] **[FUTURO]** Permitir opt-out de notificacoes (LGPD - link em cada mensagem)
+25. [ ] **[FUTURO]** Historico de consentimentos (auditoria LGPD)
+26. [ ] Cache de verificacao de numero
+27. [ ] Webhook para status de conexao
+28. [ ] Health check periodico
 
 ### Como Testar
 

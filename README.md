@@ -63,7 +63,11 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] **Download de modelo Excel para importacao**
 - [x] **Carrinho de compras no catalogo publico (localStorage)**
 - [x] **Pedidos do catalogo salvos no Supabase**
-- [x] **Integracao WhatsApp para pedidos**
+- [x] **Integracao WhatsApp para pedidos (WuzAPI)**
+  - Notificacoes automaticas (novo pedido, confirmado, entregue, cancelado)
+  - Verificacao de conexao em tempo real
+  - Sincronizacao automatica de status
+  - Consentimento LGPD
 - [x] **Pagina de gestao de pedidos do catalogo**
 - [x] **Conversao automatica de pedido em venda (com baixa de estoque)**
 - [x] **Estatisticas de pedidos no dashboard**
@@ -180,6 +184,7 @@ src/
 │   ├── supabase.ts      # Cliente Supabase
 │   ├── storage.ts       # Upload de imagens (Supabase Storage)
 │   ├── email.ts         # Servico de email (MailerSend)
+│   ├── whatsapp.ts      # Integracao WhatsApp (WuzAPI)
 │   └── export.ts        # Exportacao Excel/PDF
 ├── types/               # TypeScript types
 └── hooks/               # Custom hooks
@@ -188,7 +193,8 @@ src/
 supabase/
 ├── migrations/          # Migrations do banco de dados
 └── functions/           # Edge Functions
-    └── send-invite-email/  # Envio de emails de convite
+    ├── send-invite-email/  # Envio de emails de convite
+    └── wuzapi-admin/       # Gestao de usuarios WuzAPI
 
 docs/                    # Documentacao
 ├── SETUP.md            # Guia de instalacao
@@ -333,6 +339,7 @@ Acesse: http://localhost:5173
 | `sale_items` | Itens de cada venda | `sale_id` (UUID) |
 | `catalog_orders` | Pedidos do catalogo | `company_id` (UUID) |
 | `catalog_order_items` | Itens de pedidos | `order_id` (UUID) |
+| `whatsapp_messages` | Log de mensagens WhatsApp | `company_id` (UUID) |
 
 ### Diagrama de Relacionamento
 
@@ -513,9 +520,41 @@ Ao marcar um pedido como "Entregue":
 4. Forma de pagamento: "Catalogo Online"
 5. Faturamento unificado com vendas manuais
 
-### Integracao WhatsApp
+### Integracao WhatsApp (WuzAPI)
 
-- Botao para contatar cliente via WhatsApp
+O sistema possui integracao automatica com WhatsApp via WuzAPI:
+
+**Notificacoes Automaticas:**
+- Novo pedido recebido (cliente + empresa)
+- Pedido confirmado (cliente)
+- Pedido entregue (cliente)
+- Pedido cancelado (cliente)
+
+**Configuracoes:**
+- Conexao via QR Code na pagina de Configuracoes
+- Toggles individuais para cada tipo de notificacao
+- Consentimento LGPD do cliente (checkbox no checkout)
+
+**Arquitetura:**
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Frontend  │────▶│  WuzAPI     │────▶│  WhatsApp   │
+│   React     │     │  (VPS)      │     │  Business   │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │
+       │  Verificacao em tempo real
+       │  (getConnectionState)
+       └──────────────────────────────────────
+```
+
+**Robustez:**
+- Verificacao de conexao em tempo real (nao depende de cache)
+- Sincronizacao automatica do status no banco de dados
+- Retry automatico em caso de falha (3 tentativas)
+- Fire-and-forget (nao bloqueia operacao principal)
+
+**Fallback Manual:**
+- Botao para contatar cliente via WhatsApp (wa.me)
 - Mensagem pre-formatada com dados do pedido
 - Numero do cliente formatado automaticamente (55 + DDD + numero)
 
