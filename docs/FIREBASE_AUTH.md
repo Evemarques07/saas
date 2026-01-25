@@ -83,12 +83,12 @@ O sistema utiliza uma arquitetura hibrida:
 Crie ou edite `.env.local`:
 
 ```env
-VITE_FIREBASE_API_KEY=AIzaSyDOFm9CzYf92lxa_G-n7A0rT4yJqokwY1M
-VITE_FIREBASE_AUTH_DOMAIN=saas-af55a.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=saas-af55a
-VITE_FIREBASE_STORAGE_BUCKET=saas-af55a.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=789298373422
-VITE_FIREBASE_APP_ID=1:789298373422:web:9981047cc31b07c34bd0bf
+VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 ```
 
 ---
