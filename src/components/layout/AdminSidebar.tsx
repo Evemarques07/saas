@@ -68,7 +68,11 @@ export function AdminSidebar({ collapsed, onToggle, isOpen = false, isMobile = f
         {showLabel && (
           <div className="flex items-center gap-2">
             <AdminPanelSettingsIcon className="text-primary-400" />
-            <span className="logo-text text-xl font-bold text-primary-400">EJYM</span>
+            <img
+              src="/mercadoVirtualBranco.png"
+              alt="Mercado Virtual"
+              className="h-14 w-auto object-contain"
+            />
           </div>
         )}
         <button

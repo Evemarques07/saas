@@ -36,7 +36,7 @@ export function PageContainer({ title, subtitle, action, toolbar, children }: Pa
       )}
 
       {/* Content - área que rola */}
-      <div className="flex-1 overflow-auto px-3 md:px-4 pb-3 md:pb-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 md:px-4 pb-3 md:pb-4">
         {children}
       </div>
     </div>

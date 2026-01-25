@@ -16,6 +16,7 @@ interface ImageUploadProps {
   loading?: boolean;
   showRemoveButton?: boolean;
   compact?: boolean;
+  rounded?: boolean;
 }
 
 export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
@@ -33,6 +34,7 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
       loading = false,
       showRemoveButton = true,
       compact = false,
+      rounded = false,
     },
     ref
   ) => {
@@ -135,11 +137,13 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
-            relative border-2 border-dashed rounded-lg transition-colors cursor-pointer
+            relative border-2 border-dashed transition-colors cursor-pointer
+            ${rounded ? 'rounded-full' : 'rounded-lg'}
             ${isDragging ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : ''}
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary-400'}
             ${displayImage ? 'p-2' : compact ? 'p-4' : 'p-6'}
+            ${rounded && compact ? 'aspect-square' : ''}
           `}
         >
           <input
@@ -170,7 +174,7 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
               <img
                 src={displayImage}
                 alt="Preview"
-                className="w-full h-full object-contain rounded-lg"
+                className={`w-full h-full ${rounded ? 'object-cover rounded-full' : 'object-contain rounded-lg'}`}
               />
               {showRemoveButton && (
                 <button

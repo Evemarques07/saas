@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import CloseIcon from '@mui/icons-material/Close';
-import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export function PWAInstallPrompt() {
   const { isInstallable, isInstalled, showPrompt, installApp, dismissPrompt } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const location = useLocation();
+  const { theme } = useTheme();
 
   // Don't show on catalog pages - they have their own PWA install
   const isCatalogPage = location.pathname.startsWith('/catalogo/');
@@ -84,14 +85,16 @@ export function PWAInstallPrompt() {
 
         {/* Content */}
         <div className="flex flex-col items-center text-center">
-          {/* Icon */}
-          <div className="w-16 h-16 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-            <PhoneAndroidIcon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-          </div>
+          {/* Logo */}
+          <img
+            src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
+            alt="Mercado Virtual"
+            className="h-16 w-auto object-contain mb-4"
+          />
 
           {/* Title */}
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            Instalar Ejym
+            Instalar Mercado Virtual
           </h3>
 
           {/* Description */}

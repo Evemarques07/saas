@@ -19,6 +19,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
   buildAppPath,
   buildCatalogoPath,
@@ -63,6 +64,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
   const { isSuperAdmin } = useAuth();
   const { isAdmin, currentCompany } = useTenant();
   const { pendingOrdersCount, hasNewOrders, markOrdersAsSeen } = useNotifications();
+  const { theme } = useTheme();
 
   // Se nao tem empresa, nao renderiza
   if (!currentCompany) {
@@ -137,7 +139,11 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
       {/* Logo */}
       <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-700 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {(isMobile || !collapsed) && (
-          <span className="logo-text text-2xl font-bold text-primary-600">EJYM</span>
+          <img
+            src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
+            alt="Mercado Virtual"
+            className="h-14 w-auto object-contain"
+          />
         )}
         <button
           onClick={isMobile ? onClose : onToggle}

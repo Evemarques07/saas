@@ -76,7 +76,7 @@ export function AppLayout() {
           <Header onMenuClick={handleToggleSidebar} isMobile={isMobile} />
           <main className="px-2 md:px-4 pb-2 md:pb-4 flex-1 overflow-hidden">
             <div className="h-full bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="h-full overflow-auto p-3 md:p-4">
+              <div className="h-full overflow-y-auto overflow-x-hidden p-3 md:p-4">
                 <Outlet />
               </div>
             </div>

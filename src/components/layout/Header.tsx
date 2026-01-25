@@ -18,9 +18,12 @@ interface HeaderProps {
 
 export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   const navigate = useNavigate();
-  const { profile, companies, signOut } = useAuth();
+  const { user, profile, companies, signOut } = useAuth();
   const { currentCompany, switchCompany } = useTenant();
   const { theme, toggleTheme } = useTheme();
+
+  // Avatar: profile.avatar_url > user.photoURL (Firebase/Google) > fallback icon
+  const avatarUrl = profile?.avatar_url || user?.photoURL || null;
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCompanyMenu, setShowCompanyMenu] = useState(false);
@@ -141,9 +144,18 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-              <PersonIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-            </div>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={profile?.full_name || 'Avatar'}
+                className="w-8 h-8 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <PersonIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              </div>
+            )}
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">
               {profile?.full_name || profile?.email}
             </span>
@@ -153,14 +165,28 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
           {showUserMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {profile?.full_name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {profile?.email}
-                  </p>
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={profile?.full_name || 'Avatar'}
+                      className="w-10 h-10 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                      <PersonIcon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {profile?.full_name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {profile?.email}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={handleSignOut}
