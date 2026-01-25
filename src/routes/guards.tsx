@@ -5,24 +5,34 @@ import { buildAppPath } from './paths';
 
 interface RouteGuardProps {
   children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: RouteGuardProps) {
-  const { user, loading } = useAuth();
+export function ProtectedRoute({ children, fallback }: RouteGuardProps) {
+  const { user, loading, profile, companies, isSuperAdmin } = useAuth();
 
   if (loading) {
     return <FullPageLoader />;
   }
 
   if (!user) {
+    // Se tem fallback, mostra ele em vez de redirecionar para login
+    if (fallback) {
+      return <>{fallback}</>;
+    }
     return <Navigate to="/login" replace />;
+  }
+
+  // Se usuario nao tem empresas e nao e super admin, precisa fazer onboarding
+  if (companies.length === 0 && !isSuperAdmin && profile && !profile.onboarding_completed) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
 }
 
 export function PublicRoute({ children }: RouteGuardProps) {
-  const { user, loading, companies, isSuperAdmin } = useAuth();
+  const { user, loading, companies, isSuperAdmin, profile } = useAuth();
 
   if (loading) {
     return <FullPageLoader />;
@@ -45,8 +55,13 @@ export function PublicRoute({ children }: RouteGuardProps) {
       return <Navigate to="/admin" replace />;
     }
 
-    // Sem empresas - vai para root que mostra mensagem
-    return <Navigate to="/" replace />;
+    // Usuario sem empresas - verifica se precisa de onboarding
+    if (profile && !profile.onboarding_completed) {
+      return <Navigate to="/onboarding" replace />;
+    }
+
+    // Sem empresas mas onboarding completo (caso raro) - vai para onboarding criar outra
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
@@ -65,6 +80,34 @@ export function SuperAdminRoute({ children }: RouteGuardProps) {
 
   if (!isSuperAdmin) {
     return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// Guard para a pagina de onboarding - usuario deve estar logado mas sem empresa
+export function OnboardingRoute({ children }: RouteGuardProps) {
+  const { user, loading, companies, isSuperAdmin } = useAuth();
+
+  if (loading) {
+    return <FullPageLoader />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Se ja tem empresa, vai para o dashboard dela
+  if (companies.length > 0) {
+    const firstCompany = companies[0]?.company;
+    if (firstCompany) {
+      return <Navigate to={buildAppPath(firstCompany.slug)} replace />;
+    }
+  }
+
+  // Super admin pode pular onboarding
+  if (isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;

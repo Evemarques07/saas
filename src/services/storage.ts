@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 
 const PRODUCTS_BUCKET = 'products';
 const COMPANIES_BUCKET = 'companies';
+const AVATARS_BUCKET = 'avatars';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -215,6 +216,73 @@ export async function deleteProductImages(imageUrls: string[]): Promise<void> {
 }
 
 /**
+ * Faz upload do avatar de um usuario para o Supabase Storage
+ * @param file - Arquivo a ser enviado
+ * @param userId - ID do usuario
+ * @returns URL publica da imagem
+ */
+export async function uploadUserAvatar(
+  file: File,
+  userId: string
+): Promise<UploadResult> {
+  validateFile(file);
+
+  const fileName = generateFileName(file);
+  const filePath = `${userId}/avatar-${fileName}`;
+
+  const { error } = await supabase.storage
+    .from(AVATARS_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true, // Permite sobrescrever avatar existente
+    });
+
+  if (error) {
+    console.error('Upload error:', error);
+    throw new StorageError(`Erro ao fazer upload: ${error.message}`);
+  }
+
+  const { data: urlData } = supabase.storage
+    .from(AVATARS_BUCKET)
+    .getPublicUrl(filePath);
+
+  return {
+    url: urlData.publicUrl,
+    path: filePath,
+  };
+}
+
+/**
+ * Remove o avatar de um usuario do Supabase Storage
+ * @param avatarUrl - URL completa do avatar
+ */
+export async function deleteUserAvatar(avatarUrl: string): Promise<void> {
+  // Nao deletar se for URL externa (ex: Google)
+  if (!avatarUrl.includes('supabase.co')) {
+    console.log('Avatar externo, ignorando delete:', avatarUrl);
+    return;
+  }
+
+  const urlParts = avatarUrl.split(`/storage/v1/object/public/${AVATARS_BUCKET}/`);
+
+  if (urlParts.length !== 2) {
+    console.warn('URL de avatar invalida, ignorando delete:', avatarUrl);
+    return;
+  }
+
+  const filePath = urlParts[1];
+
+  const { error } = await supabase.storage
+    .from(AVATARS_BUCKET)
+    .remove([filePath]);
+
+  if (error) {
+    console.error('Delete error:', error);
+    throw new StorageError(`Erro ao remover avatar: ${error.message}`);
+  }
+}
+
+/**
  * Constantes exportadas para uso externo
  */
 export const STORAGE_CONFIG = {
@@ -222,4 +290,5 @@ export const STORAGE_CONFIG = {
   allowedTypes: ALLOWED_TYPES,
   productsBucket: PRODUCTS_BUCKET,
   companiesBucket: COMPANIES_BUCKET,
+  avatarsBucket: AVATARS_BUCKET,
 };

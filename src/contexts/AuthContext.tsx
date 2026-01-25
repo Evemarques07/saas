@@ -201,8 +201,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: firebaseUser.uid,
           email: firebaseUser.email,
           full_name: firebaseUser.displayName || firebaseUser.email?.split('@')[0],
+          avatar_url: firebaseUser.photoURL || null,
           is_super_admin: firebaseUser.email === 'evertonmarques.jm@gmail.com',
         });
+      } else if (firebaseUser.photoURL && !existingProfile.avatar_url) {
+        // Update avatar if Google has photo and profile doesn't
+        console.log('[AuthContext] Updating avatar from Google...');
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: firebaseUser.photoURL })
+          .eq('id', firebaseUser.uid);
       }
 
       return { error: null };

@@ -1,9 +1,15 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 
+// Landing Page
+import { LandingPage } from '../modules/landing/LandingPage';
+
 // Auth Pages
 import { LoginPage } from '../modules/auth/LoginPage';
 import { RegisterPage } from '../modules/auth/RegisterPage';
 import { AcceptInvitePage } from '../modules/auth/AcceptInvitePage';
+
+// Onboarding
+import { OnboardingPage } from '../modules/onboarding/OnboardingPage';
 
 // App Pages (Tenant)
 import { DashboardPage } from '../modules/dashboard/DashboardPage';
@@ -31,8 +37,8 @@ import { TenantLayout } from '../components/layout/TenantLayout';
 import { AdminLayout } from '../components/layout/AdminLayout';
 
 // Route components
-import { ProtectedRoute, PublicRoute, SuperAdminRoute } from './guards';
-import { RootRedirect } from './RootRedirect';
+import { ProtectedRoute, PublicRoute, SuperAdminRoute, OnboardingRoute } from './guards';
+import { RootOrLanding } from './RootOrLanding';
 import { LegacyRouteRedirect } from './LegacyRouteRedirect';
 
 export function AppRoutes() {
@@ -64,19 +70,25 @@ export function AppRoutes() {
         }
       />
 
+      {/* Onboarding - Usuario logado sem empresa */}
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRoute>
+            <OnboardingPage />
+          </OnboardingRoute>
+        }
+      />
+
       {/* Catalogo Publico */}
       <Route path="/catalogo/:slug" element={<CatalogPage />} />
       <Route path="/catalogo/:slug/produto/:productId" element={<ProductPage />} />
 
-      {/* Root - redireciona para /app/:slug ou /admin */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <RootRedirect />
-          </ProtectedRoute>
-        }
-      />
+      {/* Landing Page - pagina inicial publica */}
+      <Route path="/inicio" element={<LandingPage />} />
+
+      {/* Root - mostra landing para visitantes ou redireciona usuarios logados */}
+      <Route path="/" element={<RootOrLanding />} />
 
       {/* Rotas Administrativas - /admin/* */}
       <Route

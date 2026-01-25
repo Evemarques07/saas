@@ -35,6 +35,7 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   is_super_admin: boolean;
+  onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
 }
