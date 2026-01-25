@@ -1,0 +1,11 @@
+# Robots.txt for Mercado Virtual
+# https://mercadovirtual.app
+
+User-agent: *
+Allow: /
+Allow: /catalogo/
+Disallow: /app/
+Disallow: /admin/
+
+# Sitemap
+Sitemap: https://mercadovirtual.app/sitemap.xml
