@@ -39,81 +39,7 @@ interface GetUserStatusRequest {
 
 type RequestBody = CreateUserRequest | DeleteUserRequest | ListUsersRequest | GetUserStatusRequest;
 
-// Decode base64url (for JWT)
-function base64UrlDecode(str: string): string {
-  // Add padding if necessary
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) {
-    str += '=';
-  }
-  return atob(str);
-}
-
-// Verify Firebase ID Token (simplified - validates claims only)
-// This is secure because we verify: issuer, audience, expiration, and user exists in our DB
-function decodeFirebaseToken(idToken: string): { uid: string; email?: string } | null {
-  try {
-    const parts = idToken.split('.');
-    if (parts.length !== 3) {
-      console.error('[wuzapi-admin] Invalid token format: expected 3 parts, got', parts.length);
-      return null;
-    }
-
-    const [, payloadB64] = parts;
-
-    // Decode payload
-    const payloadJson = base64UrlDecode(payloadB64);
-    const payload = JSON.parse(payloadJson);
-
-    // Basic validation
-    const now = Math.floor(Date.now() / 1000);
-    const projectId = 'saas-af55a'; // Firebase project ID
-
-    // Check expiration
-    if (payload.exp && payload.exp < now) {
-      console.error('[wuzapi-admin] Token expired. exp:', payload.exp, 'now:', now);
-      return null;
-    }
-
-    // Check issued at (with 5 min tolerance for clock skew)
-    if (payload.iat && payload.iat > now + 300) {
-      console.error('[wuzapi-admin] Token issued in future. iat:', payload.iat, 'now:', now);
-      return null;
-    }
-
-    // Check audience
-    if (payload.aud !== projectId) {
-      console.error('[wuzapi-admin] Invalid audience:', payload.aud, 'expected:', projectId);
-      return null;
-    }
-
-    // Check issuer
-    const expectedIssuer = `https://securetoken.google.com/${projectId}`;
-    if (payload.iss !== expectedIssuer) {
-      console.error('[wuzapi-admin] Invalid issuer:', payload.iss, 'expected:', expectedIssuer);
-      return null;
-    }
-
-    // Check subject (user ID) exists
-    const uid = payload.sub || payload.user_id;
-    if (!uid) {
-      console.error('[wuzapi-admin] No user ID in token');
-      return null;
-    }
-
-    console.log('[wuzapi-admin] Token decoded successfully for uid:', uid, 'email:', payload.email);
-
-    return {
-      uid,
-      email: payload.email,
-    };
-  } catch (error) {
-    console.error('[wuzapi-admin] Token decode error:', error);
-    return null;
-  }
-}
-
-// Verify user is authenticated via Firebase (basic auth - just checks token is valid)
+// Verify Supabase JWT Token and get user info
 async function verifyAuthBasic(req: Request): Promise<{
   authorized: boolean;
   error?: string;
@@ -129,14 +55,8 @@ async function verifyAuthBasic(req: Request): Promise<{
       return { authorized: false, error: 'Token de autorizacao ausente' };
     }
 
-    const idToken = authHeader.replace('Bearer ', '');
-    console.log('[wuzapi-admin] Token length:', idToken.length);
-
-    // Decode and validate Firebase token
-    const firebaseUser = decodeFirebaseToken(idToken);
-    if (!firebaseUser) {
-      return { authorized: false, error: 'Token Firebase invalido ou expirado' };
-    }
+    const accessToken = authHeader.replace('Bearer ', '');
+    console.log('[wuzapi-admin] Token length:', accessToken.length);
 
     // Get Supabase config
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -150,16 +70,33 @@ async function verifyAuthBasic(req: Request): Promise<{
       return { authorized: false, error: 'Configuracao do Supabase ausente' };
     }
 
+    // Create Supabase client with the user's access token to verify it
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    });
+
+    // Verify the token by getting the user
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(accessToken);
+
+    if (userError || !user) {
+      console.error('[wuzapi-admin] Token verification failed:', userError);
+      return { authorized: false, error: 'Token invalido ou expirado' };
+    }
+
+    console.log('[wuzapi-admin] Token verified for user:', user.id, user.email);
+
     // Use service role key to query profiles (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if user exists in profiles table (using Firebase UID)
-    console.log('[wuzapi-admin] Checking profile for UID:', firebaseUser.uid);
+    // Check if user exists in profiles table
+    console.log('[wuzapi-admin] Checking profile for UID:', user.id);
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_super_admin')
-      .eq('id', firebaseUser.uid)
+      .eq('id', user.id)
       .single();
 
     if (profileError) {
@@ -168,17 +105,17 @@ async function verifyAuthBasic(req: Request): Promise<{
     }
 
     if (!profile) {
-      console.error('[wuzapi-admin] Profile not found for UID:', firebaseUser.uid);
+      console.error('[wuzapi-admin] Profile not found for UID:', user.id);
       return { authorized: false, error: 'Perfil nao encontrado' };
     }
 
     console.log('[wuzapi-admin] Profile found, is_super_admin:', profile.is_super_admin);
-    console.log('[wuzapi-admin] Auth successful for:', firebaseUser.email);
+    console.log('[wuzapi-admin] Auth successful for:', user.email);
 
     return {
       authorized: true,
-      userId: firebaseUser.uid,
-      email: firebaseUser.email,
+      userId: user.id,
+      email: user.email,
       isSuperAdmin: profile.is_super_admin || false
     };
   } catch (err) {

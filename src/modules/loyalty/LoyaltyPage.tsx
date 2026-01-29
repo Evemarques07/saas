@@ -7,6 +7,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Card, Input, Modal, ModalFooter } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
+import { FeatureGate } from '../../components/gates';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { LoyaltyConfig, LoyaltyLevel } from '../../types';
@@ -230,10 +231,11 @@ export function LoyaltyPage() {
   }
 
   return (
-    <PageContainer
-      title="Programa de Fidelidade"
-      subtitle="Configure pontos e níveis para seus clientes"
-    >
+    <FeatureGate feature="loyalty_program">
+      <PageContainer
+        title="Programa de Fidelidade"
+        subtitle="Configure pontos e niveis para seus clientes"
+      >
       <div className="space-y-6">
         {/* Configuration Card */}
         <Card className="p-6">
@@ -543,6 +545,7 @@ export function LoyaltyPage() {
           </Button>
         </ModalFooter>
       </Modal>
-    </PageContainer>
+      </PageContainer>
+    </FeatureGate>
   );
 }

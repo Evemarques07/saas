@@ -16,6 +16,34 @@ export interface WhatsAppSettings {
   notify_on_cancel: boolean;
 }
 
+export interface PrintSettings {
+  enabled: boolean;
+  printer_name: string;
+  ip: string;
+  port: number;
+  paper_width: '58mm' | '80mm';
+  auto_cut: boolean;
+  timeout_ms: number;
+  last_connected_at: string | null;
+  // Phase 5 settings
+  auto_print: boolean;
+  print_logo: boolean;
+}
+
+export const defaultPrintSettings: PrintSettings = {
+  enabled: false,
+  printer_name: '',
+  ip: '',
+  port: 9100,
+  paper_width: '80mm',
+  auto_cut: true,
+  timeout_ms: 5000,
+  last_connected_at: null,
+  // Phase 5 defaults
+  auto_print: false,
+  print_logo: true,
+};
+
 export interface Company {
   id: string;
   name: string;
@@ -24,6 +52,7 @@ export interface Company {
   logo_url: string | null;
   phone: string | null;
   whatsapp_settings: WhatsAppSettings | null;
+  print_settings: PrintSettings | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -453,4 +482,149 @@ export interface CatalogOrderWithDiscounts extends CatalogOrder {
   points_earned: number;
   promotion_id: string | null;
   promotion_discount: number;
+}
+
+// ============================================
+// Billing / Subscription Types (Asaas)
+// ============================================
+
+export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
+export type BillingType = 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'UNDEFINED';
+export type SubscriptionStatus = 'active' | 'overdue' | 'canceled' | 'expired';
+export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'REFUND_REQUESTED' | 'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' | 'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
+
+export interface Plan {
+  id: string;
+  name: string;                    // 'free', 'starter', 'pro', 'enterprise'
+  display_name: string;            // 'Grátis', 'Starter', 'Pro'
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number | null;
+  product_limit: number | null;    // NULL = ilimitado
+  user_limit: number | null;
+  storage_limit_mb: number | null;
+  features: PlanFeatures;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanFeatures {
+  whatsapp_notifications: boolean;
+  advanced_reports: boolean;
+  multiple_users: boolean;
+  promotions: boolean;
+  loyalty_program: boolean;
+  coupons: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  company_id: string;
+  plan_id: string;
+  asaas_subscription_id: string | null;  // 'sub_xxx' do Asaas
+  asaas_customer_id: string | null;       // 'cus_xxx' do Asaas
+  billing_type: BillingType;
+  billing_cycle: BillingCycle;
+  status: SubscriptionStatus;
+  price: number;
+  next_due_date: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  canceled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  plan?: Plan;
+  company?: Company;
+}
+
+export interface Payment {
+  id: string;
+  subscription_id: string;
+  asaas_payment_id: string | null;  // 'pay_xxx' do Asaas
+  amount: number;
+  net_amount: number | null;        // Valor líquido após taxas
+  status: PaymentStatus;
+  billing_type: BillingType;
+  due_date: string;
+  paid_at: string | null;
+  invoice_url: string | null;
+  bank_slip_url: string | null;
+  pix_qr_code: string | null;
+  pix_copy_paste: string | null;
+  created_at: string;
+  subscription?: Subscription;
+}
+
+// Asaas API Types
+export interface AsaasCustomer {
+  id: string;
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  phone?: string;
+  mobilePhone?: string;
+  postalCode?: string;
+  address?: string;
+  addressNumber?: string;
+  complement?: string;
+  province?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface AsaasSubscription {
+  id: string;
+  customer: string;
+  billingType: BillingType;
+  value: number;
+  nextDueDate: string;
+  cycle: BillingCycle;
+  description: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+}
+
+export interface AsaasPayment {
+  id: string;
+  subscription?: string;
+  customer: string;
+  billingType: BillingType;
+  value: number;
+  netValue: number;
+  status: PaymentStatus;
+  dueDate: string;
+  paymentDate?: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCodeUrl?: string;
+  pixCopiaECola?: string;
+}
+
+export interface CreateSubscriptionData {
+  companyId: string;
+  planId: string;
+  billingType: BillingType;
+  billingCycle: BillingCycle;
+  customerData: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    phone?: string;
+  };
+  creditCard?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
+  creditCardHolderInfo?: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone: string;
+  };
 }

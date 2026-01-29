@@ -94,6 +94,26 @@ export function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [activeFeatureModal, setActiveFeatureModal] = useState<string | null>(null);
+  const [activeFeatureCard, setActiveFeatureCard] = useState<string | null>(null);
+
+  // Handler para clique nos cards de features (mobile: 2 toques, desktop: 1 clique)
+  const handleFeatureCardClick = (featureId: string) => {
+    // Detecta se é touch device
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+
+    if (isTouchDevice) {
+      // Mobile: primeiro toque mostra "Ver preview", segundo abre modal
+      if (activeFeatureCard === featureId) {
+        setActiveFeatureModal(featureId);
+        setActiveFeatureCard(null);
+      } else {
+        setActiveFeatureCard(featureId);
+      }
+    } else {
+      // Desktop: abre modal diretamente
+      setActiveFeatureModal(featureId);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -216,7 +236,7 @@ export function LandingPage() {
     {
       number: '01',
       title: 'Crie sua conta',
-      description: 'Cadastro gratuito em menos de 1 minuto. Sem cartao de credito.',
+      description: 'Cadastro gratuito em menos de 1 minuto. Comece com ate 20 produtos.',
       icon: RocketLaunchIcon,
     },
     {
@@ -406,12 +426,13 @@ export function LandingPage() {
             <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 transition-all duration-700 delay-300 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <Link
                 to="/registro"
-                className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] hover:bg-right text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-500 shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 overflow-hidden"
+                className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-1 overflow-hidden"
               >
                 <span className="relative z-10">Criar conta gratuita</span>
                 <ArrowForwardIcon className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               </Link>
+{/* TODO: Habilitar quando tiver vídeo de demonstração
               <a
                 href="/catalogo/newempire"
                 target="_blank"
@@ -421,13 +442,14 @@ export function LandingPage() {
                 <PlayArrowIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 Ver demonstracao
               </a>
+*/}
             </div>
 
             {/* Trust Badges */}
             <div className={`flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400 transition-all duration-700 delay-400 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                <span>Sem cartao de credito</span>
+                <span>Plano gratuito disponivel</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
@@ -587,25 +609,27 @@ export function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
+            {features.map((feature, index) => {
+              const isCardActive = activeFeatureCard === feature.id;
+              return (
               <button
                 key={feature.id}
-                onClick={() => setActiveFeatureModal(feature.id)}
+                onClick={() => handleFeatureCardClick(feature.id)}
                 className={`group relative bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 overflow-hidden text-left cursor-pointer ${
                   featuresSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
+                } ${isCardActive ? 'shadow-2xl -translate-y-3 border-indigo-300 dark:border-indigo-700' : ''}`}
                 style={{ transitionDelay: `${index * 50}ms` }}
               >
                 {/* Hover gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} transition-opacity duration-500 ${isCardActive ? 'opacity-5' : 'opacity-0 group-hover:opacity-5'}`} />
 
                 {/* Icon */}
-                <div className={`relative w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center mb-5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6`}>
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                  <feature.icon className="relative text-gray-700 dark:text-gray-300 group-hover:text-white transition-colors duration-500" />
+                <div className={`relative w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center mb-5 transition-all duration-500 ${isCardActive ? 'scale-110 rotate-6' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} transition-opacity duration-500 ${isCardActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                  <feature.icon className={`relative transition-colors duration-500 ${isCardActive ? 'text-white' : 'text-gray-700 dark:text-gray-300 group-hover:text-white'}`} />
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <h3 className={`text-lg font-bold mb-3 transition-colors ${isCardActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`}>
                   {feature.title}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -613,12 +637,13 @@ export function LandingPage() {
                 </p>
 
                 {/* Arrow indicator */}
-                <div className="mt-4 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
+                <div className={`mt-4 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-all duration-300 transform ${isCardActive ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0'}`}>
                   <span>Ver preview</span>
                   <ArrowForwardIcon className="h-4 w-4" />
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           {/* Feature Modals */}
@@ -811,7 +836,7 @@ export function LandingPage() {
 
           {/* Device Showcase - Interactive Mock */}
           <div className={`transition-all duration-700 ${responsiveSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="relative h-[450px] sm:h-[500px]">
+            <div className="relative h-[320px] sm:h-[500px]">
               <MockDevices />
             </div>
           </div>
@@ -1051,16 +1076,16 @@ export function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/registro"
-              className="group relative inline-flex items-center justify-center gap-3 bg-white text-indigo-600 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-black/30 hover:scale-105 hover:-translate-y-1 overflow-hidden"
+              className="group relative inline-flex items-center justify-center gap-3 bg-white text-indigo-600 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 overflow-hidden"
             >
               <span className="relative z-10">Comecar gratuitamente</span>
               <ArrowForwardIcon className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             </Link>
           </div>
           <p className="mt-6 text-white/60 text-sm flex items-center justify-center gap-2">
             <CheckCircleIcon className="h-5 w-5" />
-            Sem cartao de credito. Sem compromisso.
+            Plano gratuito com ate 20 produtos para voce comecar
           </p>
         </div>
       </section>
@@ -1083,9 +1108,11 @@ export function LandingPage() {
               <Link to="/registro" className="hover:text-white transition-colors">Criar conta</Link>
             </div>
 
-            <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} Mercado Virtual App
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+              <Link to="/privacidade" className="hover:text-white transition-colors">Politica de Privacidade</Link>
+              <Link to="/termos" className="hover:text-white transition-colors">Termos de Servico</Link>
+              <span>&copy; {new Date().getFullYear()} Mercado Virtual</span>
+            </div>
           </div>
         </div>
       </footer>

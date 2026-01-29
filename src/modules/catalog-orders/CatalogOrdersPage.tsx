@@ -8,6 +8,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Card, Button, Badge, Modal, ModalFooter, Input } from '../../components/ui';
 import { useTenant } from '../../contexts/TenantContext';
@@ -15,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { supabase } from '../../services/supabase';
 import { sendTextMessage, formatOrderMessageForCustomer, WhatsAppSettings, defaultWhatsAppSettings, getConnectionState } from '../../services/whatsapp';
+import { exportToExcel, exportToPDF } from '../../services/export';
 import { CatalogOrder, CatalogOrderItem, CatalogOrderStatus } from '../../types';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -100,7 +102,7 @@ export function CatalogOrdersPage() {
       .insert({
         company_id: currentCompany.id,
         customer_id: null, // Cliente não cadastrado
-        seller_id: user.uid,
+        seller_id: user.id,
         status: 'completed',
         subtotal: order.subtotal,
         discount: 0,
@@ -363,6 +365,24 @@ export function CatalogOrdersPage() {
     window.open(url, '_blank');
   };
 
+  const handleExport = (format: 'excel' | 'pdf') => {
+    const data = filteredOrders.map((o) => ({
+      'Data': formatDate(o.created_at),
+      'Cliente': o.customer_name,
+      'Telefone': o.customer_phone,
+      'Itens': o.items.length,
+      'Total': formatCurrency(o.total),
+      'Status': statusConfig[o.status].label,
+      'Observações': o.customer_notes || '-',
+    }));
+
+    if (format === 'excel') {
+      exportToExcel(data, 'pedidos_catalogo');
+    } else {
+      exportToPDF(data, 'pedidos_catalogo', 'Pedidos do Catálogo');
+    }
+  };
+
   // Contadores por status
   const statusCounts = {
     all: orders.length,
@@ -390,9 +410,19 @@ export function CatalogOrdersPage() {
       title="Pedidos do Catálogo"
       subtitle={statusCounts.pending > 0 ? `${statusCounts.pending} pedido(s) pendente(s)` : 'Pedidos recebidos pelo catálogo público'}
       action={
-        <Button variant="secondary" onClick={fetchOrders} icon={<RefreshIcon />}>
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => handleExport('excel')} className="hidden sm:flex">
+            <FileDownloadIcon className="w-4 h-4" />
+            Excel
+          </Button>
+          <Button variant="secondary" onClick={() => handleExport('pdf')} className="hidden sm:flex">
+            <FileDownloadIcon className="w-4 h-4" />
+            PDF
+          </Button>
+          <Button variant="secondary" onClick={fetchOrders} icon={<RefreshIcon />}>
+            Atualizar
+          </Button>
+        </div>
       }
       toolbar={
         <Card className="p-3">

@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../services/supabase';
 import { uploadCompanyLogo } from '../../services/storage';
 import { OnboardingProgress } from './components/OnboardingProgress';
+import { StepTerms, CURRENT_TERMS_VERSION } from './components/StepTerms';
 import { StepCompanyName } from './components/StepCompanyName';
 import { StepSegments } from './components/StepSegments';
 import { StepLogo } from './components/StepLogo';
@@ -16,6 +17,8 @@ interface OnboardingData {
   segments: string[];
   logoFile: File | null;
   logoPreview: string | null;
+  termsAccepted: boolean;
+  termsAcceptedItems: string[];
 }
 
 export function OnboardingPage() {
@@ -30,6 +33,8 @@ export function OnboardingPage() {
     segments: [],
     logoFile: null,
     logoPreview: null,
+    termsAccepted: false,
+    termsAcceptedItems: [],
   });
 
   const handleComplete = async () => {
@@ -50,6 +55,8 @@ export function OnboardingPage() {
           slug: data.slug,
           segments: data.segments,
           is_active: true,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: CURRENT_TERMS_VERSION,
         })
         .select()
         .single();
@@ -78,7 +85,24 @@ export function OnboardingPage() {
         }
       }
 
-      // 3. Adicionar usuario como admin da empresa
+      // 3. Registrar aceite dos termos
+      try {
+        await supabase.from('terms_acceptances').insert({
+          user_id: profile.id,
+          company_id: company.id,
+          terms_version: CURRENT_TERMS_VERSION,
+          accepted_items: data.termsAcceptedItems,
+          metadata: {
+            company_name: data.companyName,
+            accepted_at_step: 'onboarding',
+          },
+        });
+      } catch (termsError) {
+        console.error('Error saving terms acceptance:', termsError);
+        // Nao e critico, continuar
+      }
+
+      // 4. Adicionar usuario como admin da empresa
       const { error: memberError } = await supabase.from('company_members').insert({
         user_id: profile.id,
         company_id: company.id,
@@ -94,7 +118,7 @@ export function OnboardingPage() {
         return;
       }
 
-      // 4. Marcar onboarding como completo
+      // 5. Marcar onboarding como completo
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ onboarding_completed: true })
@@ -105,12 +129,12 @@ export function OnboardingPage() {
         // Nao e critico, continuar mesmo assim
       }
 
-      // 5. Atualizar contexto
+      // 6. Atualizar contexto
       await refreshProfile();
 
       toast.success('Sua loja foi criada com sucesso!');
 
-      // 6. Redirecionar para o dashboard da nova empresa
+      // 7. Redirecionar para o dashboard da nova empresa
       navigate(`/app/${company.slug}`);
     } catch (err) {
       console.error('Error in onboarding:', err);
@@ -132,31 +156,38 @@ export function OnboardingPage() {
       </div>
 
       {/* Progress */}
-      <OnboardingProgress currentStep={step} totalSteps={3} />
+      <OnboardingProgress currentStep={step} totalSteps={4} />
 
       {/* Steps */}
       <div className="w-full max-w-lg">
         {step === 1 && (
-          <StepCompanyName
+          <StepTerms
             data={data}
             onChange={setData}
             onNext={() => setStep(2)}
           />
         )}
         {step === 2 && (
-          <StepSegments
+          <StepCompanyName
             data={data}
             onChange={setData}
             onNext={() => setStep(3)}
-            onBack={() => setStep(1)}
           />
         )}
         {step === 3 && (
+          <StepSegments
+            data={data}
+            onChange={setData}
+            onNext={() => setStep(4)}
+            onBack={() => setStep(2)}
+          />
+        )}
+        {step === 4 && (
           <StepLogo
             data={data}
             onChange={setData}
             onComplete={handleComplete}
-            onBack={() => setStep(2)}
+            onBack={() => setStep(3)}
             loading={loading}
           />
         )}

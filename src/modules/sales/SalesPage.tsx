@@ -5,9 +5,12 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, BarcodeScanner } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
+import { PrintButton, WhatsAppShareModal } from '../../components/print';
+import { printReceipt } from '../../services/print';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
@@ -49,6 +52,10 @@ export function SalesPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+
+  // WhatsApp Share Modal
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsAppSale, setWhatsAppSale] = useState<Sale | null>(null);
 
   useEffect(() => {
     if (currentCompany) {
@@ -186,7 +193,7 @@ export function SalesPage() {
         .insert({
           company_id: currentCompany!.id,
           customer_id: selectedCustomer || null,
-          seller_id: user!.uid,
+          seller_id: user!.id,
           status: 'completed',
           subtotal,
           discount: discountValue,
@@ -224,6 +231,63 @@ export function SalesPage() {
       }
 
       toast.success('Venda registrada com sucesso!');
+
+      // Auto print if enabled
+      if (currentCompany?.print_settings?.auto_print && currentCompany?.print_settings?.enabled) {
+        // Build complete sale object for printing
+        const selectedCustomerData = selectedCustomer ? customers.find(c => c.id === selectedCustomer) : undefined;
+        const completeSale: Sale = {
+          id: saleData.id,
+          company_id: currentCompany.id,
+          customer_id: selectedCustomer || null,
+          seller_id: user!.id,
+          status: 'completed',
+          subtotal,
+          discount: discountValue,
+          total,
+          payment_method: paymentMethod || null,
+          notes: notes || null,
+          customer_name: selectedCustomerData?.name || null,
+          customer_phone: selectedCustomerData?.phone || null,
+          created_at: saleData.created_at,
+          updated_at: saleData.updated_at,
+          customer: selectedCustomerData,
+          items: saleItems.map((item, index) => ({
+            id: `temp-${index}`,
+            sale_id: saleData.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total: item.total,
+            created_at: saleData.created_at,
+          })),
+        };
+
+        try {
+          const printResult = await printReceipt(completeSale, currentCompany, {
+            method: 'network',
+            paperWidth: currentCompany.print_settings.paper_width || '80mm',
+            autoCut: currentCompany.print_settings.auto_cut ?? true,
+            showLogo: currentCompany.print_settings.print_logo ?? true,
+            networkConfig: {
+              ip: currentCompany.print_settings.ip,
+              port: currentCompany.print_settings.port || 9100,
+              timeout_ms: currentCompany.print_settings.timeout_ms || 5000,
+            },
+          });
+
+          if (printResult.success) {
+            toast.success('Comprovante impresso automaticamente!', { icon: '🖨️' });
+          } else {
+            toast.error(`Erro na impressao: ${printResult.error}`);
+          }
+        } catch (printError) {
+          console.error('Auto print error:', printError);
+          toast.error('Erro ao imprimir automaticamente');
+        }
+      }
+
       setShowNewSaleModal(false);
       fetchData();
     } catch {
@@ -298,6 +362,12 @@ export function SalesPage() {
     } finally {
       setCancelling(false);
     }
+  };
+
+  // Abrir modal de envio via WhatsApp
+  const handleOpenWhatsAppModal = (sale: Sale) => {
+    setWhatsAppSale(sale);
+    setShowWhatsAppModal(true);
   };
 
   // Helper para obter nome do cliente (cadastrado ou do catálogo)
@@ -891,6 +961,28 @@ export function SalesPage() {
               </div>
             </div>
 
+            {/* Print and Share Actions */}
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <PrintButton
+                sale={viewingSale}
+                company={currentCompany!}
+                onPrintSuccess={() => toast.success('Comprovante impresso!')}
+                onPrintError={(error) => toast.error(error)}
+                onWhatsAppShare={() => handleOpenWhatsAppModal(viewingSale)}
+              />
+
+              {(viewingSale.customer_phone || viewingSale.customer?.phone) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => handleOpenWhatsAppModal(viewingSale)}
+                  className="flex items-center gap-2"
+                >
+                  <WhatsAppIcon className="w-4 h-4" />
+                  Enviar WhatsApp
+                </Button>
+              )}
+            </div>
+
             {/* Status Actions */}
             {isAdmin && viewingSale.status !== 'cancelled' && (
               <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -986,6 +1078,21 @@ export function SalesPage() {
         onScan={handleBarcodeScan}
         title="Escanear Produto"
       />
+
+      {/* WhatsApp Share Modal */}
+      {whatsAppSale && (
+        <WhatsAppShareModal
+          isOpen={showWhatsAppModal}
+          onClose={() => {
+            setShowWhatsAppModal(false);
+            setWhatsAppSale(null);
+          }}
+          sale={whatsAppSale}
+          company={currentCompany!}
+          onSuccess={() => toast.success('Comprovante enviado via WhatsApp!')}
+          onError={(error) => toast.error(error)}
+        />
+      )}
     </PageContainer>
   );
 }

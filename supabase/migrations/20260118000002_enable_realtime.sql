@@ -12,27 +12,45 @@ BEGIN
 END
 $$;
 
--- Add tables to the realtime publication
--- Products - for inventory updates and catalog sync
-ALTER PUBLICATION supabase_realtime ADD TABLE products;
+-- Add tables to the realtime publication (with IF NOT EXISTS check)
+DO $$
+BEGIN
+  -- Products
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'products') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE products;
+  END IF;
 
--- Sales - for real-time sales tracking
-ALTER PUBLICATION supabase_realtime ADD TABLE sales;
+  -- Sales
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'sales') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sales;
+  END IF;
 
--- Sale Items - for sales details
-ALTER PUBLICATION supabase_realtime ADD TABLE sale_items;
+  -- Sale Items
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'sale_items') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sale_items;
+  END IF;
 
--- Catalog Orders - for real-time order notifications
-ALTER PUBLICATION supabase_realtime ADD TABLE catalog_orders;
+  -- Catalog Orders
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'catalog_orders') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE catalog_orders;
+  END IF;
 
--- Catalog Order Items - for order details
-ALTER PUBLICATION supabase_realtime ADD TABLE catalog_order_items;
+  -- Catalog Order Items
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'catalog_order_items') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE catalog_order_items;
+  END IF;
 
--- Categories - for catalog updates
-ALTER PUBLICATION supabase_realtime ADD TABLE categories;
+  -- Categories
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'categories') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE categories;
+  END IF;
 
--- Customers - for customer data sync
-ALTER PUBLICATION supabase_realtime ADD TABLE customers;
+  -- Customers
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'customers') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE customers;
+  END IF;
+END
+$$;
 
 -- Comment explaining the realtime setup
 COMMENT ON PUBLICATION supabase_realtime IS 'Publication for Supabase Realtime. Includes: products, sales, sale_items, catalog_orders, catalog_order_items, categories, customers';

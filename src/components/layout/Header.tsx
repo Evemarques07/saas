@@ -22,8 +22,8 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   const { currentCompany, switchCompany } = useTenant();
   const { theme, toggleTheme } = useTheme();
 
-  // Avatar: profile.avatar_url > user.photoURL (Firebase/Google) > fallback icon
-  const avatarUrl = profile?.avatar_url || user?.photoURL || null;
+  // Avatar: profile.avatar_url > user.user_metadata.avatar_url (Supabase/Google) > fallback icon
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null;
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCompanyMenu, setShowCompanyMenu] = useState(false);

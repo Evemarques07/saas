@@ -11,6 +11,8 @@ interface OnboardingData {
   segments: string[];
   logoFile: File | null;
   logoPreview: string | null;
+  termsAccepted: boolean;
+  termsAcceptedItems: string[];
 }
 
 interface StepCompanyNameProps {

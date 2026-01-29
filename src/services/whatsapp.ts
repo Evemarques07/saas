@@ -1,5 +1,6 @@
 // WuzAPI Configuration
-const WUZAPI_URL = import.meta.env.VITE_WUZAPI_URL || 'https://evertonapi.vps-kinghost.net';
+// URL deve ser configurada via VITE_WUZAPI_URL no .env.local
+const WUZAPI_URL = import.meta.env.VITE_WUZAPI_URL || '';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // Constants
@@ -152,33 +153,32 @@ export function formatPhoneForWhatsApp(phone: string): string {
 
 // ==================== EDGE FUNCTION CALLS (SECURE) ====================
 
-// Helper to get Firebase ID Token for edge function auth
-async function getFirebaseIdToken(): Promise<string | null> {
+// Helper to get Supabase access token for edge function auth
+async function getSupabaseAccessToken(): Promise<string | null> {
   try {
-    // Import Firebase auth dynamically to avoid circular dependencies
-    const { auth } = await import('./firebase');
-    const user = auth.currentUser;
-    if (!user) {
-      console.error('[WhatsApp] No Firebase user logged in');
+    const { supabaseGetAccessToken } = await import('./supabase');
+    const token = await supabaseGetAccessToken();
+    if (!token) {
+      console.error('[WhatsApp] No Supabase session found');
       return null;
     }
-    return await user.getIdToken();
+    return token;
   } catch (error) {
-    console.error('[WhatsApp] Error getting Firebase ID token:', error);
+    console.error('[WhatsApp] Error getting Supabase access token:', error);
     return null;
   }
 }
 
-// Call edge function with Firebase auth
+// Call edge function with Supabase auth
 async function callEdgeFunction(action: string, data: Record<string, unknown> = {}): Promise<{
   success: boolean;
   data?: unknown;
   error?: string;
 }> {
   try {
-    const idToken = await getFirebaseIdToken();
-    if (!idToken) {
-      console.error('[WhatsApp] No Firebase ID token available');
+    const accessToken = await getSupabaseAccessToken();
+    if (!accessToken) {
+      console.error('[WhatsApp] No Supabase access token available');
       return { success: false, error: 'Usuario nao autenticado' };
     }
 
@@ -191,7 +191,7 @@ async function callEdgeFunction(action: string, data: Record<string, unknown> = 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ action, ...data }),
       },
@@ -478,6 +478,76 @@ export async function sendTextMessage(
     };
   } catch (error) {
     console.error('[WhatsApp] Error sending message:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro de conexao com a API';
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+// Send image message
+export async function sendImageMessage(
+  userToken: string,
+  phone: string,
+  imageBase64: string,
+  caption?: string
+): Promise<SendMessageResult> {
+  try {
+    // IMPORTANT: First verify the session is connected
+    const connectionState = await getConnectionState(userToken);
+    if (connectionState.state !== 'open') {
+      return {
+        success: false,
+        error: 'WhatsApp nao esta conectado. Reconecte na pagina de Configuracoes.',
+      };
+    }
+
+    // Check if the phone exists on WhatsApp and get the correct JID
+    const checkResult = await checkPhoneOnWhatsApp(userToken, phone);
+
+    if (!checkResult.exists || !checkResult.jid) {
+      return {
+        success: false,
+        error: 'Numero nao encontrado no WhatsApp',
+      };
+    }
+
+    // Ensure image has proper data URI prefix
+    let imageData = imageBase64;
+    if (!imageData.startsWith('data:image')) {
+      imageData = `data:image/png;base64,${imageData}`;
+    }
+
+    // Send image via WuzAPI
+    const response = await fetchWithRetry(`${WUZAPI_URL}/chat/send/image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Token': userToken,
+      },
+      body: JSON.stringify({
+        Phone: checkResult.jid,
+        Image: imageData,
+        Caption: caption || '',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData?.error || 'Erro ao enviar imagem',
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      messageId: data?.data?.Id || data?.data?.id,
+    };
+  } catch (error) {
+    console.error('[WhatsApp] Error sending image:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro de conexao com a API';
     return {
       success: false,

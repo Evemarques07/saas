@@ -35,8 +35,11 @@ export function LoginPage() {
       const { error } = await signIn(email, password);
 
       if (error) {
-        if (error.message.includes('invalid-credential')) {
-          toast.error('Email ou senha inválidos');
+        // Supabase error messages
+        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid-credential')) {
+          toast.error('Email ou senha invalidos');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Email nao confirmado. Verifique sua caixa de entrada.');
         } else {
           toast.error('Erro ao fazer login');
         }
@@ -60,14 +63,14 @@ export function LoginPage() {
 
       if (error) {
         toast.error('Erro ao fazer login com Google');
+        setGoogleLoading(false);
         return;
       }
 
-      toast.success('Login realizado com sucesso!');
-      navigate('/');
+      // Note: Supabase OAuth redirects to Google, so we won't reach here
+      // The redirect back will be handled by /auth/callback
     } catch {
       toast.error('Erro ao fazer login com Google');
-    } finally {
       setGoogleLoading(false);
     }
   };
@@ -146,6 +149,15 @@ export function LoginPage() {
               }
               autoComplete="current-password"
             />
+
+            <div className="flex justify-end">
+              <Link
+                to="/esqueci-senha"
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
 
             <Button
               type="submit"

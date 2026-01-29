@@ -11,12 +11,14 @@ import LinkIcon from '@mui/icons-material/Link';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import * as XLSX from 'xlsx';
+import WarningIcon from '@mui/icons-material/Warning';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, MultiImageUpload, ConfirmModal, BarcodeScanner } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { uploadProductImage, deleteProductImages, StorageError } from '../../services/storage';
+import { getCompanyUsage, canAddProduct, UsageLimits } from '../../services/asaas';
 import { Product, Category, TableColumn, ProductImage } from '../../types';
 import { exportToExcel, exportToPDF } from '../../services/export';
 
@@ -43,6 +45,7 @@ export function ProductsPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<Array<Record<string, string | number>>>([]);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [usageLimits, setUsageLimits] = useState<UsageLimits | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -89,6 +92,14 @@ export function ProductsPage() {
 
     if (categoriesResult.data) {
       setCategories(categoriesResult.data);
+    }
+
+    // Carregar limites de uso do plano
+    try {
+      const usage = await getCompanyUsage(currentCompany.id);
+      setUsageLimits(usage);
+    } catch (err) {
+      console.error('Erro ao carregar limites:', err);
     }
 
     setLoading(false);
@@ -188,6 +199,19 @@ export function ProductsPage() {
   // Importar produtos do Excel
   const handleImportProducts = async () => {
     if (!currentCompany || importPreview.length === 0) return;
+
+    // Verificar limite antes de importar
+    if (usageLimits && usageLimits.products.limit !== null) {
+      const availableSlots = usageLimits.products.limit - usageLimits.products.used;
+      if (availableSlots <= 0) {
+        toast.error('Limite de produtos atingido. Faca upgrade do seu plano para importar produtos.');
+        return;
+      }
+      if (importPreview.length > availableSlots) {
+        toast.error(`Voce pode importar apenas ${availableSlots} produto(s). Seu plano permite ${usageLimits.products.limit} produtos.`);
+        return;
+      }
+    }
 
     setImporting(true);
 
@@ -310,6 +334,12 @@ export function ProductsPage() {
 
     if (!formData.name || !formData.price) {
       toast.error('Nome e preco sao obrigatorios');
+      return;
+    }
+
+    // Verificar limite de produtos ao criar novo
+    if (!editingProduct && usageLimits && !canAddProduct(usageLimits)) {
+      toast.error('Limite de produtos atingido. Faca upgrade do seu plano para adicionar mais produtos.');
       return;
     }
 
@@ -617,7 +647,11 @@ export function ProductsPage() {
             <FileUploadIcon className="w-4 h-4" />
             Importar
           </Button>
-          <Button onClick={() => handleOpenModal()}>
+          <Button
+            onClick={() => handleOpenModal()}
+            disabled={usageLimits ? !canAddProduct(usageLimits) : false}
+            title={usageLimits && !canAddProduct(usageLimits) ? 'Limite de produtos atingido' : undefined}
+          >
             <AddIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Novo Produto</span>
             <span className="sm:hidden">Novo</span>
@@ -635,6 +669,51 @@ export function ProductsPage() {
         </Card>
       }
     >
+      {/* Alerta de limite de produtos */}
+      {usageLimits && usageLimits.products.limit !== null && (
+        <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+          usageLimits.products.used >= usageLimits.products.limit
+            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            : usageLimits.products.used >= usageLimits.products.limit * 0.8
+              ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+              : 'hidden'
+        }`}>
+          <WarningIcon className={`w-5 h-5 flex-shrink-0 ${
+            usageLimits.products.used >= usageLimits.products.limit
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-yellow-600 dark:text-yellow-400'
+          }`} />
+          <div className="flex-1">
+            <p className={`text-sm font-medium ${
+              usageLimits.products.used >= usageLimits.products.limit
+                ? 'text-red-800 dark:text-red-200'
+                : 'text-yellow-800 dark:text-yellow-200'
+            }`}>
+              {usageLimits.products.used >= usageLimits.products.limit
+                ? 'Limite de produtos atingido!'
+                : 'Voce esta proximo do limite de produtos'}
+            </p>
+            <p className={`text-xs ${
+              usageLimits.products.used >= usageLimits.products.limit
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-yellow-600 dark:text-yellow-400'
+            }`}>
+              {usageLimits.products.used} de {usageLimits.products.limit} produtos utilizados.
+              {usageLimits.products.used >= usageLimits.products.limit
+                ? ' Faca upgrade do seu plano para adicionar mais produtos.'
+                : ` Restam ${usageLimits.products.limit - usageLimits.products.used} vagas.`}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/app/${currentCompany?.slug}/faturamento`}
+          >
+            Ver Planos
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <Table
         columns={columns}

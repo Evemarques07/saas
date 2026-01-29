@@ -23,8 +23,14 @@ export function ProtectedRoute({ children, fallback }: RouteGuardProps) {
     return <Navigate to="/login" replace />;
   }
 
+  // Aguarda profile carregar antes de decidir rota
+  // Isso evita flash de erro quando usuario loga e profile ainda esta sendo buscado
+  if (!profile) {
+    return <FullPageLoader />;
+  }
+
   // Se usuario nao tem empresas e nao e super admin, precisa fazer onboarding
-  if (companies.length === 0 && !isSuperAdmin && profile && !profile.onboarding_completed) {
+  if (companies.length === 0 && !isSuperAdmin && !profile.onboarding_completed) {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -39,6 +45,11 @@ export function PublicRoute({ children }: RouteGuardProps) {
   }
 
   if (user) {
+    // Aguarda profile carregar antes de decidir rota
+    if (!profile) {
+      return <FullPageLoader />;
+    }
+
     // Super admin sem empresas vai para /admin
     if (isSuperAdmin && companies.length === 0) {
       return <Navigate to="/admin" replace />;
@@ -55,8 +66,8 @@ export function PublicRoute({ children }: RouteGuardProps) {
       return <Navigate to="/admin" replace />;
     }
 
-    // Usuario sem empresas - verifica se precisa de onboarding
-    if (profile && !profile.onboarding_completed) {
+    // Usuario sem empresas - vai para onboarding
+    if (!profile.onboarding_completed) {
       return <Navigate to="/onboarding" replace />;
     }
 

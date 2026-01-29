@@ -8,6 +8,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StarsIcon from '@mui/icons-material/Stars';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -55,6 +56,7 @@ const navItemsConfig: NavItemConfig[] = [
   { route: PATHS.FIDELIDADE, label: 'Fidelidade', icon: <StarsIcon /> },
   { route: PATHS.PROMOCOES, label: 'Promocoes', icon: <CampaignIcon /> },
   { route: PATHS.USUARIOS, label: 'Usuarios', icon: <GroupIcon />, adminOnly: true },
+  { route: PATHS.FATURAMENTO, label: 'Faturamento', icon: <PaymentsIcon />, adminOnly: true },
   { route: PATHS.CONFIGURACOES, label: 'Configuracoes', icon: <SettingsIcon /> },
 ];
 

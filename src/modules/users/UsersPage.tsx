@@ -6,6 +6,8 @@ import BlockIcon from '@mui/icons-material/Block';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
+import WarningIcon from '@mui/icons-material/Warning';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, ConfirmModal, InviteLinkModal } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -13,6 +15,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { sendInviteEmail } from '../../services/email';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 import { CompanyMember, MemberRole, TableColumn } from '../../types';
 
 const ROLES: { value: MemberRole; label: string }[] = [
@@ -24,6 +27,7 @@ const ROLES: { value: MemberRole; label: string }[] = [
 export function UsersPage() {
   const { currentCompany, isAdmin } = useTenant();
   const { user } = useAuth();
+  const { limits, canAddUser } = usePlanFeatures();
   const [members, setMembers] = useState<CompanyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -116,6 +120,12 @@ export function UsersPage() {
       return;
     }
 
+    // Verificar limite de usuarios
+    if (!canAddUser()) {
+      toast.error('Limite de usuarios atingido. Faca upgrade do seu plano para convidar mais usuarios.');
+      return;
+    }
+
     setSendingInvite(true);
 
     try {
@@ -126,7 +136,7 @@ export function UsersPage() {
           email: inviteEmail,
           company_id: currentCompany!.id,
           role: inviteRole,
-          invited_by: user!.uid,
+          invited_by: user!.id,
         })
         .select('token')
         .single();
@@ -281,7 +291,7 @@ export function UsersPage() {
       label: 'Ações',
       render: (m) => (
         <div className="flex items-center gap-2">
-          {isAdmin && m.user_id !== user?.uid && (
+          {isAdmin && m.user_id !== user?.id && (
             <>
               <button
                 onClick={() => handleOpenEditModal(m)}
@@ -330,12 +340,21 @@ export function UsersPage() {
     );
   }
 
+  const userLimit = limits?.users?.limit ?? null;
+  const userUsed = limits?.users?.used ?? 0;
+  const userLimitReached = userLimit !== null && userUsed >= userLimit;
+  const userLimitNear = userLimit !== null && userUsed >= userLimit * 0.8;
+
   return (
     <PageContainer
       title="Usuários"
       subtitle={`${filteredMembers.length} usuários na empresa`}
       action={
-        <Button onClick={handleOpenInviteModal}>
+        <Button
+          onClick={handleOpenInviteModal}
+          disabled={userLimitReached}
+          title={userLimitReached ? 'Limite de usuarios atingido' : undefined}
+        >
           <PersonAddIcon className="w-4 h-4" />
           <span className="hidden sm:inline">Convidar Usuário</span>
           <span className="sm:hidden">Convidar</span>
@@ -352,6 +371,50 @@ export function UsersPage() {
         </Card>
       }
     >
+      {/* Alerta de limite de usuarios */}
+      {userLimit !== null && (userLimitReached || userLimitNear) && (
+        <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+          userLimitReached
+            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <WarningIcon className={`w-5 h-5 flex-shrink-0 ${
+            userLimitReached
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-yellow-600 dark:text-yellow-400'
+          }`} />
+          <div className="flex-1">
+            <p className={`text-sm font-medium ${
+              userLimitReached
+                ? 'text-red-800 dark:text-red-200'
+                : 'text-yellow-800 dark:text-yellow-200'
+            }`}>
+              {userLimitReached
+                ? 'Limite de usuarios atingido!'
+                : 'Voce esta proximo do limite de usuarios'}
+            </p>
+            <p className={`text-xs ${
+              userLimitReached
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-yellow-600 dark:text-yellow-400'
+            }`}>
+              {userUsed} de {userLimit} usuarios.
+              {userLimitReached
+                ? ' Faca upgrade para adicionar mais usuarios.'
+                : ` Restam ${userLimit - userUsed} vagas.`}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant={userLimitReached ? 'primary' : 'outline'}
+            onClick={() => window.location.href = `/app/${currentCompany?.slug}/faturamento`}
+          >
+            <RocketLaunchIcon className="w-4 h-4" />
+            Upgrade
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <Table
         columns={columns}
@@ -393,7 +456,7 @@ export function UsersPage() {
                 </span>
               </div>
 
-              {isAdmin && m.user_id !== user?.uid && (
+              {isAdmin && m.user_id !== user?.id && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleOpenEditModal(m)}

@@ -16,6 +16,7 @@ import { Button, Card, Input, Select, Modal, ModalFooter } from '../../component
 import { Table } from '../../components/ui/Table';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { PageLoader } from '../../components/ui/Loader';
+import { FeatureGate } from '../../components/gates';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { Promotion, PromotionType, CouponDiscountType, Category, Product, LoyaltyLevel } from '../../types';
@@ -500,15 +501,16 @@ export function PromotionsPage() {
   }
 
   return (
-    <PageContainer
-      title="Promocoes"
-      subtitle="Crie promocoes automaticas para seus clientes"
-      action={
-        <Button icon={<AddIcon />} onClick={openCreateModal}>
-          Nova Promocao
-        </Button>
-      }
-    >
+    <FeatureGate feature="promotions">
+      <PageContainer
+        title="Promocoes"
+        subtitle="Crie promocoes automaticas para seus clientes"
+        action={
+          <Button icon={<AddIcon />} onClick={openCreateModal}>
+            Nova Promocao
+          </Button>
+        }
+      >
       {/* Promotion Types Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         {PROMOTION_TYPES.slice(0, 4).map((type) => {
@@ -829,6 +831,7 @@ export function PromotionsPage() {
           </Button>
         </ModalFooter>
       </Modal>
-    </PageContainer>
+      </PageContainer>
+    </FeatureGate>
   );
 }

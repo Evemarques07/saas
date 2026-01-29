@@ -6,8 +6,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { supabase } from '../../services/supabase';
-import { firebaseSignUp } from '../../services/firebase';
+import { supabase, supabaseSignUp } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button, Input, Card } from '../../components/ui';
 import { Invite } from '../../types';
@@ -31,7 +30,7 @@ export function AcceptInvitePage() {
 
   useEffect(() => {
     if (!token) {
-      toast.error('Token de convite inválido');
+      toast.error('Token de convite invalido');
       navigate('/login');
       return;
     }
@@ -52,7 +51,7 @@ export function AcceptInvitePage() {
       .single();
 
     if (error || !data) {
-      toast.error('Convite inválido ou expirado');
+      toast.error('Convite invalido ou expirado');
       navigate('/login');
       return;
     }
@@ -70,7 +69,7 @@ export function AcceptInvitePage() {
     }
 
     if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+      toast.error('As senhas nao coincidem');
       return;
     }
 
@@ -82,16 +81,22 @@ export function AcceptInvitePage() {
     setSubmitting(true);
 
     try {
-      // 1. Create user in Firebase (no email confirmation needed!)
-      console.log('[AcceptInvite] Creating Firebase user...');
-      const userCredential = await firebaseSignUp(invite!.email, password, fullName);
-      const firebaseUser = userCredential.user;
-      console.log('[AcceptInvite] Firebase user created:', firebaseUser.uid);
+      // 1. Create user in Supabase Auth
+      console.log('[AcceptInvite] Creating Supabase user...');
+      const { user: newUser } = await supabaseSignUp(invite!.email, password, { full_name: fullName });
 
-      // 2. Create profile in Supabase using Firebase UID
+      if (!newUser) {
+        toast.error('Erro ao criar usuario');
+        setSubmitting(false);
+        return;
+      }
+
+      console.log('[AcceptInvite] Supabase user created:', newUser.id);
+
+      // 2. Create profile in Supabase
       console.log('[AcceptInvite] Creating Supabase profile...');
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: firebaseUser.uid,
+        id: newUser.id,
         email: invite!.email,
         full_name: fullName,
         is_super_admin: false,
@@ -99,7 +104,7 @@ export function AcceptInvitePage() {
 
       if (profileError) {
         console.error('[AcceptInvite] Profile error:', profileError);
-        // Continue anyway - might be a conflict
+        // Continue anyway - might be a conflict or already exists
       }
 
       // 3. Add user to company
@@ -107,7 +112,7 @@ export function AcceptInvitePage() {
       const role = invite!.role === 'company_admin' ? 'admin' : invite!.role;
       const { error: memberError } = await supabase.from('company_members').insert({
         company_id: invite!.company_id,
-        user_id: firebaseUser.uid,
+        user_id: newUser.id,
         role: role,
         is_active: true,
       });
@@ -133,12 +138,12 @@ export function AcceptInvitePage() {
     } catch (err: unknown) {
       console.error('[AcceptInvite] Error:', err);
 
-      // Handle Firebase errors
-      const error = err as { code?: string; message?: string };
-      if (error.code === 'auth/email-already-in-use') {
-        toast.error('Este email já está cadastrado. Faça login.');
+      // Handle Supabase errors
+      const error = err as { message?: string };
+      if (error.message?.includes('already registered')) {
+        toast.error('Este email ja esta cadastrado. Faca login.');
         navigate('/login');
-      } else if (error.code === 'auth/weak-password') {
+      } else if (error.message?.includes('Password should be')) {
         toast.error('Senha muito fraca. Use pelo menos 6 caracteres.');
       } else {
         toast.error(error.message || 'Erro ao criar conta');
@@ -159,7 +164,7 @@ export function AcceptInvitePage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-600">Ejym</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Sistema de Gestão de Vendas
+            Sistema de Gestao de Vendas
           </p>
         </div>
 
@@ -169,8 +174,8 @@ export function AcceptInvitePage() {
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {invite?.company
-              ? `Você foi convidado para ${invite.company.name}`
-              : 'Você foi convidado para criar uma empresa'}
+              ? `Voce foi convidado para ${invite.company.name}`
+              : 'Voce foi convidado para criar uma empresa'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

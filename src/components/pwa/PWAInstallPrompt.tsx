@@ -15,9 +15,12 @@ export function PWAInstallPrompt() {
   // Don't show on catalog pages - they have their own PWA install
   const isCatalogPage = location.pathname.startsWith('/catalogo/');
 
+  // Don't show on landing page
+  const isLandingPage = location.pathname === '/inicio' || location.pathname === '/';
+
   // Handle visibility with animation
   useEffect(() => {
-    if (showPrompt && isInstallable && !isInstalled && !isCatalogPage) {
+    if (showPrompt && isInstallable && !isInstalled && !isCatalogPage && !isLandingPage) {
       // Small delay before showing for better UX
       const showTimer = setTimeout(() => {
         setIsVisible(true);
@@ -30,7 +33,7 @@ export function PWAInstallPrompt() {
       const hideTimer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(hideTimer);
     }
-  }, [showPrompt, isInstallable, isInstalled, isCatalogPage]);
+  }, [showPrompt, isInstallable, isInstalled, isCatalogPage, isLandingPage]);
 
   const handleInstall = async () => {
     setIsAnimating(false);

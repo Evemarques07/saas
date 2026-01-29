@@ -23,6 +23,7 @@ export const PATHS = {
   USUARIOS: '/usuarios',
   EMPRESAS: '/empresas',
   CONFIGURACOES: '/configuracoes',
+  FATURAMENTO: '/faturamento',
 } as const;
 
 // Helper para construir path com slug

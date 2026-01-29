@@ -4,6 +4,8 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import PrintIcon from '@mui/icons-material/Print';
+import RouterIcon from '@mui/icons-material/Router';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -19,14 +21,14 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import TouchAppIcon from '@mui/icons-material/TouchApp';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Card, Button, Input, ImageUpload, WhatsAppConnectModal } from '../../components/ui';
+import { UpgradePrompt } from '../../components/gates';
 import { useTenant } from '../../contexts/TenantContext';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../services/supabase';
+import { supabase, supabaseUpdatePassword } from '../../services/supabase';
 import { uploadCompanyLogo, deleteCompanyLogo, uploadUserAvatar, deleteUserAvatar } from '../../services/storage';
-import { auth } from '../../services/firebase';
 import {
   getConnectionState,
   getSessionStatus,
@@ -35,6 +37,12 @@ import {
   defaultWhatsAppSettings,
   type WhatsAppSettings,
 } from '../../services/whatsapp';
+import {
+  testNetworkConnection,
+  validateNetworkConfig,
+} from '../../services/print';
+import { PrinterHelpButton } from '../../components/print';
+import { PrintSettings, defaultPrintSettings } from '../../types';
 
 // Formatar telefone brasileiro: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
 const formatPhoneNumber = (value: string): string => {
@@ -89,7 +97,8 @@ const validatePhoneNumber = (value: string): { valid: boolean; message: string }
 
 export function SettingsPage() {
   const { currentCompany, isAdmin } = useTenant();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, session, refreshProfile } = useAuth();
+  const { hasFeature, isLoading: loadingFeatures } = usePlanFeatures();
 
   // Company Logo State
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -98,7 +107,7 @@ export function SettingsPage() {
 
   // User Avatar State
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || user?.photoURL || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || user?.user_metadata?.avatar_url || null);
   const [savingAvatar, setSavingAvatar] = useState(false);
 
   // Company Phone/WhatsApp State
@@ -114,10 +123,16 @@ export function SettingsPage() {
   const [testingMessage, setTestingMessage] = useState(false);
   const [testPhone, setTestPhone] = useState('');
 
+  // Network Printer State
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(defaultPrintSettings);
+  const [savingPrintSettings, setSavingPrintSettings] = useState(false);
+  const [testingPrinter, setTestingPrinter] = useState(false);
+  const [printerTestResult, setPrinterTestResult] = useState<'success' | 'error' | null>(null);
+
   // Sync avatar preview when profile changes
   useEffect(() => {
-    setAvatarPreview(profile?.avatar_url || user?.photoURL || null);
-  }, [profile?.avatar_url, user?.photoURL]);
+    setAvatarPreview(profile?.avatar_url || user?.user_metadata?.avatar_url || null);
+  }, [profile?.avatar_url, user?.user_metadata?.avatar_url]);
 
   // Sync company phone when currentCompany changes
   useEffect(() => {
@@ -143,6 +158,16 @@ export function SettingsPage() {
       });
     } else {
       setWhatsAppSettings(defaultWhatsAppSettings);
+    }
+
+    // Load Print settings
+    if (currentCompany?.print_settings) {
+      setPrintSettings({
+        ...defaultPrintSettings,
+        ...currentCompany.print_settings,
+      });
+    } else {
+      setPrintSettings(defaultPrintSettings);
     }
   }, [currentCompany]);
 
@@ -194,18 +219,20 @@ export function SettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Check authentication providers
+  // Check authentication providers (Supabase)
   const authProviders = useMemo(() => {
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) return { hasPassword: false, hasGoogle: false, providers: [] };
+    if (!user) return { hasPassword: false, hasGoogle: false, providers: [] };
 
-    const providers = firebaseUser.providerData.map(p => p.providerId);
+    // Supabase stores the provider in app_metadata.provider or identities
+    const identities = user.identities || [];
+    const providers = identities.map(i => i.provider);
+
     return {
-      hasPassword: providers.includes('password'),
-      hasGoogle: providers.includes('google.com'),
+      hasPassword: providers.includes('email'),
+      hasGoogle: providers.includes('google'),
       providers,
     };
-  }, [auth.currentUser]);
+  }, [user]);
 
   const handleLogoChange = (file: File | null) => {
     setLogoFile(file);
@@ -297,7 +324,7 @@ export function SettingsPage() {
     if (file) {
       setAvatarPreview(URL.createObjectURL(file));
     } else {
-      setAvatarPreview(profile?.avatar_url || user?.photoURL || null);
+      setAvatarPreview(profile?.avatar_url || user?.user_metadata?.avatar_url || null);
     }
   };
 
@@ -359,7 +386,7 @@ export function SettingsPage() {
       if (error) throw error;
 
       toast.success('Foto de perfil removida!');
-      setAvatarPreview(user?.photoURL || null);
+      setAvatarPreview(user?.user_metadata?.avatar_url || null);
       setAvatarFile(null);
       await refreshProfile();
     } catch (error) {
@@ -524,10 +551,70 @@ export function SettingsPage() {
     }
   };
 
+  // Network Printer Handlers
+  const handleTestPrinter = async () => {
+    const validation = validateNetworkConfig(printSettings);
+    if (!validation.valid) {
+      toast.error(validation.error || 'Configuracao invalida');
+      return;
+    }
+
+    setTestingPrinter(true);
+    setPrinterTestResult(null);
+
+    try {
+      const result = await testNetworkConnection({
+        ip: printSettings.ip,
+        port: printSettings.port,
+        timeout_ms: printSettings.timeout_ms,
+      });
+
+      if (result.success) {
+        setPrinterTestResult('success');
+        toast.success(`Conectado! (${result.connection_time_ms}ms)`);
+      } else {
+        setPrinterTestResult('error');
+        toast.error(result.error || 'Erro ao conectar');
+      }
+    } catch (error) {
+      setPrinterTestResult('error');
+      toast.error('Erro ao testar conexao');
+    } finally {
+      setTestingPrinter(false);
+    }
+  };
+
+  const handleSavePrintSettings = async () => {
+    if (!currentCompany) return;
+
+    setSavingPrintSettings(true);
+
+    try {
+      const settingsToSave = printSettings.enabled ? {
+        ...printSettings,
+        last_connected_at: printerTestResult === 'success' ? new Date().toISOString() : printSettings.last_connected_at,
+      } : null;
+
+      const { error } = await supabase
+        .from('companies')
+        .update({ print_settings: settingsToSave })
+        .eq('id', currentCompany.id);
+
+      if (error) throw error;
+
+      toast.success('Configuracoes de impressora salvas!');
+    } catch (error) {
+      console.error('Erro ao salvar configuracoes:', error);
+      toast.error('Erro ao salvar configuracoes');
+    } finally {
+      setSavingPrintSettings(false);
+    }
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !auth.currentUser) {
+    if (!user || !session) {
       toast.error('Usuario nao autenticado');
       return;
     }
@@ -545,16 +632,25 @@ export function SettingsPage() {
     setChangingPassword(true);
 
     try {
-      // Reautenticar o usuario (necessario para mudar senha)
-      const credential = EmailAuthProvider.credential(
-        auth.currentUser.email!,
-        currentPassword
-      );
+      // Super admin pode alterar senha sem confirmar a atual
+      const isSuperAdmin = profile?.is_super_admin === true;
 
-      await reauthenticateWithCredential(auth.currentUser, credential);
+      if (!isSuperAdmin) {
+        // Usuarios normais: verifica senha atual fazendo sign in
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: user.email!,
+          password: currentPassword,
+        });
+
+        if (verifyError) {
+          toast.error('Senha atual incorreta');
+          setChangingPassword(false);
+          return;
+        }
+      }
 
       // Atualizar a senha
-      await updatePassword(auth.currentUser, newPassword);
+      await supabaseUpdatePassword(newPassword);
 
       toast.success('Senha alterada com sucesso!');
       setCurrentPassword('');
@@ -563,11 +659,9 @@ export function SettingsPage() {
     } catch (error: unknown) {
       console.error('Erro ao alterar senha:', error);
 
-      const firebaseError = error as { code?: string };
-      if (firebaseError.code === 'auth/wrong-password') {
+      const supabaseError = error as { message?: string };
+      if (supabaseError.message?.includes('Invalid login credentials')) {
         toast.error('Senha atual incorreta');
-      } else if (firebaseError.code === 'auth/requires-recent-login') {
-        toast.error('Por favor, faca login novamente antes de alterar a senha');
       } else {
         toast.error('Erro ao alterar senha');
       }
@@ -689,7 +783,7 @@ export function SettingsPage() {
             {/* Info and Actions */}
             <div className="flex-1 flex flex-col justify-between">
               <div className="space-y-2">
-                {user?.photoURL && !profile?.avatar_url?.includes('supabase.co') && (
+                {user?.user_metadata?.avatar_url && !profile?.avatar_url?.includes('supabase.co') && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <GoogleIcon className="w-4 h-4 text-red-500" />
                     <span>Usando foto do Google</span>
@@ -725,8 +819,9 @@ export function SettingsPage() {
           </div>
         </Card>
 
-        {/* WhatsApp Unificado - Admin Only */}
+        {/* WhatsApp Unificado - Admin Only + Plano Pago */}
         {isAdmin && (
+          hasFeature('whatsapp_notifications') ? (
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
@@ -1175,6 +1270,202 @@ export function SettingsPage() {
               </div>
             )}
           </Card>
+          ) : (
+            <UpgradePrompt feature="whatsapp_notifications" />
+          )
+        )}
+
+        {/* Network Printer Settings - Admin Only */}
+        {isAdmin && (
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                <PrintIcon className="text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Impressora de Rede
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Configure uma impressora termica via IP/Rede
+                </p>
+              </div>
+              <PrinterHelpButton />
+            </div>
+
+            {/* Enable Toggle */}
+            <div className="mb-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={printSettings.enabled}
+                  onChange={(e) => setPrintSettings(prev => ({ ...prev, enabled: e.target.checked }))}
+                  className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="font-medium text-gray-900 dark:text-white">
+                  Ativar impressora de rede
+                </span>
+              </label>
+            </div>
+
+            {printSettings.enabled && (
+              <div className="space-y-4">
+                {/* Printer Name */}
+                <Input
+                  label="Nome da Impressora"
+                  value={printSettings.printer_name}
+                  onChange={(e) => setPrintSettings(prev => ({ ...prev, printer_name: e.target.value }))}
+                  placeholder="Ex: Impressora Cozinha"
+                  helperText="Nome para identificar esta impressora"
+                />
+
+                {/* IP and Port */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Endereco IP"
+                    value={printSettings.ip}
+                    onChange={(e) => setPrintSettings(prev => ({ ...prev, ip: e.target.value }))}
+                    placeholder="192.168.1.100"
+                    leftIcon={<RouterIcon className="w-5 h-5" />}
+                  />
+                  <Input
+                    label="Porta"
+                    type="number"
+                    value={printSettings.port.toString()}
+                    onChange={(e) => setPrintSettings(prev => ({ ...prev, port: parseInt(e.target.value) || 9100 }))}
+                    placeholder="9100"
+                    helperText="Padrao: 9100"
+                  />
+                </div>
+
+                {/* Paper Width */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Largura do Papel
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paper_width"
+                        value="58mm"
+                        checked={printSettings.paper_width === '58mm'}
+                        onChange={(e) => setPrintSettings(prev => ({ ...prev, paper_width: e.target.value as '58mm' | '80mm' }))}
+                        className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">58mm (Bobina pequena)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paper_width"
+                        value="80mm"
+                        checked={printSettings.paper_width === '80mm'}
+                        onChange={(e) => setPrintSettings(prev => ({ ...prev, paper_width: e.target.value as '58mm' | '80mm' }))}
+                        className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">80mm (Bobina padrao)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Auto Cut */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={printSettings.auto_cut}
+                    onChange={(e) => setPrintSettings(prev => ({ ...prev, auto_cut: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Cortar papel automaticamente apos impressao
+                  </span>
+                </label>
+
+                {/* Print Logo */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={printSettings.print_logo ?? true}
+                    onChange={(e) => setPrintSettings(prev => ({ ...prev, print_logo: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Imprimir logo da empresa no comprovante
+                  </span>
+                </label>
+
+                {/* Auto Print */}
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={printSettings.auto_print ?? false}
+                      onChange={(e) => setPrintSettings(prev => ({ ...prev, auto_print: e.target.checked }))}
+                      className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Impressao automatica
+                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Imprimir comprovante automaticamente ao finalizar venda
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Connection Status */}
+                {printerTestResult && (
+                  <div className={`p-3 rounded-lg ${
+                    printerTestResult === 'success'
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {printerTestResult === 'success' ? (
+                        <>
+                          <CheckCircleIcon className="w-5 h-5" />
+                          <span>Impressora conectada com sucesso!</span>
+                        </>
+                      ) : (
+                        <>
+                          <ErrorIcon className="w-5 h-5" />
+                          <span>Falha ao conectar. Verifique IP e porta.</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Test Connection and Save */}
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button
+                    variant="secondary"
+                    onClick={handleTestPrinter}
+                    loading={testingPrinter}
+                    disabled={!printSettings.ip}
+                    icon={printerTestResult === 'success' ? <CheckCircleIcon className="text-green-500" /> : <RouterIcon />}
+                  >
+                    {testingPrinter ? 'Testando...' : 'Testar Conexao'}
+                  </Button>
+                  <Button
+                    onClick={handleSavePrintSettings}
+                    loading={savingPrintSettings}
+                  >
+                    Salvar Configuracoes
+                  </Button>
+                </div>
+
+                {/* Last connected info */}
+                {printSettings.last_connected_at && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Ultima conexao: {new Date(printSettings.last_connected_at).toLocaleString('pt-BR')}
+                  </p>
+                )}
+              </div>
+            )}
+          </Card>
         )}
 
         {/* Password Change - All Users */}
@@ -1228,28 +1519,31 @@ export function SettingsPage() {
           {authProviders.hasPassword ? (
             /* Form para alterar senha existente */
             <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-              <Input
-                type={showCurrentPassword ? 'text' : 'password'}
-                label="Senha Atual"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Digite sua senha atual"
-                leftIcon={<LockIcon className="w-5 h-5" />}
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showCurrentPassword ? (
-                      <VisibilityOffIcon className="w-5 h-5" />
-                    ) : (
-                      <VisibilityIcon className="w-5 h-5" />
-                    )}
-                  </button>
-                }
-                required
-              />
+              {/* Super admin nao precisa informar senha atual */}
+              {!profile?.is_super_admin && (
+                <Input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  label="Senha Atual"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                  leftIcon={<LockIcon className="w-5 h-5" />}
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      {showCurrentPassword ? (
+                        <VisibilityOffIcon className="w-5 h-5" />
+                      ) : (
+                        <VisibilityIcon className="w-5 h-5" />
+                      )}
+                    </button>
+                  }
+                  required
+                />
+              )}
 
               <Input
                 type={showNewPassword ? 'text' : 'password'}
@@ -1301,7 +1595,7 @@ export function SettingsPage() {
               <Button
                 type="submit"
                 loading={changingPassword}
-                disabled={!currentPassword || !newPassword || !confirmPassword}
+                disabled={(!profile?.is_super_admin && !currentPassword) || !newPassword || !confirmPassword}
               >
                 Alterar Senha
               </Button>
@@ -1317,7 +1611,7 @@ export function SettingsPage() {
                       Voce usa apenas login com Google
                     </p>
                     <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                      Para adicionar uma senha ao seu email ({auth.currentUser?.email}),
+                      Para adicionar uma senha ao seu email ({user?.email}),
                       use a opcao "Esqueci minha senha" na tela de login.
                       Um link sera enviado para criar sua senha.
                     </p>

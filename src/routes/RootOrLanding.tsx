@@ -5,7 +5,7 @@ import { FullPageLoader } from '../components/ui/Loader';
 import { buildAppPath } from './paths';
 
 export function RootOrLanding() {
-  const { user, loading, companies, isSuperAdmin } = useAuth();
+  const { user, loading, companies, isSuperAdmin, profile } = useAuth();
 
   // Enquanto carrega, mostra a landing page (melhor UX que loader)
   if (loading) {
@@ -15,6 +15,11 @@ export function RootOrLanding() {
   // Usuario nao logado - mostra landing page
   if (!user) {
     return <LandingPage />;
+  }
+
+  // Aguarda profile carregar antes de decidir rota
+  if (!profile) {
+    return <FullPageLoader />;
   }
 
   // Usuario logado - redireciona para o app apropriado
@@ -35,23 +40,11 @@ export function RootOrLanding() {
     return <Navigate to="/admin" replace />;
   }
 
-  // Usuario sem empresas - mostra mensagem (ou landing temporariamente)
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-center p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Sem acesso a empresas
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Voce ainda nao foi adicionado a nenhuma empresa.
-        </p>
-        <button
-          onClick={() => window.location.href = '/login'}
-          className="text-indigo-600 hover:text-indigo-700 font-medium"
-        >
-          Voltar para login
-        </button>
-      </div>
-    </div>
-  );
+  // Usuario sem empresas - vai para onboarding
+  if (!profile.onboarding_completed) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Sem empresas mas onboarding completo (caso raro) - vai para onboarding criar outra
+  return <Navigate to="/onboarding" replace />;
 }

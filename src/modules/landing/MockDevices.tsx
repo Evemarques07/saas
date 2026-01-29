@@ -440,8 +440,8 @@ export function MockDevices() {
 
   return (
     <div className="relative w-full h-full flex items-end justify-center gap-4 sm:gap-6 lg:gap-8 pb-8">
-      {/* Connection Lines SVG */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 5 }}>
+      {/* Connection Lines SVG - hidden on mobile */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50 hidden sm:block" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 5 }}>
         <defs>
           <linearGradient id="lineGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#6366f1" stopOpacity="0" />
@@ -468,8 +468,8 @@ export function MockDevices() {
         />
       </svg>
 
-      {/* Mobile Device */}
-      <div className="relative z-10 transform hover:-translate-y-4 transition-all duration-500 group">
+      {/* Mobile Device - hidden on mobile screens */}
+      <div className="relative z-10 transform hover:-translate-y-4 transition-all duration-500 group hidden sm:block">
         <PushNotification show={showNotification} message={notificationData.message} icon={notificationData.icon} />
 
         {/* Phone Frame */}
@@ -518,9 +518,9 @@ export function MockDevices() {
       </div>
 
       {/* Desktop Device - Center (Larger) */}
-      <div className="relative z-20 transform hover:-translate-y-6 transition-all duration-500 group -mt-8">
-        {/* Sync Indicator */}
-        <div className={`absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full border transition-all duration-500 z-30 ${
+      <div className="relative z-20 transform hover:-translate-y-6 transition-all duration-500 group sm:-mt-8">
+        {/* Sync Indicator - hidden on mobile */}
+        <div className={`absolute -top-10 left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2 bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full border transition-all duration-500 z-30 ${
           syncPulse ? 'border-green-500/50 shadow-lg shadow-green-500/20' : 'border-gray-800'
         }`}>
           <div className="relative">
@@ -557,13 +557,14 @@ export function MockDevices() {
             <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span className="font-semibold text-white text-sm">Desktop</span>
+            <span className="font-semibold text-white text-sm hidden sm:inline">Desktop</span>
+            <span className="font-semibold text-white text-sm sm:hidden">Multiplataforma</span>
           </div>
         </div>
       </div>
 
-      {/* Tablet Device */}
-      <div className="relative z-10 transform hover:-translate-y-4 transition-all duration-500 group">
+      {/* Tablet Device - hidden on mobile screens */}
+      <div className="relative z-10 transform hover:-translate-y-4 transition-all duration-500 group hidden sm:block">
         {/* Tablet Frame */}
         <div className="relative bg-gradient-to-b from-gray-800 via-gray-850 to-gray-900 rounded-[1.75rem] p-[6px] shadow-2xl shadow-black/50 border border-gray-700/50 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20 transition-all duration-500">
           {/* Camera */}

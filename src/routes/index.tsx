@@ -7,6 +7,9 @@ import { LandingPage } from '../modules/landing/LandingPage';
 import { LoginPage } from '../modules/auth/LoginPage';
 import { RegisterPage } from '../modules/auth/RegisterPage';
 import { AcceptInvitePage } from '../modules/auth/AcceptInvitePage';
+import { AuthCallbackPage } from '../modules/auth/AuthCallbackPage';
+import { ForgotPasswordPage } from '../modules/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../modules/auth/ResetPasswordPage';
 
 // Onboarding
 import { OnboardingPage } from '../modules/onboarding/OnboardingPage';
@@ -26,11 +29,16 @@ import { SettingsPage } from '../modules/settings/SettingsPage';
 import { CouponsPage } from '../modules/coupons/CouponsPage';
 import { LoyaltyPage } from '../modules/loyalty/LoyaltyPage';
 import { PromotionsPage } from '../modules/promotions/PromotionsPage';
+import { BillingPage } from '../modules/billing/BillingPage';
 
 // Admin Pages
 import { AdminDashboardPage } from '../modules/admin/AdminDashboardPage';
 import { AdminUsersPage } from '../modules/admin/AdminUsersPage';
 import { WhatsAppAdminPage } from '../modules/admin/WhatsAppAdminPage';
+
+// Legal Pages
+import { PrivacyPolicyPage } from '../modules/legal/PrivacyPolicyPage';
+import { TermsOfServicePage } from '../modules/legal/TermsOfServicePage';
 
 // Layouts
 import { TenantLayout } from '../components/layout/TenantLayout';
@@ -69,6 +77,20 @@ export function AppRoutes() {
           </PublicRoute>
         }
       />
+      <Route
+        path="/esqueci-senha"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* OAuth Callback - handles redirect from Google/other providers */}
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+      {/* Password Reset - handles redirect from recovery email */}
+      <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
       {/* Onboarding - Usuario logado sem empresa */}
       <Route
@@ -86,6 +108,10 @@ export function AppRoutes() {
 
       {/* Landing Page - pagina inicial publica */}
       <Route path="/inicio" element={<LandingPage />} />
+
+      {/* Paginas Legais - publicas para verificacao Google OAuth */}
+      <Route path="/privacidade" element={<PrivacyPolicyPage />} />
+      <Route path="/termos" element={<TermsOfServicePage />} />
 
       {/* Root - mostra landing para visitantes ou redireciona usuarios logados */}
       <Route path="/" element={<RootOrLanding />} />
@@ -125,6 +151,7 @@ export function AppRoutes() {
         <Route path="promocoes" element={<PromotionsPage />} />
         <Route path="usuarios" element={<UsersPage />} />
         <Route path="configuracoes" element={<SettingsPage />} />
+        <Route path="faturamento" element={<BillingPage />} />
       </Route>
 
       {/* Rotas legadas - redirecionam para novo formato */}

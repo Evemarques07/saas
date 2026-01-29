@@ -9,6 +9,7 @@ import { Button, Card, Input, Select, Modal, ModalFooter } from '../../component
 import { Table } from '../../components/ui/Table';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { PageLoader } from '../../components/ui/Loader';
+import { FeatureGate } from '../../components/gates';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { Coupon, CouponDiscountType } from '../../types';
@@ -301,15 +302,16 @@ export function CouponsPage() {
   }
 
   return (
-    <PageContainer
-      title="Cupons de Desconto"
-      subtitle="Gerencie cupons promocionais para seus clientes"
-      action={
-        <Button icon={<AddIcon />} onClick={openCreateModal}>
-          Novo Cupom
-        </Button>
-      }
-    >
+    <FeatureGate feature="coupons">
+      <PageContainer
+        title="Cupons de Desconto"
+        subtitle="Gerencie cupons promocionais para seus clientes"
+        action={
+          <Button icon={<AddIcon />} onClick={openCreateModal}>
+            Novo Cupom
+          </Button>
+        }
+      >
       {coupons.length === 0 ? (
         <EmptyState
           title="Nenhum cupom cadastrado"
@@ -566,6 +568,7 @@ export function CouponsPage() {
           </Button>
         </ModalFooter>
       </Modal>
-    </PageContainer>
+      </PageContainer>
+    </FeatureGate>
   );
 }

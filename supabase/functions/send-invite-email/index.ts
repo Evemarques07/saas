@@ -25,8 +25,12 @@ serve(async (req: Request) => {
 
   try {
     const MAILERSEND_API_TOKEN = Deno.env.get('MAILERSEND_API_TOKEN');
-    const FROM_EMAIL = Deno.env.get('MAILERSEND_FROM_EMAIL') || 'evertonmarques.jm@gmail.com';
+    const FROM_EMAIL = Deno.env.get('MAILERSEND_FROM_EMAIL');
     const FROM_NAME = Deno.env.get('MAILERSEND_FROM_NAME') || 'Ejym';
+
+    if (!FROM_EMAIL) {
+      throw new Error('MAILERSEND_FROM_EMAIL não configurado');
+    }
 
     if (!MAILERSEND_API_TOKEN) {
       throw new Error('MAILERSEND_API_TOKEN não configurado');

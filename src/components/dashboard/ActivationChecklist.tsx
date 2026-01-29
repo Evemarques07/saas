@@ -12,6 +12,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Card, Button } from '../ui';
 import { supabase } from '../../services/supabase';
 import { useTenant } from '../../contexts/TenantContext';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 
 interface ChecklistItem {
   id: string;
@@ -24,17 +25,19 @@ interface ChecklistItem {
 
 export function ActivationChecklist() {
   const { currentCompany } = useTenant();
+  const { hasFeature } = usePlanFeatures();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissed] = useState(false);
 
   const slug = currentCompany?.slug;
+  const canInviteTeam = hasFeature('multiple_users');
 
   useEffect(() => {
     if (currentCompany) {
       checkProgress();
     }
-  }, [currentCompany]);
+  }, [currentCompany, canInviteTeam]);
 
   const checkProgress = async () => {
     if (!currentCompany) return;
@@ -57,13 +60,8 @@ export function ActivationChecklist() {
         .select('*', { count: 'exact', head: true })
         .eq('company_id', currentCompany.id);
 
-      // Verificar membros da equipe
-      const { count: memberCount } = await supabase
-        .from('company_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', currentCompany.id);
-
-      setItems([
+      // Base items (sempre visiveis)
+      const baseItems: ChecklistItem[] = [
         {
           id: 'first_product',
           title: 'Cadastre seu primeiro produto',
@@ -88,15 +86,26 @@ export function ActivationChecklist() {
           icon: <ShoppingCartIcon className="w-5 h-5" />,
           completed: (orderCount || 0) > 0,
         },
-        {
+      ];
+
+      // Adicionar etapa de convite apenas se o plano permitir multiplos usuarios
+      if (canInviteTeam) {
+        const { count: memberCount } = await supabase
+          .from('company_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('company_id', currentCompany.id);
+
+        baseItems.push({
           id: 'invite_team',
           title: 'Convide sua equipe',
           description: 'Adicione vendedores ou gerentes para ajudar',
           link: `/app/${slug}/usuarios`,
           icon: <GroupAddIcon className="w-5 h-5" />,
           completed: (memberCount || 0) > 1,
-        },
-      ]);
+        });
+      }
+
+      setItems(baseItems);
     } catch (err) {
       console.error('Error checking activation progress:', err);
     } finally {

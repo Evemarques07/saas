@@ -55,6 +55,17 @@
   }
 }
 
+@layer utilities {
+  /* Esconde scrollbar mantendo funcionalidade de scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Scrollbar customization */
 ::-webkit-scrollbar {
   width: 6px;

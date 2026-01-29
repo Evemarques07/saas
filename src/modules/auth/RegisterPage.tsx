@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
@@ -7,12 +7,12 @@ import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Button, Input, Card } from '../../components/ui';
 
 export function RegisterPage() {
-  const navigate = useNavigate();
   const { signUp, signInWithGoogle } = useAuth();
   const { theme } = useTheme();
 
@@ -24,6 +24,8 @@ export function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,17 +51,20 @@ export function RegisterPage() {
       const { error } = await signUp(email, password, fullName);
 
       if (error) {
-        if (error.message.includes('already-in-use')) {
+        // Supabase error messages
+        if (error.message.includes('already registered') || error.message.includes('already-in-use')) {
           toast.error('Este email ja esta cadastrado');
+        } else if (error.message.includes('Password should be')) {
+          toast.error('A senha deve ter no minimo 6 caracteres');
         } else {
           toast.error('Erro ao criar conta');
         }
         return;
       }
 
-      toast.success('Conta criada com sucesso!');
-      // Redireciona para onboarding para criar a empresa
-      navigate('/onboarding');
+      // Mostrar tela de confirmação de email
+      setRegisteredEmail(email);
+      setEmailSent(true);
     } catch {
       toast.error('Erro ao criar conta');
     } finally {
@@ -75,18 +80,75 @@ export function RegisterPage() {
 
       if (error) {
         toast.error('Erro ao criar conta com Google');
+        setGoogleLoading(false);
         return;
       }
 
-      toast.success('Conta criada com sucesso!');
-      // O redirecionamento sera feito pelo PublicRoute baseado em ter ou nao empresa
-      navigate('/');
+      // Note: Supabase OAuth redirects to Google, so we won't reach here
+      // The redirect back will be handled by /auth/callback
     } catch {
       toast.error('Erro ao criar conta com Google');
-    } finally {
       setGoogleLoading(false);
     }
   };
+
+  // Tela de confirmação de email enviado
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <img
+              src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
+              alt="Mercado Virtual"
+              className="h-20 w-auto object-contain"
+            />
+          </div>
+
+          <Card className="p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <MarkEmailReadIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              Verifique seu email
+            </h2>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Enviamos um link de confirmacao para:
+            </p>
+
+            <p className="font-medium text-gray-900 dark:text-gray-100 mb-6 break-all">
+              {registeredEmail}
+            </p>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Clique no link enviado para ativar sua conta. Verifique tambem a pasta de spam.
+            </p>
+
+            <Link to="/login">
+              <Button variant="primary" className="w-full">
+                Ir para o login
+              </Button>
+            </Link>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+              Nao recebeu o email?{' '}
+              <button
+                type="button"
+                onClick={() => setEmailSent(false)}
+                className="text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Tentar novamente
+              </button>
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
