@@ -103,7 +103,7 @@ export function OrderHistoryList({ onRepeatOrder }: OrderHistoryListProps) {
           return (
             <div
               key={order.id}
-              className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+              className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
             >
               {/* Order header */}
               <div className="flex items-start justify-between mb-3">

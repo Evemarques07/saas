@@ -68,7 +68,7 @@ export function LoyaltyCard() {
 
       {/* Progress to next level */}
       {customerLoyalty.next_level && (
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
               Próximo nível: <span className="font-medium">{customerLoyalty.next_level.name}</span>

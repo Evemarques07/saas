@@ -75,7 +75,7 @@ export function CatalogInstallPrompt({
     <>
       {/* Install Banner */}
       <div className="fixed bottom-20 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-40 animate-slide-up">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           {/* Header with close button */}
           <div className="flex items-start gap-3 p-4">
             {/* Company Logo */}
@@ -177,7 +177,7 @@ function IOSInstructionsModal({ company, isOpen, onClose }: IOSInstructionsModal
     <Modal isOpen={isOpen} onClose={onClose} title="Instalar no iPhone/iPad">
       <div className="space-y-4">
         {/* Company info */}
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
           {company.logo_url ? (
             <img
               src={company.logo_url}
@@ -256,7 +256,7 @@ function IOSInstructionsModal({ company, isOpen, onClose }: IOSInstructionsModal
         </div>
       </div>
 
-      <div className="mt-6 -mx-6 -mb-4 px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
+      <div className="mt-6 -mx-6 -mb-4 px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-600">
         <Button variant="secondary" onClick={onClose} className="w-full">
           Entendi
         </Button>

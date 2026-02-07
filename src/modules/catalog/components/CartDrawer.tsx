@@ -34,13 +34,13 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-gray-800 shadow-xl z-50 transform transition-transform duration-300 ${
+        className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <ShoppingCartIcon className="w-5 h-5 text-primary-600" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -49,7 +49,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors"
             >
               <CloseIcon className="w-5 h-5" />
             </button>
@@ -68,7 +68,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 {items.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                    className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                   >
                     {/* Image */}
                     <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
@@ -128,7 +128,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
           {/* Footer */}
           {items.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
+            <div className="border-t border-gray-200 dark:border-gray-800 p-4 space-y-4">
               {/* Subtotal */}
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Subtotal</span>

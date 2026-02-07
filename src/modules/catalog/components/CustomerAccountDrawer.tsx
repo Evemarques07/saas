@@ -95,13 +95,13 @@ export function CustomerAccountDrawer({ isOpen, onClose, onRepeatOrder }: Custom
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full md:w-[420px] bg-white dark:bg-gray-800 shadow-xl z-50
+        className={`fixed top-0 right-0 h-full w-full md:w-[420px] bg-white dark:bg-gray-900 shadow-xl z-50
           transform transition-transform duration-300 ease-in-out ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
               <PersonIcon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
@@ -115,14 +115,14 @@ export function CustomerAccountDrawer({ isOpen, onClose, onRepeatOrder }: Custom
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="flex border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -226,13 +226,13 @@ export function CustomerAccountDrawer({ isOpen, onClose, onRepeatOrder }: Custom
                     Editar Dados
                   </Button>
 
-                  <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
                     <div className="grid grid-cols-2 gap-4 text-center">
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <p className="text-2xl font-bold text-primary-600">{customer.total_orders || 0}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Pedidos</p>
                       </div>
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <p className="text-2xl font-bold text-primary-600">
                           {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
@@ -262,7 +262,7 @@ export function CustomerAccountDrawer({ isOpen, onClose, onRepeatOrder }: Custom
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <Button
             variant="secondary"
             icon={<LogoutIcon />}

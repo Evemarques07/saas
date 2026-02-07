@@ -142,7 +142,7 @@ export function OrderDetailModal({ isOpen, onClose, order, onRepeatOrder }: Orde
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Itens do Pedido
           </h4>
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
             {order.items?.map((item) => (
               <div key={item.id} className="flex justify-between p-3">
                 <div>
@@ -167,14 +167,14 @@ export function OrderDetailModal({ isOpen, onClose, order, onRepeatOrder }: Orde
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Observações
             </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
               {order.customer_notes}
             </p>
           </div>
         )}
 
         {/* Totals */}
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
             <span className="text-gray-900 dark:text-gray-100">{formatCurrency(order.subtotal)}</span>

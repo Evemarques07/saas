@@ -41,7 +41,7 @@ export function PointsRedeemSlider({
 
   if (!canUsePoints) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
           <StarsIcon className="w-5 h-5" />
           <div>

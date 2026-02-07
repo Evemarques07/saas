@@ -90,7 +90,7 @@ export function CatalogPage() {
 
   if (error || !company) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <EmptyState
           title="Catálogo não encontrado"
           description="A empresa solicitada não existe ou está inativa"
@@ -166,9 +166,9 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex flex-col p-2 md:p-4">
+    <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-950 flex flex-col p-2 md:p-4">
       {/* Header - Arredondado */}
-      <header className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 mb-2 md:mb-4 flex-shrink-0">
+      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0">
         <div className="px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 md:gap-4">
@@ -193,11 +193,11 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Account Button */}
               {customerLoading ? (
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
               ) : isAuthenticated ? (
                 <button
                   onClick={() => setAccountDrawerOpen(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   title={customer?.name || 'Minha Conta'}
                 >
                   <PersonIcon className="w-5 h-5" />
@@ -206,7 +206,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
               ) : (
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   title="Entrar"
                 >
                   <LoginIcon className="w-5 h-5" />
@@ -245,9 +245,9 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
       </header>
 
       {/* Main Content - Container arredondado com scroll interno */}
-      <main className="flex-1 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
+      <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col min-h-0">
         {/* Filters - Sticky no topo */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 px-3 md:px-4 pt-3 md:pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 px-3 md:px-4 pt-3 md:pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
           <Card className="p-3 md:p-4">
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="flex-1 relative">
@@ -305,7 +305,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                         fallbackUrl={product.image_url}
                         alt={product.name}
                         onImageClick={(index) => handleOpenLightbox(product, index)}
-                        className="bg-gray-100 dark:bg-gray-700"
+                        className="bg-gray-100 dark:bg-gray-800"
                       />
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
@@ -342,7 +342,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                       <div className="mt-auto pt-2 md:pt-3 space-y-2">
                         {/* Ver Detalhes Button */}
                         <Link to={buildCatalogoProductPath(company.slug, product.id)} className="block">
-                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
                             <VisibilityIcon className="w-4 h-4" />
                             <span className="hidden md:inline">Ver Detalhes</span>
                             <span className="md:hidden">Detalhes</span>
@@ -359,7 +359,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                             <div className="flex items-center gap-1 md:gap-2">
                               <button
                                 onClick={() => updateQuantity(product.id, quantity - 1)}
-                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                               >
                                 <RemoveIcon className="w-4 h-4 md:w-5 md:h-5" />
                               </button>
@@ -369,7 +369,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                               <button
                                 onClick={() => updateQuantity(product.id, quantity + 1)}
                                 disabled={quantity >= product.stock}
-                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                               >
                                 <AddIcon className="w-4 h-4 md:w-5 md:h-5" />
                               </button>
@@ -394,7 +394,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
           )}
 
           {/* Footer dentro do container */}
-          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
             Powered by <span className="font-semibold text-primary-600">Ejym</span>
           </div>
         </div>

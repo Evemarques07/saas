@@ -96,7 +96,7 @@ export function CouponsList() {
             key={coupon.id}
             className={`border rounded-xl overflow-hidden ${
               cannotUse
-                ? 'border-gray-200 dark:border-gray-700 opacity-60'
+                ? 'border-gray-200 dark:border-gray-800 opacity-60'
                 : 'border-primary-200 dark:border-primary-800'
             }`}
           >
@@ -104,7 +104,7 @@ export function CouponsList() {
             <div
               className={`px-4 py-3 flex items-center justify-between ${
                 cannotUse
-                  ? 'bg-gray-100 dark:bg-gray-800'
+                  ? 'bg-gray-100 dark:bg-gray-900'
                   : 'bg-primary-50 dark:bg-primary-900/30'
               }`}
             >
@@ -136,7 +136,7 @@ export function CouponsList() {
             </div>
 
             {/* Coupon body */}
-            <div className="px-4 py-3 bg-white dark:bg-gray-800">
+            <div className="px-4 py-3 bg-white dark:bg-gray-900">
               {coupon.description && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   {coupon.description}
@@ -145,7 +145,7 @@ export function CouponsList() {
 
               {/* Coupon code */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <div className="flex-1 flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
                   <span className="font-mono font-bold text-gray-900 dark:text-gray-100">
                     {coupon.code}
                   </span>

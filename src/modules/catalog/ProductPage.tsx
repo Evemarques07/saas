@@ -74,7 +74,7 @@ export function ProductPage() {
 
   if (error || !company || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <EmptyState
           title="Produto não encontrado"
           description="O produto solicitado não existe ou está indisponível"
@@ -124,9 +124,9 @@ function ProductContent({ company, product }: ProductContentProps) {
   const isOutOfStock = product.stock <= 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -185,7 +185,7 @@ function ProductContent({ company, product }: ProductContentProps) {
                 fallbackUrl={product.image_url}
                 alt={product.name}
                 onImageClick={handleOpenLightbox}
-                className="bg-gray-100 dark:bg-gray-700"
+                className="bg-gray-100 dark:bg-gray-800"
               />
               {isOutOfStock && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
@@ -235,7 +235,7 @@ function ProductContent({ company, product }: ProductContentProps) {
                     <div className="flex items-center gap-3 flex-1">
                       <button
                         onClick={() => updateQuantity(product.id, quantity - 1)}
-                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                       >
                         <RemoveIcon className="w-6 h-6" />
                       </button>
@@ -245,7 +245,7 @@ function ProductContent({ company, product }: ProductContentProps) {
                       <button
                         onClick={() => updateQuantity(product.id, quantity + 1)}
                         disabled={quantity >= product.stock}
-                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                       >
                         <AddIcon className="w-6 h-6" />
                       </button>
@@ -286,7 +286,7 @@ function ProductContent({ company, product }: ProductContentProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-8">
+      <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-8">
         <div className="max-w-4xl mx-auto px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
           Powered by <span className="font-semibold text-primary-600">Ejym</span>
         </div>
