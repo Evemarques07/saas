@@ -39,10 +39,7 @@ export function StepCompanyName({ data, onChange, onNext }: StepCompanyNameProps
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-      .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-      .replace(/\s+/g, '-') // Substitui espacos por hifens
-      .replace(/-+/g, '-') // Remove hifens duplicados
-      .replace(/^-|-$/g, ''); // Remove hifens no inicio e fim
+      .replace(/[^a-z0-9]/g, ''); // Remove tudo exceto letras e numeros
   };
 
   // Verificar disponibilidade do slug

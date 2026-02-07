@@ -1,6 +1,5 @@
 import { Fragment } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -64,14 +63,14 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 <p className="text-sm">Adicione produtos para continuar</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {items.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                    className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800"
                   >
                     {/* Image */}
-                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -79,45 +78,58 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <ShoppingCartIcon className="w-6 h-6" />
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         </div>
                       )}
                     </div>
 
                     {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-primary-600 font-semibold">
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                          {item.name}
+                        </h3>
+                        <button
+                          onClick={() => removeItem(item.productId)}
+                          className="p-1 flex-shrink-0 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="Remover"
+                        >
+                          <CloseIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <p className="text-sm text-primary-600 font-semibold mt-0.5">
                         {formatCurrency(item.price)}
                       </p>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          className="p-1 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
-                        >
-                          <RemoveIcon className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          disabled={item.quantity >= item.stock}
-                          className="p-1 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <AddIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          className="p-1 ml-auto rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <DeleteIcon className="w-4 h-4" />
-                        </button>
+                      {/* Quantity + Line Total */}
+                      <div className="flex items-center justify-between mt-auto pt-2">
+                        <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700">
+                          <button
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            className="p-1.5 rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            <RemoveIcon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          </button>
+                          <span className="w-8 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            disabled={item.quantity >= item.stock}
+                            className="p-1.5 rounded-r-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          >
+                            <AddIcon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          </button>
+                        </div>
+                        {item.quantity > 1 && (
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {formatCurrency(item.price * item.quantity)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -128,24 +140,25 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
           {/* Footer */}
           {items.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-800 p-4 space-y-4">
+            <div className="border-t border-gray-200 dark:border-gray-800 p-4 space-y-3">
               {/* Subtotal */}
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Subtotal</span>
                 <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(subtotal)}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={clearCart} className="flex-1">
-                  Limpar
-                </Button>
-                <Button onClick={onCheckout} className="flex-1">
-                  Finalizar Pedido
-                </Button>
-              </div>
+              <Button onClick={onCheckout} className="w-full" icon={<ShoppingCartIcon />}>
+                Finalizar Pedido
+              </Button>
+              <button
+                onClick={clearCart}
+                className="w-full text-center text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors py-1"
+              >
+                Limpar carrinho
+              </button>
             </div>
           )}
         </div>

@@ -26,7 +26,7 @@ serve(async (req: Request) => {
   try {
     const MAILERSEND_API_TOKEN = Deno.env.get('MAILERSEND_API_TOKEN');
     const FROM_EMAIL = Deno.env.get('MAILERSEND_FROM_EMAIL');
-    const FROM_NAME = Deno.env.get('MAILERSEND_FROM_NAME') || 'Ejym';
+    const FROM_NAME = Deno.env.get('MAILERSEND_FROM_NAME') || 'Mercado Virtual';
 
     if (!FROM_EMAIL) {
       throw new Error('MAILERSEND_FROM_EMAIL não configurado');
@@ -45,7 +45,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const subject = `Você foi convidado para gerenciar ${companyName} no Ejym`;
+    const subject = `Você foi convidado para gerenciar ${companyName} no Mercado Virtual`;
 
     const html = `
 <!DOCTYPE html>
@@ -53,7 +53,7 @@ serve(async (req: Request) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convite Ejym</title>
+  <title>Convite Mercado Virtual</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -64,7 +64,7 @@ serve(async (req: Request) => {
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 12px 12px 0 0;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                Ejym
+                Mercado Virtual
               </h1>
               <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
                 Gestão de Vendas Inteligente
@@ -122,7 +122,7 @@ serve(async (req: Request) => {
           <tr>
             <td style="padding: 24px 40px; background-color: #fafafa; border-radius: 0 0 12px 12px; text-align: center;">
               <p style="margin: 0; color: #a1a1aa; font-size: 12px;">
-                © ${new Date().getFullYear()} Ejym - Gestão de Vendas<br>
+                © ${new Date().getFullYear()} Mercado Virtual - Gestão de Vendas<br>
                 Enviado automaticamente, não responda este email.
               </p>
             </td>
@@ -136,7 +136,7 @@ serve(async (req: Request) => {
     `.trim();
 
     const text = `
-Você foi convidado para gerenciar ${companyName} no Ejym!
+Você foi convidado para gerenciar ${companyName} no Mercado Virtual!
 
 ${invitedByName ? `${invitedByName} convidou você` : 'Você foi convidado'} para ser administrador da empresa ${companyName}.
 
@@ -148,7 +148,7 @@ Este convite expira em 7 dias.
 Se você não esperava este email, pode ignorá-lo com segurança.
 
 ---
-Ejym - Gestão de Vendas
+Mercado Virtual - Gestão de Vendas
     `.trim();
 
     // Enviar email via MailerSend

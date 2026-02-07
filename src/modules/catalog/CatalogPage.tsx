@@ -6,14 +6,13 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
 import LoginIcon from '@mui/icons-material/Login';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import { supabase } from '../../services/supabase';
 import { getSubdomainSlug, buildCatalogoProductPath } from '../../routes/paths';
 import { Company, Product, Category } from '../../types';
-import { Input, Select, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
+import { Input, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { CartProvider, useCart } from '../../contexts/CartContext';
@@ -247,39 +246,55 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
       {/* Main Content - Container arredondado com scroll interno */}
       <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col min-h-0">
         {/* Filters - Sticky no topo */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 px-3 md:px-4 pt-3 md:pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-          <Card className="p-3 md:p-4">
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-              <div className="flex-1 relative">
-                <Input
-                  placeholder="Buscar produtos..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  leftIcon={<SearchIcon className="w-5 h-5" />}
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                    type="button"
-                    aria-label="Limpar busca"
-                  >
-                    <CloseIcon className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="w-full md:w-64">
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  options={[
-                    { value: '', label: 'Todas as categorias' },
-                    ...categories.map((c) => ({ value: c.id, label: c.name })),
-                  ]}
-                />
-              </div>
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 px-3 md:px-4 pt-3 md:pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 space-y-2">
+          {/* Search */}
+          <div className="relative">
+            <Input
+              placeholder="Buscar produtos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              leftIcon={<SearchIcon className="w-5 h-5" />}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                type="button"
+                aria-label="Limpar busca"
+              >
+                <CloseIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Category Chips - Horizontal scroll */}
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <button
+                onClick={() => setCategoryFilter('')}
+                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  !categoryFilter
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                Todas
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategoryFilter(categoryFilter === cat.id ? '' : cat.id)}
+                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    categoryFilter === cat.id
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
             </div>
-          </Card>
+          )}
         </div>
 
         {/* Products Grid - Área com scroll */}
@@ -290,7 +305,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
               description="Tente ajustar os filtros de busca"
             />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
               {filteredProducts.map((product) => {
                 const inCart = isInCart(product.id);
                 const quantity = getItemQuantity(product.id);
@@ -298,8 +313,8 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
 
                 return (
                   <Card key={product.id} padding="none" className="overflow-hidden flex flex-col">
-                    {/* Product Image */}
-                    <div className="relative">
+                    {/* Product Image - clicável para detalhes */}
+                    <Link to={buildCatalogoProductPath(company.slug, product.id)} className="relative block">
                       <ImageCarousel
                         images={product.images || []}
                         fallbackUrl={product.image_url}
@@ -312,79 +327,66 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                           <span className="text-white font-semibold text-sm md:text-lg">Esgotado</span>
                         </div>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Product Info */}
-                    <div className="p-3 md:p-4 flex-1 flex flex-col">
+                    <div className="p-2.5 md:p-3 flex-1 flex flex-col">
                       {product.category && (
-                        <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
+                        <span className="text-[10px] md:text-xs text-primary-600 dark:text-primary-400 font-medium">
                           {product.category.name}
                         </span>
                       )}
                       <Link
                         to={buildCatalogoProductPath(company.slug, product.id)}
-                        className="block mt-1"
+                        className="block mt-0.5"
                       >
                         <h3 className="text-xs md:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                           {product.name}
                         </h3>
                       </Link>
                       {product.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 hidden md:block">
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1 hidden lg:block">
                           {product.description}
                         </p>
                       )}
-                      <p className="text-base md:text-lg font-bold text-primary-600 mt-2">
+                      <p className="text-sm md:text-base font-bold text-primary-600 mt-1.5">
                         {formatCurrency(product.price)}
                       </p>
 
-                      {/* Actions */}
-                      <div className="mt-auto pt-2 md:pt-3 space-y-2">
-                        {/* Ver Detalhes Button */}
-                        <Link to={buildCatalogoProductPath(company.slug, product.id)} className="block">
-                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                            <VisibilityIcon className="w-4 h-4" />
-                            <span className="hidden md:inline">Ver Detalhes</span>
-                            <span className="md:hidden">Detalhes</span>
-                          </button>
-                        </Link>
-
-                        {/* Add to Cart Button */}
-                        <div>
-                          {isOutOfStock ? (
-                            <Button variant="secondary" disabled className="w-full text-xs md:text-sm">
-                              Indisponível
-                            </Button>
-                          ) : inCart ? (
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <button
-                                onClick={() => updateQuantity(product.id, quantity - 1)}
-                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              >
-                                <RemoveIcon className="w-4 h-4 md:w-5 md:h-5" />
-                              </button>
-                              <span className="flex-1 text-center font-semibold text-base md:text-lg">
-                                {quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(product.id, quantity + 1)}
-                                disabled={quantity >= product.stock}
-                                className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                              >
-                                <AddIcon className="w-4 h-4 md:w-5 md:h-5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <Button
-                              onClick={() => addItem(product)}
-                              icon={<AddShoppingCartIcon className="w-4 h-4 md:w-5 md:h-5" />}
-                              className="w-full text-xs md:text-sm"
+                      {/* Add to Cart */}
+                      <div className="mt-auto pt-2">
+                        {isOutOfStock ? (
+                          <Button variant="secondary" disabled className="w-full text-xs md:text-sm">
+                            Indisponível
+                          </Button>
+                        ) : inCart ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(product.id, quantity - 1)}
+                              className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             >
-                              <span className="hidden md:inline">Adicionar</span>
-                              <span className="md:hidden">Add</span>
-                            </Button>
-                          )}
-                        </div>
+                              <RemoveIcon className="w-4 h-4" />
+                            </button>
+                            <span className="flex-1 text-center font-semibold text-sm md:text-base">
+                              {quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(product.id, quantity + 1)}
+                              disabled={quantity >= product.stock}
+                              className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                            >
+                              <AddIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => addItem(product)}
+                            icon={<AddShoppingCartIcon className="w-4 h-4" />}
+                            className="w-full text-xs md:text-sm"
+                          >
+                            Adicionar
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </Card>
@@ -395,7 +397,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
 
           {/* Footer dentro do container */}
           <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
-            Powered by <span className="font-semibold text-primary-600">Ejym</span>
+            Powered by <span className="font-semibold text-primary-600">Mercado Virtual</span>
           </div>
         </div>
       </main>

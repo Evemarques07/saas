@@ -70,7 +70,7 @@ export function CartProvider({ children, companySlug }: CartProviderProps) {
           name: product.name,
           price: product.price,
           quantity: 1,
-          imageUrl: product.image_url,
+          imageUrl: product.image_url || (product.images?.length ? [...product.images].sort((a, b) => a.order - b.order)[0].url : null),
           stock: product.stock,
           categoryId: product.category_id || undefined,
         },

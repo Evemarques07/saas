@@ -148,7 +148,7 @@ export function CompaniesPage() {
 
     const companyData = {
       name: formData.name,
-      slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
+      slug: formData.slug.toLowerCase().replace(/[^a-z0-9]/g, ''),
       segments: formData.segments,
       is_active: formData.is_active,
     };
@@ -319,8 +319,7 @@ export function CompaniesPage() {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
+      .replace(/[^a-z0-9]/g, '');
   };
 
   const filteredCompanies = companies.filter((c) =>

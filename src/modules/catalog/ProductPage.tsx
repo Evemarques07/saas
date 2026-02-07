@@ -195,7 +195,7 @@ function ProductContent({ company, product }: ProductContentProps) {
             </div>
 
             {/* Product Info */}
-            <div className="p-6 flex flex-col">
+            <div className="p-2 md:p-6 flex flex-col">
               {product.category && (
                 <span className="text-sm text-primary-600 dark:text-primary-400 font-medium mb-2">
                   {product.category.name}
@@ -231,25 +231,32 @@ function ProductContent({ company, product }: ProductContentProps) {
                     Produto Indisponível
                   </Button>
                 ) : inCart ? (
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3 flex-1">
+                  <div className="space-y-5">
+                    {/* Quantity control - unified */}
+                    <div className="flex items-center rounded-xl border border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => updateQuantity(product.id, quantity - 1)}
-                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        className="p-3 rounded-l-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
-                        <RemoveIcon className="w-6 h-6" />
+                        <RemoveIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                       </button>
-                      <span className="flex-1 text-center font-semibold text-2xl">
+                      <span className="flex-1 text-center font-semibold text-xl text-gray-900 dark:text-gray-100">
                         {quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(product.id, quantity + 1)}
                         disabled={quantity >= product.stock}
-                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        className="p-3 rounded-r-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                       >
-                        <AddIcon className="w-6 h-6" />
+                        <AddIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                       </button>
                     </div>
+                    {/* View Cart */}
+                    <Link to={buildCatalogoPath(company.slug)}>
+                      <Button className="w-full" icon={<ShoppingCartIcon />}>
+                        Ver Carrinho e Finalizar
+                      </Button>
+                    </Link>
                   </div>
                 ) : (
                   <Button
@@ -260,15 +267,6 @@ function ProductContent({ company, product }: ProductContentProps) {
                   >
                     Adicionar ao Carrinho
                   </Button>
-                )}
-
-                {/* View Cart Link */}
-                {inCart && (
-                  <Link to={buildCatalogoPath(company.slug)}>
-                    <Button variant="secondary" className="w-full" icon={<ShoppingCartIcon />}>
-                      Ver Carrinho e Finalizar
-                    </Button>
-                  </Link>
                 )}
               </div>
             </div>
@@ -288,7 +286,7 @@ function ProductContent({ company, product }: ProductContentProps) {
       {/* Footer */}
       <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-8">
         <div className="max-w-4xl mx-auto px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          Powered by <span className="font-semibold text-primary-600">Ejym</span>
+          Powered by <span className="font-semibold text-primary-600">Mercado Virtual</span>
         </div>
       </footer>
 

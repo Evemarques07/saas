@@ -49,29 +49,29 @@ export function PlanCard({
 
   return (
     <Card
-      className={`relative flex flex-col h-full transition-all overflow-visible ${getCardStyle()}`}
+      className={`relative flex flex-col h-full transition-all ${getCardStyle()}`}
       padding="none"
     >
-      {/* Badges Container */}
-      {(isPopular || isCurrentPlan) && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
-          {isCurrentPlan && (
-            <Badge variant="success" className="whitespace-nowrap text-xs px-3 py-1 shadow-sm">
-              Plano Atual
-            </Badge>
-          )}
-          {isPopular && !isCurrentPlan && (
-            <Badge variant="info" className="flex items-center gap-1 whitespace-nowrap text-xs px-3 py-1 shadow-sm">
-              <StarIcon className="w-3 h-3" />
-              Popular
-            </Badge>
-          )}
-        </div>
-      )}
-
       <div className="p-4 sm:p-5 flex-1 flex flex-col">
+        {/* Badge */}
+        {(isPopular || isCurrentPlan) && (
+          <div className="flex justify-center mb-2">
+            {isCurrentPlan && (
+              <Badge variant="success" className="whitespace-nowrap text-xs px-3 py-1">
+                Plano Atual
+              </Badge>
+            )}
+            {isPopular && !isCurrentPlan && (
+              <Badge variant="info" className="flex items-center gap-1 whitespace-nowrap text-xs px-3 py-1">
+                <StarIcon className="w-3 h-3" />
+                Popular
+              </Badge>
+            )}
+          </div>
+        )}
+
         {/* Header */}
-        <div className="text-center mb-3 sm:mb-4 pt-2">
+        <div className="text-center mb-3 sm:mb-4">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
             {plan.display_name}
           </h3>
@@ -85,8 +85,13 @@ export function PlanCard({
           <div className="flex items-baseline justify-center gap-0.5">
             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">R$</span>
             <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              {price.toFixed(0)}
+              {Math.floor(price)}
             </span>
+            {!isFree && (
+              <span className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400">
+                ,{String(Math.round((price % 1) * 100)).padStart(2, '0')}
+              </span>
+            )}
             {!isFree && (
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">/mes</span>
             )}
