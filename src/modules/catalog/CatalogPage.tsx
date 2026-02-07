@@ -11,7 +11,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LoginIcon from '@mui/icons-material/Login';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import { supabase } from '../../services/supabase';
-import { getSubdomainSlug } from '../../routes/paths';
+import { getSubdomainSlug, buildCatalogoProductPath } from '../../routes/paths';
 import { Company, Product, Category } from '../../types';
 import { Input, Select, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
@@ -322,7 +322,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                         </span>
                       )}
                       <Link
-                        to={`/catalogo/${company.slug}/produto/${product.id}`}
+                        to={buildCatalogoProductPath(company.slug, product.id)}
                         className="block mt-1"
                       >
                         <h3 className="text-xs md:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
@@ -341,7 +341,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                       {/* Actions */}
                       <div className="mt-auto pt-2 md:pt-3 space-y-2">
                         {/* Ver Detalhes Button */}
-                        <Link to={`/catalogo/${company.slug}/produto/${product.id}`} className="block">
+                        <Link to={buildCatalogoProductPath(company.slug, product.id)} className="block">
                           <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
                             <VisibilityIcon className="w-4 h-4" />
                             <span className="hidden md:inline">Ver Detalhes</span>

@@ -23,7 +23,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import {
   buildAppPath,
-  buildCatalogoPath,
+  buildFullCatalogoUrl,
   PATHS,
 } from '../../routes/paths';
 
@@ -99,7 +99,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
       badge: getBadgeValue(item.badgeKey),
     }));
 
-  const catalogUrl = `${window.location.origin}${buildCatalogoPath(slug)}`;
+  const catalogUrl = buildFullCatalogoUrl(slug);
   const dashboardPath = buildAppPath(slug, PATHS.DASHBOARD);
 
   const handleOpenCatalog = () => {

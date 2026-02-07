@@ -7,7 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { supabase } from '../../services/supabase';
-import { getSubdomainSlug } from '../../routes/paths';
+import { getSubdomainSlug, buildCatalogoPath } from '../../routes/paths';
 import { Company, Product } from '../../types';
 import { Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
@@ -80,7 +80,7 @@ export function ProductPage() {
           description="O produto solicitado não existe ou está indisponível"
           action={
             slug ? (
-              <Link to={`/catalogo/${slug}`}>
+              <Link to={buildCatalogoPath(slug || '')}>
                 <Button icon={<StorefrontIcon />}>Ver Catálogo</Button>
               </Link>
             ) : undefined
@@ -150,7 +150,7 @@ function ProductContent({ company, product }: ProductContentProps) {
             {/* Cart Button */}
             {itemCount > 0 && (
               <Link
-                to={`/catalogo/${company.slug}`}
+                to={buildCatalogoPath(company.slug)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
               >
                 <ShoppingCartIcon className="w-5 h-5" />
@@ -168,7 +168,7 @@ function ProductContent({ company, product }: ProductContentProps) {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Link */}
         <Link
-          to={`/catalogo/${company.slug}`}
+          to={buildCatalogoPath(company.slug)}
           className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-6"
         >
           <ArrowBackIcon className="w-5 h-5" />
@@ -264,7 +264,7 @@ function ProductContent({ company, product }: ProductContentProps) {
 
                 {/* View Cart Link */}
                 {inCart && (
-                  <Link to={`/catalogo/${company.slug}`}>
+                  <Link to={buildCatalogoPath(company.slug)}>
                     <Button variant="secondary" className="w-full" icon={<ShoppingCartIcon />}>
                       Ver Carrinho e Finalizar
                     </Button>
@@ -277,7 +277,7 @@ function ProductContent({ company, product }: ProductContentProps) {
 
         {/* View Full Catalog */}
         <div className="mt-8 text-center">
-          <Link to={`/catalogo/${company.slug}`}>
+          <Link to={buildCatalogoPath(company.slug)}>
             <Button variant="secondary" size="lg" icon={<StorefrontIcon />}>
               Ver Catálogo Completo
             </Button>

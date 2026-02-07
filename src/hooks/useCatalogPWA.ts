@@ -1,3 +1,4 @@
+import { getSubdomainSlug } from '../routes/paths';
 import { useState, useEffect, useCallback } from 'react';
 import { Company } from '../types';
 
@@ -120,9 +121,9 @@ async function generateManifest(company: Company): Promise<string> {
     background_color: '#111827',
     display: 'standalone',
     orientation: 'portrait',
-    scope: `/catalogo/${company.slug}`,
-    start_url: `/catalogo/${company.slug}`,
-    id: `/catalogo/${company.slug}`,
+    scope: getSubdomainSlug() ? `/catalogo` : `/catalogo/${company.slug}`,
+    start_url: getSubdomainSlug() ? `/catalogo` : `/catalogo/${company.slug}`,
+    id: getSubdomainSlug() ? `/catalogo` : `/catalogo/${company.slug}`,
     icons,
     categories: ['shopping', 'lifestyle'],
     screenshots: [],
@@ -131,7 +132,7 @@ async function generateManifest(company: Company): Promise<string> {
         name: 'Ver Catalogo',
         short_name: 'Catalogo',
         description: 'Abrir catalogo de produtos',
-        url: `/catalogo/${company.slug}`,
+        url: getSubdomainSlug() ? `/catalogo` : `/catalogo/${company.slug}`,
       },
     ],
   };

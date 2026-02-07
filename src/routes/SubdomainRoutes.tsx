@@ -98,6 +98,8 @@ export function SubdomainRoutes() {
 
       {/* Catalogo Publico - acessivel sem autenticacao */}
       <Route path="/catalogo" element={<CatalogPage />} />
+      <Route path="/catalogo/produto/:productId" element={<ProductPage />} />
+      {/* Rotas legadas com slug no path - mantidas para compatibilidade */}
       <Route path="/catalogo/:slug" element={<CatalogPage />} />
       <Route path="/catalogo/:slug/produto/:productId" element={<ProductPage />} />
 

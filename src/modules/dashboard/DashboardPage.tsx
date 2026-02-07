@@ -1,3 +1,4 @@
+import { buildFullCatalogoUrl } from '../../routes/paths';
 import { useEffect, useState, useRef } from 'react';
 import {
   AreaChart,
@@ -454,7 +455,7 @@ export function DashboardPage() {
     );
   }
 
-  const catalogUrl = `${window.location.origin}/catalogo/${currentCompany.slug}`;
+  const catalogUrl = buildFullCatalogoUrl(currentCompany.slug);
 
   const handleCopyCatalogLink = async () => {
     await navigator.clipboard.writeText(catalogUrl);

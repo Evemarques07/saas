@@ -1,3 +1,4 @@
+import { buildFullCatalogoProductUrl } from '../../routes/paths';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -506,7 +507,7 @@ export function ProductsPage() {
   };
 
   const getProductCatalogUrl = (productId: string) => {
-    return `${window.location.origin}/catalogo/${currentCompany?.slug}/produto/${productId}`;
+    return buildFullCatalogoProductUrl(currentCompany?.slug || '', productId);
   };
 
   const handleCopyProductLink = async (productId: string) => {

@@ -141,7 +141,32 @@ export function buildEmpresasPath(slug: string): string {
 }
 
 export function buildCatalogoPath(slug: string): string {
+  // Em modo subdominio, o slug ja esta no hostname
+  if (isSubdomainMode()) {
+    return PATHS.CATALOGO;
+  }
   return `${PATHS.CATALOGO}/${slug}`;
+}
+
+export function buildCatalogoProductPath(slug: string, productId: string): string {
+  if (isSubdomainMode()) {
+    return `${PATHS.CATALOGO}/produto/${productId}`;
+  }
+  return `${PATHS.CATALOGO}/${slug}/produto/${productId}`;
+}
+
+export function buildFullCatalogoUrl(slug: string): string {
+  if (isSubdomainMode() || (!isLocalhost() && !isMainDomain())) {
+    return `https://${slug}.mercadovirtual.app/catalogo`;
+  }
+  return `${window.location.origin}/catalogo/${slug}`;
+}
+
+export function buildFullCatalogoProductUrl(slug: string, productId: string): string {
+  if (isSubdomainMode() || (!isLocalhost() && !isMainDomain())) {
+    return `https://${slug}.mercadovirtual.app/catalogo/produto/${productId}`;
+  }
+  return `${window.location.origin}/catalogo/${slug}/produto/${productId}`;
 }
 
 // Extrair slug do pathname (para modo legacy)
