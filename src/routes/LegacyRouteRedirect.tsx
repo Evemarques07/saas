@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FullPageLoader } from '../components/ui/Loader';
-import { buildAppPath } from './paths';
+import { redirectToSubdomain, isMainDomain } from './paths';
 
 const STORAGE_KEY = 'ejym_current_company';
 
@@ -33,10 +33,14 @@ export function LegacyRouteRedirect() {
   }
 
   if (targetCompany) {
-    // Redirecionar para nova rota mantendo o path
-    // Ex: /produtos -> /app/minha-loja/produtos
-    const newPath = buildAppPath(targetCompany.slug, location.pathname);
-    return <Navigate to={newPath} replace />;
+    // Redirecionar para subdominio mantendo o path
+    // Ex: /produtos -> minha-loja.mercadovirtual.app/produtos
+    if (isMainDomain()) {
+      redirectToSubdomain(targetCompany.slug, location.pathname);
+      return <FullPageLoader />;
+    }
+    // Ja estamos no subdominio, vai para o path relativo
+    return <Navigate to={location.pathname} replace />;
   }
 
   return <Navigate to="/login" replace />;

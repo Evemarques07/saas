@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FullPageLoader } from '../components/ui/Loader';
-import { buildAppPath } from './paths';
+import { redirectToSubdomain, isMainDomain } from './paths';
 
 const STORAGE_KEY = 'ejym_current_company';
 
@@ -59,7 +59,13 @@ export function RootRedirect() {
   }
 
   if (targetCompany) {
-    return <Navigate to={buildAppPath(targetCompany.slug)} replace />;
+    // Se estamos no dominio principal, redireciona para subdominio
+    if (isMainDomain()) {
+      redirectToSubdomain(targetCompany.slug);
+      return <FullPageLoader />;
+    }
+    // Ja estamos no subdominio, vai para raiz
+    return <Navigate to="/" replace />;
   }
 
   // Super admin vai para admin

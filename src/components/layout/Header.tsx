@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import PersonIcon from '@mui/icons-material/Person';
@@ -17,7 +16,6 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
-  const navigate = useNavigate();
   const { user, profile, companies, signOut } = useAuth();
   const { currentCompany, switchCompany } = useTenant();
   const { theme, toggleTheme } = useTheme();
@@ -28,9 +26,17 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCompanyMenu, setShowCompanyMenu] = useState(false);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('[Header] ====== BOTAO SAIR CLICADO ======');
+    try {
+      console.log('[Header] Chamando signOut...');
+      await signOut();
+      console.log('[Header] signOut concluido');
+    } catch (err) {
+      console.error('[Header] Erro no signOut:', err);
+    }
   };
 
   return (
@@ -189,7 +195,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
                   </div>
                 </div>
                 <button
-                  onClick={handleSignOut}
+                  onClick={(e) => handleSignOut(e)}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
                   <LogoutIcon className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -23,6 +24,7 @@ import { Product, Category, TableColumn, ProductImage } from '../../types';
 import { exportToExcel, exportToPDF } from '../../services/export';
 
 export function ProductsPage() {
+  const navigate = useNavigate();
   const { currentCompany, canManageProducts } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -707,7 +709,7 @@ export function ProductsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = `/app/${currentCompany?.slug}/faturamento`}
+            onClick={() => navigate('/faturamento')}
           >
             Ver Planos
           </Button>

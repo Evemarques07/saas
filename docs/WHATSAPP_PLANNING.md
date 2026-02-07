@@ -102,7 +102,7 @@ Este documento detalha o planejamento para automatizar mensagens de WhatsApp no 
 
 ### Fluxo Atual (Manual)
 
-1. Cliente acessa catalogo (`/catalogo/:slug`)
+1. Cliente acessa catalogo (`slug.mercadovirtual.app/catalogo`)
 2. Adiciona produtos ao carrinho
 3. Preenche dados (nome, telefone, observacoes)
 4. Finaliza pedido

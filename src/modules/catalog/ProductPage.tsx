@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { supabase } from '../../services/supabase';
+import { getSubdomainSlug } from '../../routes/paths';
 import { Company, Product } from '../../types';
 import { Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
@@ -14,7 +15,8 @@ import { EmptyState } from '../../components/feedback/EmptyState';
 import { CartProvider, useCart } from '../../contexts/CartContext';
 
 export function ProductPage() {
-  const { slug, productId } = useParams<{ slug: string; productId: string }>();
+  const { slug: urlSlug, productId } = useParams<{ slug: string; productId: string }>();
+  const slug = urlSlug || getSubdomainSlug();
   const [company, setCompany] = useState<Company | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);

@@ -28,7 +28,7 @@ Sistema SaaS completo para gestao de vendas no varejo, desenvolvido para atender
 - [x] Login com Google
 - [x] Sistema de registro e login com visualizacao de senha
 - [x] Multi-tenancy com RLS (Row Level Security)
-- [x] Rotas baseadas em slug da empresa (`/app/:slug/*`)
+- [x] Roteamento por subdominios (`slug.mercadovirtual.app`)
 - [x] Area administrativa separada (`/admin/*`)
 - [x] Super Admin automatico (email especifico)
 - [x] CRUD de Empresas (Super Admin)
@@ -120,24 +120,39 @@ O sistema utiliza uma arquitetura hibrida:
 
 ### Estrutura de Rotas
 
+O sistema utiliza **subdominios** para isolamento de empresas em producao:
+
+**Dominio principal** (`mercadovirtual.app`):
+
 | Rota | Descricao | Acesso |
 |------|-----------|--------|
 | `/login` | Pagina de login | Publico |
 | `/registro` | Pagina de registro | Publico |
 | `/aceitar-convite?token=xxx` | Aceitar convite | Publico |
-| `/catalogo/:slug` | Catalogo publico | Publico |
-| `/catalogo/:slug/produto/:productId` | Pagina individual de produto | Publico |
 | `/admin` | Dashboard admin | Super Admin |
 | `/admin/empresas` | Gestao de empresas | Super Admin |
 | `/admin/usuarios` | Lista de usuarios do sistema | Super Admin |
-| `/app/:slug` | Dashboard da empresa | Autenticado |
-| `/app/:slug/vendas` | Gestao de vendas | Autenticado |
-| `/app/:slug/pedidos` | Pedidos do catalogo | Autenticado |
-| `/app/:slug/clientes` | Gestao de clientes | Autenticado |
-| `/app/:slug/produtos` | Gestao de produtos | Autenticado |
-| `/app/:slug/categorias` | Gestao de categorias | Autenticado |
-| `/app/:slug/usuarios` | Gestao de usuarios | Admin |
-| `/app/:slug/configuracoes` | Configuracoes da empresa | Autenticado |
+
+**Subdominio da empresa** (`slug.mercadovirtual.app`):
+
+| Rota | Descricao | Acesso |
+|------|-----------|--------|
+| `/` | Dashboard da empresa | Autenticado |
+| `/vendas` | Gestao de vendas | Autenticado |
+| `/pedidos` | Pedidos do catalogo | Autenticado |
+| `/clientes` | Gestao de clientes | Autenticado |
+| `/produtos` | Gestao de produtos | Autenticado |
+| `/categorias` | Gestao de categorias | Autenticado |
+| `/cupons` | Gestao de cupons | Autenticado |
+| `/fidelidade` | Programa de fidelidade | Autenticado |
+| `/promocoes` | Gestao de promocoes | Autenticado |
+| `/usuarios` | Gestao de usuarios | Admin |
+| `/configuracoes` | Configuracoes da empresa | Autenticado |
+| `/faturamento` | Faturamento e planos | Autenticado |
+| `/catalogo` | Catalogo publico | Publico |
+| `/catalogo/produto/:productId` | Pagina individual de produto | Publico |
+
+> Em desenvolvimento local (`localhost`), as rotas usam o formato legado `/app/:slug/*`.
 
 ---
 
@@ -309,7 +324,7 @@ Acesse: http://localhost:5173
 - Todas as tabelas principais possuem `company_id`
 - Row Level Security (RLS) garante que usuarios so acessem dados de suas empresas
 - Um usuario pode pertencer a multiplas empresas com diferentes papeis
-- Rotas baseadas em slug: `/app/minha-empresa/produtos`
+- Roteamento por subdominios: `minha-empresa.mercadovirtual.app/produtos`
 
 ### Papeis e Permissoes
 
@@ -389,7 +404,7 @@ const {
 
 ```tsx
 const {
-  currentCompany,     // Empresa ativa (do slug da URL)
+  currentCompany,     // Empresa ativa (do subdominio ou slug da URL)
   switchCompany,      // Trocar empresa (navega para nova URL)
   userRole,           // Papel na empresa atual
   isAdmin,            // Se e admin
@@ -501,7 +516,7 @@ O catalogo publico possui um sistema completo de carrinho de compras:
 
 ### Gestao de Pedidos
 
-A empresa gerencia pedidos em `/app/:slug/pedidos`:
+A empresa gerencia pedidos em `/pedidos` (ex: `slug.mercadovirtual.app/pedidos`):
 
 | Status | Descricao | Acao |
 |--------|-----------|------|
@@ -562,7 +577,7 @@ O sistema possui integracao automatica com WhatsApp via WuzAPI:
 
 Cada produto possui uma pagina unica compartilhavel:
 
-- Rota: `/catalogo/:slug/produto/:productId`
+- Rota: `slug.mercadovirtual.app/catalogo/produto/:productId`
 - Detalhes completos do produto
 - Adicionar ao carrinho
 - Link "Ver Catalogo Completo"
@@ -588,7 +603,7 @@ O deploy e feito automaticamente via GitHub Actions ao fazer merge na branch `ma
 npm run build && npx firebase deploy --only hosting
 ```
 
-**URL de producao:** https://saas-af55a.web.app
+**URL de producao:** https://mercadovirtual.app
 
 ---
 

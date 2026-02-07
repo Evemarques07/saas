@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
@@ -25,6 +26,7 @@ const ROLES: { value: MemberRole; label: string }[] = [
 ];
 
 export function UsersPage() {
+  const navigate = useNavigate();
   const { currentCompany, isAdmin } = useTenant();
   const { user } = useAuth();
   const { limits, canAddUser } = usePlanFeatures();
@@ -407,7 +409,7 @@ export function UsersPage() {
           <Button
             size="sm"
             variant={userLimitReached ? 'primary' : 'outline'}
-            onClick={() => window.location.href = `/app/${currentCompany?.slug}/faturamento`}
+            onClick={() => navigate('/faturamento')}
           >
             <RocketLaunchIcon className="w-4 h-4" />
             Upgrade

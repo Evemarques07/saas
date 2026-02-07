@@ -405,7 +405,7 @@ src/modules/billing/
 ### Rota
 
 ```
-/app/:slug/faturamento
+slug.mercadovirtual.app/faturamento
 ```
 
 Acessivel apenas para **admins** da empresa.
@@ -748,7 +748,7 @@ Use estes CPFs validos para testes no sandbox:
 
 ### Testar Fluxo Completo (Boleto)
 
-1. Acesse `/app/:slug/faturamento`
+1. Acesse `slug.mercadovirtual.app/faturamento`
 2. Clique em "Fazer Upgrade" ou va para aba "Planos"
 3. Selecione um plano pago
 4. No modal:

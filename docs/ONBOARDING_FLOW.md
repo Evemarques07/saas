@@ -134,7 +134,7 @@ Agora redireciona usuarios sem empresa para `/onboarding`.
 | `/registro` | Publico | Cadastro de usuario |
 | `/login` | Publico | Login |
 | `/aceitar-convite` | Publico | Aceitar convite |
-| `/app/:slug/*` | Autenticado com empresa | Area do tenant |
+| `slug.mercadovirtual.app/*` | Autenticado com empresa | Area do tenant (subdominio) |
 | `/admin/*` | Super Admin | Area administrativa |
 
 ## Seguranca

@@ -12,6 +12,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Card, Button } from '../ui';
 import { supabase } from '../../services/supabase';
 import { useTenant } from '../../contexts/TenantContext';
+import { buildAppPath } from '../../routes/paths';
 import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 
 interface ChecklistItem {
@@ -24,13 +25,21 @@ interface ChecklistItem {
 }
 
 export function ActivationChecklist() {
-  const { currentCompany } = useTenant();
+  const { currentCompany, isSubdomainMode } = useTenant();
   const { hasFeature } = usePlanFeatures();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissed] = useState(false);
 
-  const slug = currentCompany?.slug;
+  const slug = currentCompany?.slug || '';
+  
+  // Helper para construir links - usa path relativo em modo subdominio
+  const buildLink = (route: string) => {
+    if (isSubdomainMode) {
+      return route;
+    }
+    return buildAppPath(slug, route);
+  };
   const canInviteTeam = hasFeature('multiple_users');
 
   useEffect(() => {
@@ -66,7 +75,7 @@ export function ActivationChecklist() {
           id: 'first_product',
           title: 'Cadastre seu primeiro produto',
           description: 'Adicione produtos ao seu catalogo para comecar a vender',
-          link: `/app/${slug}/produtos`,
+          link: buildLink('/produtos'),
           icon: <InventoryIcon className="w-5 h-5" />,
           completed: (productCount || 0) > 0,
         },
@@ -74,7 +83,7 @@ export function ActivationChecklist() {
           id: 'customize_catalog',
           title: 'Personalize sua loja',
           description: 'Adicione sua logo e configure as informacoes',
-          link: `/app/${slug}/configuracoes`,
+          link: buildLink('/configuracoes'),
           icon: <PaletteIcon className="w-5 h-5" />,
           completed: hasCustomization,
         },
@@ -82,7 +91,7 @@ export function ActivationChecklist() {
           id: 'first_sale',
           title: 'Receba seu primeiro pedido',
           description: 'Compartilhe o link do catalogo e faca sua primeira venda',
-          link: `/app/${slug}/pedidos`,
+          link: buildLink('/pedidos'),
           icon: <ShoppingCartIcon className="w-5 h-5" />,
           completed: (orderCount || 0) > 0,
         },
@@ -99,7 +108,7 @@ export function ActivationChecklist() {
           id: 'invite_team',
           title: 'Convide sua equipe',
           description: 'Adicione vendedores ou gerentes para ajudar',
-          link: `/app/${slug}/usuarios`,
+          link: buildLink('/usuarios'),
           icon: <GroupAddIcon className="w-5 h-5" />,
           completed: (memberCount || 0) > 1,
         });

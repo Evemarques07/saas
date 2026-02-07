@@ -11,6 +11,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LoginIcon from '@mui/icons-material/Login';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import { supabase } from '../../services/supabase';
+import { getSubdomainSlug } from '../../routes/paths';
 import { Company, Product, Category } from '../../types';
 import { Input, Select, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
@@ -21,7 +22,9 @@ import { CartDrawer, CheckoutModal, CustomerLoginModal, CustomerAccountDrawer, C
 import { useCatalogPWA } from '../../hooks/useCatalogPWA';
 
 export function CatalogPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: urlSlug } = useParams<{ slug: string }>();
+  // Em modo subdomínio, pega o slug do hostname se não vier na URL
+  const slug = urlSlug || getSubdomainSlug();
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -30,7 +33,12 @@ export function CatalogPage() {
 
   useEffect(() => {
     if (slug) {
+      console.log('[CatalogPage] Loading catalog for slug:', slug);
       fetchCatalogData();
+    } else {
+      console.log('[CatalogPage] No slug found');
+      setError(true);
+      setLoading(false);
     }
   }, [slug]);
 

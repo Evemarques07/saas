@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button, Input, Card } from '../../components/ui';
 import { Invite } from '../../types';
 import { PageLoader } from '../../components/ui/Loader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export function AcceptInvitePage() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export function AcceptInvitePage() {
   const { refreshProfile } = useAuth();
   const token = searchParams.get('token');
 
+  const { theme } = useTheme();
   const [invite, setInvite] = useState<Invite | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

@@ -63,7 +63,7 @@ Tela amigavel mostrando que a feature requer upgrade:
 // src/components/gates/UpgradePrompt.tsx
 - Icone da feature bloqueada
 - Mensagem explicativa
-- Botao "Ver Planos" -> /app/:slug/faturamento
+- Botao "Ver Planos" -> /faturamento (via subdominio)
 ```
 
 ---

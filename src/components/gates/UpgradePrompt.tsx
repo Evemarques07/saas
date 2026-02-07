@@ -71,7 +71,7 @@ export function UpgradePrompt({ feature, compact = false }: UpgradePromptProps) 
 
   const handleUpgrade = () => {
     if (currentCompany?.slug) {
-      navigate(`/app/${currentCompany.slug}/faturamento`);
+      navigate('/faturamento');
     }
   };
 

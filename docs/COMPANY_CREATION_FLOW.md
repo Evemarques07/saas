@@ -57,7 +57,7 @@ Todas as empresas compartilham o mesmo banco de dados, mas sao isoladas logicame
 
 1. **company_id**: Coluna presente em todas tabelas de dados
 2. **RLS (Row Level Security)**: Policies que filtram dados por empresa
-3. **Rotas baseadas em Slug**: URLs no formato `/app/:slug/*`
+3. **Roteamento por Subdominios**: URLs no formato `slug.mercadovirtual.app/*`
 
 ```sql
 -- Exemplo de estrutura com company_id
@@ -480,7 +480,7 @@ CREATE INDEX idx_invites_email ON invites(email);
 │                                                                  │
 │  5. refreshProfile() para atualizar contexto                    │
 │                                                                  │
-│  6. Redireciona para /app/:slug                                 │
+│  6. Redireciona para slug.mercadovirtual.app                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -744,7 +744,7 @@ Use este checklist ao implementar multi-tenancy em um novo projeto:
 ### Frontend
 
 - [ ] Rotas `/admin/*` para Super Admin
-- [ ] Rotas `/app/:slug/*` para tenants
+- [ ] Roteamento por subdominios (`slug.mercadovirtual.app`)
 - [ ] Guards de rota (ProtectedRoute, SuperAdminRoute)
 - [ ] Pagina de criacao de empresas
 - [ ] Modal de convite com email

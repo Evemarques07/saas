@@ -10,6 +10,7 @@ import { StepTerms, CURRENT_TERMS_VERSION } from './components/StepTerms';
 import { StepCompanyName } from './components/StepCompanyName';
 import { StepSegments } from './components/StepSegments';
 import { StepLogo } from './components/StepLogo';
+import { redirectToSubdomain } from '../../routes/paths';
 
 interface OnboardingData {
   companyName: string;
@@ -134,8 +135,8 @@ export function OnboardingPage() {
 
       toast.success('Sua loja foi criada com sucesso!');
 
-      // 7. Redirecionar para o dashboard da nova empresa
-      navigate(`/app/${company.slug}`);
+      // 7. Redirecionar para o subdominio da nova empresa
+      redirectToSubdomain(company.slug);
     } catch (err) {
       console.error('Error in onboarding:', err);
       toast.error('Erro ao criar sua loja');

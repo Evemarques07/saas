@@ -68,7 +68,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 - [x] Isolamento de dados por empresa
 - [x] Row Level Security (RLS)
-- [x] Rotas baseadas em slug (`/app/:slug/*`)
+- [x] Roteamento por subdominios (`slug.mercadovirtual.app`)
 - [x] Troca de empresa no header
 
 ### Gestao de Empresas
@@ -158,7 +158,7 @@ Este documento descreve os planos de desenvolvimento do Ejym SaaS, dividido em f
 
 ### Catalogo Publico
 
-- [x] Pagina publica `/catalogo/:slug`
+- [x] Catalogo publico via subdominio (`slug.mercadovirtual.app/catalogo`)
 - [x] Listagem de produtos ativos
 - [x] Filtro por categoria
 - [x] Busca de produtos
@@ -704,14 +704,14 @@ O WuzAPI suporta webhooks para receber mensagens:
   - Status com cores diferenciadas
 
 - **Sistema de Cupons de Desconto**
-  - CRUD completo de cupons (`/app/:slug/cupons`)
+  - CRUD completo de cupons (`/cupons`)
   - Tipos: percentual ou valor fixo
   - Validacoes: pedido minimo, limite de uso, primeira compra
   - Input de cupom no checkout com validacao em tempo real
   - Lista de cupons disponiveis para o cliente
 
 - **Programa de Fidelidade**
-  - Configuracao do programa (`/app/:slug/fidelidade`)
+  - Configuracao do programa (`/fidelidade`)
   - Pontos por R$ gasto (configuravel)
   - Valor do ponto em R$ (configuravel)
   - Niveis de fidelidade com multiplicadores
@@ -719,7 +719,7 @@ O WuzAPI suporta webhooks para receber mensagens:
   - Card de fidelidade na area do cliente
 
 - **Sistema de Promocoes**
-  - CRUD completo de promocoes (`/app/:slug/promocoes`)
+  - CRUD completo de promocoes (`/promocoes`)
   - 8 tipos de promocao:
     - Aniversario
     - Nivel de fidelidade
@@ -742,9 +742,9 @@ O WuzAPI suporta webhooks para receber mensagens:
     - `promotion_id`, `promotion_discount`
 
 - **Novas Rotas**
-  - `/app/:slug/cupons` - Gerenciar cupons
-  - `/app/:slug/fidelidade` - Configurar fidelidade
-  - `/app/:slug/promocoes` - Gerenciar promocoes
+  - `slug.mercadovirtual.app/cupons` - Gerenciar cupons
+  - `slug.mercadovirtual.app/fidelidade` - Configurar fidelidade
+  - `slug.mercadovirtual.app/promocoes` - Gerenciar promocoes
 
 - **Menu Lateral Atualizado**
   - Cupons (LocalOfferIcon)
@@ -1390,7 +1390,7 @@ O WuzAPI suporta webhooks para receber mensagens:
 - **Sistema de Pedidos do Catalogo**
   - Tabelas `catalog_orders` e `catalog_order_items`
   - CheckoutModal com formulario (nome, telefone, observacoes)
-  - Pagina de gestao de pedidos `/app/:slug/pedidos`
+  - Pagina de gestao de pedidos (`/pedidos`)
   - Status: pending, confirmed, completed, cancelled
   - Botao WhatsApp para contatar cliente
 - **Conversao Pedido → Venda**
@@ -1402,7 +1402,7 @@ O WuzAPI suporta webhooks para receber mensagens:
   - Cards com contagem por status (pendentes, confirmados, entregues, cancelados)
   - Cores diferenciadas por status
 - **Pagina Individual de Produto**
-  - Rota `/catalogo/:slug/produto/:productId`
+  - Rota `slug.mercadovirtual.app/catalogo/produto/:productId`
   - Detalhes completos do produto
   - Adicionar ao carrinho
   - Link "Ver Catalogo Completo"
@@ -1421,7 +1421,7 @@ O WuzAPI suporta webhooks para receber mensagens:
   - Todos os usuarios podem alterar sua propria senha
   - Reautenticacao com Firebase para seguranca
 - **Pagina de Configuracoes**
-  - Nova rota `/app/:slug/configuracoes`
+  - Nova rota `/configuracoes` (via subdominio)
   - Upload de logo (admin only)
   - Alteracao de senha (todos)
 - **Lista de Usuarios do Sistema (Super Admin)**
@@ -1479,7 +1479,7 @@ O WuzAPI suporta webhooks para receber mensagens:
 - CRUD de produtos, clientes e vendas
 - Catalogo publico
 - Exportacao Excel/PDF
-- Rotas baseadas em slug da empresa
+- Roteamento por subdominios (`slug.mercadovirtual.app`)
 - Area administrativa separada
 
 ### v0.1.0 (Dezembro 2024)

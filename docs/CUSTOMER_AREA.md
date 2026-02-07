@@ -411,9 +411,9 @@ O modal de detalhes do pedido exibe todos os descontos de forma detalhada.
 
 | Rota | Componente | Descricao |
 |------|------------|-----------|
-| `/app/:slug/cupons` | CouponsPage | Gerenciar cupons |
-| `/app/:slug/fidelidade` | LoyaltyPage | Configurar fidelidade |
-| `/app/:slug/promocoes` | PromotionsPage | Gerenciar promocoes |
+| `/cupons` | CouponsPage | Gerenciar cupons |
+| `/fidelidade` | LoyaltyPage | Configurar fidelidade |
+| `/promocoes` | PromotionsPage | Gerenciar promocoes |
 
 ### Menu Lateral (Sidebar)
 

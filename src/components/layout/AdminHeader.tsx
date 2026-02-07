@@ -9,7 +9,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { buildAppPath } from '../../routes/paths';
+import { redirectToSubdomain } from '../../routes/paths';
 
 interface AdminHeaderProps {
   onMenuClick?: () => void;
@@ -23,13 +23,22 @@ export function AdminHeader({ onMenuClick, isMobile = false }: AdminHeaderProps)
 
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('[AdminHeader] ====== BOTAO SAIR CLICADO ======');
+    setShowUserMenu(false);
+    try {
+      console.log('[AdminHeader] Chamando signOut...');
+      await signOut();
+      console.log('[AdminHeader] signOut concluido');
+    } catch (err) {
+      console.error('[AdminHeader] Erro no signOut:', err);
+    }
   };
 
   const handleGoToCompany = (slug: string) => {
-    navigate(buildAppPath(slug));
+    redirectToSubdomain(slug);
   };
 
   return (
@@ -116,7 +125,7 @@ export function AdminHeader({ onMenuClick, isMobile = false }: AdminHeaderProps)
                   </p>
                 </div>
                 <button
-                  onClick={handleSignOut}
+                  onClick={(e) => handleSignOut(e)}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
                 >
                   <LogoutIcon className="w-4 h-4" />

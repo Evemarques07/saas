@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Company, CompanyMember, MemberRole } from '../types';
-import { useAuth } from './AuthContext';
-import { buildAppPath, extractRouteFromPath } from '../routes/paths';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Company, CompanyMember, MemberRole } from "../types";
+import { useAuth } from "./AuthContext";
+import { buildAppPath, extractRouteFromPath, isSubdomainMode as checkSubdomainMode, redirectToSubdomain, isMainDomain } from "../routes/paths";
 
 interface TenantContextType {
   currentCompany: Company | null;
@@ -16,29 +16,67 @@ interface TenantContextType {
   canManageProducts: boolean;
   canManageSales: boolean;
   isValidatingSlug: boolean;
-  slugError: 'invalid' | 'no_access' | null;
+  slugError: "invalid" | "no_access" | null;
+  isSubdomainMode: boolean;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'ejym_current_company';
+const STORAGE_KEY = "ejym_current_company";
+
+// Dominios conhecidos (sem subdominio de empresa)
+const KNOWN_DOMAINS = [
+  "localhost",
+  "mercadovirtual.app",
+  "www.mercadovirtual.app",
+  "evertonapi.vps-kinghost.net",
+];
+
+// Extrai slug do subdominio (ex: empresa.mercadovirtual.app -> empresa)
+function getSlugFromHostname(): string | null {
+  const hostname = window.location.hostname;
+  
+  // Se for dominio conhecido sem subdominio, retorna null
+  if (KNOWN_DOMAINS.includes(hostname)) {
+    return null;
+  }
+  
+  // Extrai o primeiro segmento do hostname
+  const parts = hostname.split(".");
+  
+  // Precisa ter pelo menos 3 partes (subdominio.dominio.tld)
+  if (parts.length >= 3) {
+    const potentialSlug = parts[0];
+    // Ignora www e outros prefixos comuns
+    if (potentialSlug !== "www" && potentialSlug !== "app" && potentialSlug !== "api") {
+      return potentialSlug;
+    }
+  }
+  
+  return null;
+}
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { companies, isSuperAdmin } = useAuth();
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: urlSlug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Tenta pegar slug do subdominio primeiro, depois da URL
+  const subdomainSlug = getSlugFromHostname();
+  const slug = subdomainSlug || urlSlug;
+  const isSubdomainMode = !!subdomainSlug;
 
   const [currentCompany, setCurrentCompanyState] = useState<Company | null>(null);
   const [currentMembership, setCurrentMembership] = useState<CompanyMember | null>(null);
   const [isValidatingSlug, setIsValidatingSlug] = useState(true);
-  const [slugError, setSlugError] = useState<'invalid' | 'no_access' | null>(null);
+  const [slugError, setSlugError] = useState<"invalid" | "no_access" | null>(null);
 
-  // Validar slug da URL
+  // Validar slug (do subdominio ou URL)
   useEffect(() => {
     if (!slug) {
       setIsValidatingSlug(false);
-      setSlugError('invalid');
+      setSlugError("invalid");
       return;
     }
 
@@ -56,12 +94,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setSlugError(null);
     } else if (companies.length > 0) {
       // Slug invalido mas usuario tem outras empresas
-      setSlugError('no_access');
+      setSlugError("no_access");
       setCurrentCompanyState(null);
       setCurrentMembership(null);
     } else {
       // Nenhuma empresa
-      setSlugError('invalid');
+      setSlugError("invalid");
       setCurrentCompanyState(null);
       setCurrentMembership(null);
     }
@@ -77,33 +115,29 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // Usuario foi removido - redirecionar para primeira empresa
         const firstCompany = companies[0]?.company;
         if (firstCompany) {
-          const currentRoute = extractRouteFromPath(location.pathname);
-          navigate(buildAppPath(firstCompany.slug, currentRoute), { replace: true });
+          // Sempre redireciona para o subdominio da empresa
+          redirectToSubdomain(firstCompany.slug);
         } else {
-          navigate('/', { replace: true });
+          navigate("/", { replace: true });
         }
       }
     }
-  }, [companies, currentCompany, navigate, location.pathname]);
+  }, [companies, currentCompany, navigate, location.pathname, isSubdomainMode, slug]);
 
-  // Trocar empresa - navega para nova URL
+  // Trocar empresa - sempre redireciona para subdominio
   const switchCompany = (company: Company) => {
-    // Pegar rota atual apos /app/:slug/
-    const currentRoute = extractRouteFromPath(location.pathname);
-    const newPath = buildAppPath(company.slug, currentRoute);
-
     // Salvar no localStorage para redirecionamentos futuros
     localStorage.setItem(STORAGE_KEY, company.id);
 
-    // Navegar para nova URL
-    navigate(newPath, { replace: true });
+    // Sempre redireciona para o subdominio da empresa
+    redirectToSubdomain(company.slug);
   };
 
   const userRole = currentMembership?.role || null;
 
-  const isAdmin = isSuperAdmin || userRole === 'admin';
-  const isManager = isAdmin || userRole === 'manager';
-  const isSeller = userRole === 'seller';
+  const isAdmin = isSuperAdmin || userRole === "admin";
+  const isManager = isAdmin || userRole === "manager";
+  const isSeller = userRole === "seller";
 
   const canManageUsers = isAdmin;
   const canManageProducts = isManager;
@@ -122,6 +156,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     canManageSales,
     isValidatingSlug,
     slugError,
+    isSubdomainMode,
   };
 
   return (
@@ -134,7 +169,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 export function useTenant() {
   const context = useContext(TenantContext);
   if (context === undefined) {
-    throw new Error('useTenant must be used within a TenantProvider');
+    throw new Error("useTenant must be used within a TenantProvider");
   }
   return context;
 }

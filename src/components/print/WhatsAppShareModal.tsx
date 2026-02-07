@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import ImageIcon from '@mui/icons-material/Image';
@@ -42,6 +43,7 @@ export function WhatsAppShareModal({
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const { hasFeature, isLoading: loadingFeatures } = usePlanFeatures();
+  const navigate = useNavigate();
   const hasWhatsAppFeature = hasFeature('whatsapp_notifications');
 
   // Reset state when modal opens
@@ -143,7 +145,7 @@ export function WhatsAppShareModal({
             onClick={() => {
               onClose();
               // Navigate to settings
-              window.location.href = `/app/${company.slug}/configuracoes`;
+              navigate('/configuracoes');
             }}
           >
             Ir para Configuracoes

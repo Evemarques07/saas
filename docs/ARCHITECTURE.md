@@ -1132,13 +1132,13 @@ useEffect(() => {
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Rotas baseadas em Slug
+### Roteamento por Subdominios
 
 ```
-/app/:slug/*
+slug.mercadovirtual.app/*
 
-/app/minha-loja/produtos    → Produtos da empresa "minha-loja"
-/app/outra-empresa/vendas   → Vendas da empresa "outra-empresa"
+minha-loja.mercadovirtual.app/produtos    → Produtos da empresa "minha-loja"
+outra-empresa.mercadovirtual.app/vendas   → Vendas da empresa "outra-empresa"
 ```
 
 ### Papeis e Permissoes
@@ -1330,7 +1330,7 @@ export function ExamplePage() {
 
 ### Layout do Catalogo Publico
 
-O catalogo publico (`/catalogo/:slug`) utiliza o mesmo padrao de layout arredondado:
+O catalogo publico (`slug.mercadovirtual.app/catalogo`) utiliza o mesmo padrao de layout arredondado:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1423,7 +1423,7 @@ Quando um pedido e marcado como "completed" (entregue):
 ### Pagina Individual de Produto
 
 ```
-/catalogo/:slug/produto/:productId
+slug.mercadovirtual.app/catalogo/produto/:productId
          │                │
          │                └──▶ ProductPage.tsx
          │                         │
