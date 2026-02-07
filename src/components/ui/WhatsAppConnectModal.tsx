@@ -372,7 +372,7 @@ export function WhatsAppConnectModal({
 
             {qrCodeExpired ? (
               <div className="py-8">
-                <div className="w-64 h-64 mx-auto bg-gray-100 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center">
+                <div className="w-64 h-64 mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg flex flex-col items-center justify-center">
                   <RefreshIcon className="w-12 h-12 text-gray-400" />
                   <p className="mt-2 text-sm text-gray-500">QR Code expirado</p>
                 </div>
@@ -397,7 +397,7 @@ export function WhatsAppConnectModal({
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-2 text-left bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                <div className="mt-6 space-y-2 text-left bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <PhoneAndroidIcon className="w-5 h-5 text-green-500" />
                     Como escanear:

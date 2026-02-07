@@ -2,6 +2,7 @@
 // Este serviço faz chamadas via Edge Function para proteger a API Key
 
 import { supabase, supabaseGetAccessToken } from './supabase';
+import { getCompanyStorageUsage } from './storage';
 import type {
   Plan,
   Subscription,
@@ -243,8 +244,8 @@ export async function getCompanyUsage(companyId: string): Promise<UsageLimits> {
     .eq('company_id', companyId)
     .eq('is_active', true);
 
-  // TODO: Calcular storage usado (sum de tamanho dos arquivos)
-  const storageUsed = 0;
+  // Calcular storage usado (soma dos arquivos nos buckets da empresa)
+  const storageUsed = await getCompanyStorageUsage(companyId);
 
   return {
     products: {

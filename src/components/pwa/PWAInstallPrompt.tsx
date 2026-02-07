@@ -12,15 +12,12 @@ export function PWAInstallPrompt() {
   const location = useLocation();
   const { theme } = useTheme();
 
-  // Don't show on catalog pages - they have their own PWA install
-  const isCatalogPage = location.pathname.startsWith('/catalogo/');
-
-  // Don't show on landing page
-  const isLandingPage = location.pathname === '/inicio' || location.pathname === '/';
+  // Only show inside the app (protected routes)
+  const isAppPage = location.pathname.startsWith('/app/') || location.pathname.startsWith('/admin');
 
   // Handle visibility with animation
   useEffect(() => {
-    if (showPrompt && isInstallable && !isInstalled && !isCatalogPage && !isLandingPage) {
+    if (showPrompt && isInstallable && !isInstalled && isAppPage) {
       // Small delay before showing for better UX
       const showTimer = setTimeout(() => {
         setIsVisible(true);
@@ -33,7 +30,7 @@ export function PWAInstallPrompt() {
       const hideTimer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(hideTimer);
     }
-  }, [showPrompt, isInstallable, isInstalled, isCatalogPage, isLandingPage]);
+  }, [showPrompt, isInstallable, isInstalled, isAppPage]);
 
   const handleInstall = async () => {
     setIsAnimating(false);
@@ -70,7 +67,7 @@ export function PWAInstallPrompt() {
       <div
         className={`
           fixed bottom-0 left-0 right-0 z-50
-          bg-white dark:bg-gray-800
+          bg-white dark:bg-gray-900
           rounded-t-3xl shadow-2xl
           p-6 pb-8
           transform transition-transform duration-300 ease-out
@@ -80,7 +77,7 @@ export function PWAInstallPrompt() {
         {/* Close button */}
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           aria-label="Fechar"
         >
           <CloseIcon className="w-5 h-5" />
@@ -129,7 +126,7 @@ export function PWAInstallPrompt() {
             </button>
             <button
               onClick={handleDismiss}
-              className="flex-1 px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium rounded-xl transition-colors"
+              className="flex-1 px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium rounded-xl transition-colors"
             >
               Agora nao
             </button>

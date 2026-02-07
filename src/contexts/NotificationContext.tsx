@@ -140,7 +140,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               <div
                 className={`${
                   t.visible ? 'animate-enter' : 'animate-leave'
-                } max-w-md w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+                } max-w-md w-full bg-white dark:bg-gray-900 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
               >
                 <div className="flex-1 w-0 p-4">
                   <div className="flex items-start">
@@ -163,7 +163,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex border-l border-gray-200 dark:border-gray-700">
+                <div className="flex border-l border-gray-200 dark:border-gray-800">
                   <button
                     onClick={() => toast.dismiss(t.id)}
                     className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-primary-600 hover:text-primary-500 focus:outline-none"

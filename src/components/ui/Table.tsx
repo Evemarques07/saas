@@ -97,7 +97,7 @@ export function Table<T>({
       return (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 animate-pulse">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg" />
                 <div className="flex-1">
@@ -114,11 +114,11 @@ export function Table<T>({
     }
 
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="animate-pulse">
-          <div className="h-12 bg-gray-100 dark:bg-gray-700" />
+          <div className="h-12 bg-gray-100 dark:bg-gray-800" />
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-14 border-t border-gray-200 dark:border-gray-700 flex items-center px-4 gap-4">
+            <div key={i} className="h-14 border-t border-gray-200 dark:border-gray-800 flex items-center px-4 gap-4">
               <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/4" />
               <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3" />
               <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/5" />
@@ -133,7 +133,7 @@ export function Table<T>({
   if (isCardView && mobileCardRender) {
     if (data.length === 0) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
           {emptyMessage}
         </div>
       );
@@ -150,7 +150,7 @@ export function Table<T>({
 
         {/* Paginacao */}
         {shouldPaginate && totalPages > 1 && (
-          <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 mt-4">
+          <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 mt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, data.length)} de {data.length}
             </p>
@@ -162,7 +162,7 @@ export function Table<T>({
                 className={`p-2 rounded-lg transition-colors ${
                   currentPage === 1
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <ChevronLeftIcon className="w-5 h-5" />
@@ -178,7 +178,7 @@ export function Table<T>({
                 className={`p-2 rounded-lg transition-colors ${
                   currentPage === totalPages
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <ChevronRightIcon className="w-5 h-5" />
@@ -192,11 +192,11 @@ export function Table<T>({
 
   // Table view (desktop)
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700/50">
+            <tr className="bg-gray-50 dark:bg-gray-800/50">
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
@@ -230,7 +230,7 @@ export function Table<T>({
               data.map((item) => (
                 <tr
                   key={keyExtractor(item)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                 >
                   {columns.map((column) => (
                     <td key={String(column.key)} className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">

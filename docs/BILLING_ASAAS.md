@@ -431,10 +431,10 @@ Exibe informacoes do plano com:
 #### UsageCard
 
 Mostra barras de progresso com:
-- Produtos usados vs limite
-- Usuarios ativos vs limite
-- Storage usado vs limite
-- Alertas quando proximo do limite
+- Produtos usados vs limite (conta TODOS os produtos, ativos e inativos)
+- Usuarios ativos vs limite (conta apenas ativos; reativacao tambem verifica limite)
+- Storage usado vs limite (calculo real via `getCompanyStorageUsage()` que soma arquivos nos buckets `products` e `companies`)
+- Alertas quando proximo do limite (80%) e quando atingido (100%)
 
 ---
 

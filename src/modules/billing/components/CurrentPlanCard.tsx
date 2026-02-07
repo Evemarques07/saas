@@ -36,7 +36,7 @@ export function CurrentPlanCard({ plan, subscription, onUpgrade }: CurrentPlanCa
 
   return (
     <Card>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <RocketLaunchIcon className="w-5 h-5 text-primary-500" />
           Plano Atual
@@ -71,7 +71,7 @@ export function CurrentPlanCard({ plan, subscription, onUpgrade }: CurrentPlanCa
         </div>
 
         {/* Plan Limits */}
-        <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100 dark:border-gray-700">
+        <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100 dark:border-gray-800">
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {plan?.product_limit || '∞'}

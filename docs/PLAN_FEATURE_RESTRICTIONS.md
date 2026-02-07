@@ -113,6 +113,7 @@ Tela amigavel mostrando que a feature requer upgrade:
 - Verificar limite antes de convidar usuario
 - Desabilitar botao se atingiu limite
 - Mostrar alerta similar ao de produtos
+- **Verificar limite ao reativar usuario** (fix v0.21.0): `handleConfirmToggle` verifica `canAddUser()` antes de reativar membro inativo. Botao de reativar desabilitado visualmente quando limite atingido.
 
 ---
 

@@ -283,6 +283,33 @@ export async function deleteUserAvatar(avatarUrl: string): Promise<void> {
 }
 
 /**
+ * Calcula o armazenamento total usado por uma empresa (em MB)
+ * Soma os tamanhos dos arquivos nos buckets products e companies
+ */
+export async function getCompanyStorageUsage(companyId: string): Promise<number> {
+  let totalBytes = 0;
+
+  const buckets = [PRODUCTS_BUCKET, COMPANIES_BUCKET];
+
+  for (const bucket of buckets) {
+    const { data: files, error } = await supabase.storage
+      .from(bucket)
+      .list(companyId, { limit: 1000 });
+
+    if (error || !files) continue;
+
+    for (const file of files) {
+      if (file.metadata?.size) {
+        totalBytes += file.metadata.size;
+      }
+    }
+  }
+
+  // Converter bytes para MB (arredondado para 1 casa decimal)
+  return Math.round((totalBytes / (1024 * 1024)) * 10) / 10;
+}
+
+/**
  * Constantes exportadas para uso externo
  */
 export const STORAGE_CONFIG = {

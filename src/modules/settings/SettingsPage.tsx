@@ -843,13 +843,13 @@ export function SettingsPage() {
               <div className={`relative p-4 rounded-xl border-2 transition-all ${
                 whatsAppSettings.connected
                   ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'
+                  : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
               }`}>
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
                     whatsAppSettings.connected
                       ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                      : 'bg-gray-200 dark:bg-gray-800 text-gray-500'
                   }`}>
                     <AutoModeIcon className="w-5 h-5" />
                   </div>
@@ -885,13 +885,13 @@ export function SettingsPage() {
               <div className={`relative p-4 rounded-xl border-2 transition-all ${
                 !whatsAppSettings.connected && companyPhone
                   ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'
+                  : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
               }`}>
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
                     !whatsAppSettings.connected && companyPhone
                       ? 'bg-amber-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                      : 'bg-gray-200 dark:bg-gray-800 text-gray-500'
                   }`}>
                     <TouchAppIcon className="w-5 h-5" />
                   </div>
@@ -974,7 +974,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Notification Settings */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">
                     Notificacoes Automaticas
                   </h3>
@@ -983,7 +983,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_new_order
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -997,7 +997,7 @@ export function SettingsPage() {
                       <div className={`flex-shrink-0 p-2 rounded-lg ${
                         whatsAppSettings.notify_on_new_order
                           ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                       }`}>
                         <NotificationsActiveIcon className="w-5 h-5" />
                       </div>
@@ -1022,7 +1022,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_confirm
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1036,7 +1036,7 @@ export function SettingsPage() {
                       <div className={`flex-shrink-0 p-2 rounded-lg ${
                         whatsAppSettings.notify_on_confirm
                           ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                       }`}>
                         <InventoryIcon className="w-5 h-5" />
                       </div>
@@ -1061,7 +1061,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_complete
                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1075,7 +1075,7 @@ export function SettingsPage() {
                       <div className={`flex-shrink-0 p-2 rounded-lg ${
                         whatsAppSettings.notify_on_complete
                           ? 'bg-emerald-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                       }`}>
                         <LocalShippingIcon className="w-5 h-5" />
                       </div>
@@ -1100,7 +1100,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_cancel
                         ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1114,7 +1114,7 @@ export function SettingsPage() {
                       <div className={`flex-shrink-0 p-2 rounded-lg ${
                         whatsAppSettings.notify_on_cancel
                           ? 'bg-red-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                       }`}>
                         <CancelIcon className="w-5 h-5" />
                       </div>
@@ -1146,7 +1146,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Test Message */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">
                     Testar Envio de Mensagem
                   </h3>
@@ -1199,7 +1199,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Manual Mode Section */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TouchAppIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1439,7 +1439,7 @@ export function SettingsPage() {
                 )}
 
                 {/* Test Connection and Save */}
-                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
                   <Button
                     variant="secondary"
                     onClick={handleTestPrinter}
@@ -1488,20 +1488,20 @@ export function SettingsPage() {
           </div>
 
           {/* Status dos providers */}
-          <div className="mb-6 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+          <div className="mb-6 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Metodos de login vinculados:
             </p>
             <div className="flex flex-wrap gap-2">
               {authProviders.hasGoogle && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                   <GoogleIcon className="w-4 h-4 text-red-500" />
                   Google
                   <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
                 </span>
               )}
               {authProviders.hasPassword ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                   <LockIcon className="w-4 h-4 text-purple-500" />
                   Email/Senha
                   <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />

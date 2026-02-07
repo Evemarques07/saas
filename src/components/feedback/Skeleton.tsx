@@ -11,7 +11,7 @@ export function Skeleton({
   width,
   height,
 }: SkeletonProps) {
-  const baseClasses = 'animate-pulse bg-gray-200 dark:bg-gray-700';
+  const baseClasses = 'animate-pulse bg-gray-200 dark:bg-gray-800';
 
   const variantClasses = {
     text: 'rounded',
@@ -33,7 +33,7 @@ export function Skeleton({
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <Skeleton height={20} width="60%" className="mb-2" />
       <Skeleton height={32} width="40%" className="mb-4" />
       <Skeleton height={12} width="80%" />
@@ -43,7 +43,7 @@ export function CardSkeleton() {
 
 export function TableRowSkeleton({ columns = 4 }: { columns?: number }) {
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-800">
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton key={i} height={16} className="flex-1" />
       ))}

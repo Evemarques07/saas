@@ -99,7 +99,7 @@ export function PlanCard({
         </div>
 
         {/* Limits */}
-        <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-5 text-xs sm:text-sm border-t border-b border-gray-100 dark:border-gray-700 py-3 sm:py-4">
+        <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-5 text-xs sm:text-sm border-t border-b border-gray-100 dark:border-gray-800 py-3 sm:py-4">
           <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
             <span>Produtos</span>
             <span className="font-semibold text-gray-900 dark:text-white">

@@ -345,7 +345,7 @@ export function CompaniesPage() {
             className="w-10 h-10 rounded-lg object-cover"
           />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <BusinessIcon className="text-gray-400" />
           </div>
         )
@@ -455,7 +455,7 @@ export function CompaniesPage() {
         loading={loading}
         emptyMessage="Nenhuma empresa encontrada"
         mobileCardRender={(c) => (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-start gap-3">
               {/* Logo */}
               {c.logo_url ? (
@@ -465,7 +465,7 @@ export function CompaniesPage() {
                   className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
                   <BusinessIcon className="text-gray-400" />
                 </div>
               )}
@@ -506,21 +506,21 @@ export function CompaniesPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <span className="text-xs text-gray-500">
                 Criada em {new Date(c.created_at).toLocaleDateString('pt-BR')}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleOpenCompanyModal(c)}
-                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   title="Editar"
                 >
                   <EditIcon className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleOpenInviteModal(c)}
-                  className="p-2 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   title="Enviar convite"
                 >
                   <SendIcon className="w-5 h-5" />
@@ -573,7 +573,7 @@ export function CompaniesPage() {
                     px-3 py-1 rounded-full text-sm font-medium transition-colors
                     ${formData.segments.includes(segment.value)
                       ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-600'
                     }
                   `}
                 >
@@ -599,7 +599,7 @@ export function CompaniesPage() {
 
           {/* Campo de email do admin - só aparece ao criar nova empresa */}
           {!editingCompany && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
               <Input
                 label="Email do Administrador"
                 type="email"

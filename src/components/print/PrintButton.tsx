@@ -234,8 +234,8 @@ export function PrintButton({
     primary:
       'bg-primary-600 text-white hover:bg-primary-700 disabled:bg-primary-300',
     secondary:
-      'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50',
-    icon: 'p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50',
+      'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50',
+    icon: 'p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg disabled:opacity-50',
   };
 
   if (variant === 'icon') {
@@ -347,8 +347,8 @@ function PrintMenu({ options, onSelect, direction = 'up' }: PrintMenuProps) {
   return (
     <div
       className={`
-        absolute left-0 ${positionClasses} w-64 bg-white dark:bg-gray-800
-        rounded-lg shadow-xl border border-gray-200 dark:border-gray-700
+        absolute left-0 ${positionClasses} w-64 bg-white dark:bg-gray-900
+        rounded-lg shadow-xl border border-gray-200 dark:border-gray-800
         py-2 z-[100]
       `}
     >
@@ -368,7 +368,7 @@ function PrintMenu({ options, onSelect, direction = 'up' }: PrintMenuProps) {
             ${
               option.disabled
                 ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-800'
             }
           `}
           title={option.disabled ? option.disabledReason : undefined}
@@ -448,7 +448,7 @@ export function SimplePrintButton({
       disabled={isPrinting}
       className={`
         p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100
-        dark:hover:bg-gray-700 rounded-lg transition-colors
+        dark:hover:bg-gray-800 rounded-lg transition-colors
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}

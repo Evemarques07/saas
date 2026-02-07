@@ -186,7 +186,7 @@ export function WhatsAppShareModal({
     >
       <div className="space-y-4">
         {/* Recipient info */}
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
           <WhatsAppIcon className="w-8 h-8 text-green-500" />
           <div>
             <p className="font-medium text-gray-900 dark:text-gray-100">
@@ -211,7 +211,7 @@ export function WhatsAppShareModal({
                 flex items-center gap-3 p-3 rounded-lg border-2 transition-all
                 ${mode === 'text'
                   ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
                 }
               `}
             >
@@ -233,7 +233,7 @@ export function WhatsAppShareModal({
                 flex items-center gap-3 p-3 rounded-lg border-2 transition-all
                 ${mode === 'image'
                   ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
                 }
               `}
             >
@@ -255,9 +255,9 @@ export function WhatsAppShareModal({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Preview
           </label>
-          <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
             {mode === 'text' ? (
-              <pre className="p-4 text-xs whitespace-pre-wrap font-mono bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+              <pre className="p-4 text-xs whitespace-pre-wrap font-mono bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200">
                 {getReceiptText(sale, company)}
               </pre>
             ) : (

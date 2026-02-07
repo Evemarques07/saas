@@ -25,7 +25,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           className={`
             w-full px-3 py-2 text-sm border rounded-lg
             focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-            dark:bg-gray-800 dark:text-gray-100
+            dark:bg-gray-900 dark:text-gray-100
             ${error
               ? 'border-red-500 focus:ring-red-500'
               : 'border-gray-300 dark:border-gray-600'

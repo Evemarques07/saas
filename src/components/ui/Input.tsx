@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`
               w-full px-3 py-2 text-sm border rounded-lg
               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-              dark:bg-gray-800 dark:text-gray-100
+              dark:bg-gray-900 dark:text-gray-100
               ${leftIcon ? 'pl-10' : ''}
               ${rightIcon ? 'pr-10' : ''}
               ${error

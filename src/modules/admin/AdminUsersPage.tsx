@@ -153,7 +153,7 @@ export function AdminUsersPage() {
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map(i => (
             <Card key={i} className="h-32">
-              <div className="h-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-full bg-gray-200 dark:bg-gray-800 rounded-lg" />
             </Card>
           ))}
         </div>
@@ -183,7 +183,7 @@ export function AdminUsersPage() {
             {/* Company Header */}
             <button
               onClick={() => toggleCompany(company.id)}
-              className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <div className="flex items-center gap-3">
                 {company.logo_url ? (

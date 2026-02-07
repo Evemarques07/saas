@@ -936,7 +936,7 @@ export function DashboardPage() {
 
           {/* Legend and Stats */}
           <div className="flex flex-col gap-3">
-            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Legenda dos Quadrantes
               </h4>

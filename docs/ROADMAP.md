@@ -564,6 +564,43 @@ O WuzAPI suporta webhooks para receber mensagens:
 
 ## Changelog
 
+### v0.21.0 (Fevereiro 2026)
+
+- **Fix: Bypass de Limite de Usuarios**
+  - Corrigido bug que permitia burlar o limite de usuarios do plano
+  - Cenario: usuario inativava membro, convidava outro, reativava o primeiro, ficando acima do limite
+  - Adicionada verificacao de limite na reativacao (`handleConfirmToggle`)
+  - Botao de reativar fica desabilitado visualmente quando limite atingido
+  - Variaveis `userLimitReached` movidas para antes da definicao das colunas
+
+- **Calculo Real de Armazenamento**
+  - Substituido `storageUsed = 0` (hardcoded) por calculo real
+  - Nova funcao `getCompanyStorageUsage()` em `storage.ts`
+  - Lista arquivos nos buckets `products` e `companies` via Supabase Storage API
+  - Soma `file.metadata.size` e converte para MB
+  - Barra de armazenamento no Faturamento agora reflete uso real
+
+- **Fix: Carrossel de Imagens no Catalogo**
+  - Corrigido bug onde imagens ficavam cortadas pela metade ao navegar com setas
+  - Causa: container com `absolute inset-0` restringia largura do flex container
+  - Solucao: removido `absolute inset-0`, usando `flex h-full` (padrao standard de carrossel)
+  - Slides alterados de `min-w-full` para `w-full`
+
+- **PWA Install Prompt: Apenas em Rotas Protegidas**
+  - `PWAInstallPrompt` agora so aparece em `/app/*` e `/admin/*`
+  - Nao aparece mais em login, registro, onboarding, landing, catalogo, etc.
+  - `CatalogInstallPrompt` continua aparecendo apenas no catalogo (ja estava correto)
+
+- **Arquivos Criados**
+  - Nenhum
+
+- **Arquivos Modificados**
+  - `src/modules/users/UsersPage.tsx` - Verificacao de limite na reativacao de usuario
+  - `src/services/storage.ts` - Nova funcao `getCompanyStorageUsage()`
+  - `src/services/asaas.ts` - Import e uso do calculo real de storage
+  - `src/components/ui/ImageCarousel.tsx` - Fix do carrossel de imagens
+  - `src/components/pwa/PWAInstallPrompt.tsx` - Restricao a rotas protegidas
+
 ### v0.20.0 (Janeiro 2026)
 
 - **Dashboard: Melhorias de Responsividade**

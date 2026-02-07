@@ -107,7 +107,7 @@ export function ImageCarousel({
   // No images placeholder
   if (displayImages.length === 0) {
     return (
-      <div className={`aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${className}`}>
+      <div className={`aspect-square bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${className}`}>
         <svg
           className="w-12 md:w-16 h-12 md:h-16 text-gray-400"
           fill="none"
@@ -136,13 +136,13 @@ export function ImageCarousel({
     >
       {/* Images container */}
       <div
-        className="absolute inset-0 flex transition-transform duration-300 ease-out"
+        className="flex h-full transition-transform duration-300 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {displayImages.map((url, index) => (
           <div
             key={url + index}
-            className="min-w-full h-full flex-shrink-0"
+            className="w-full h-full flex-shrink-0"
           >
             <img
               src={url}

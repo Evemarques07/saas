@@ -32,7 +32,7 @@ export function InviteLinkModal({ isOpen, onClose, inviteLink, email }: InviteLi
           O convite para <strong>{email}</strong> foi criado com sucesso.
         </p>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
             Link de Convite
           </label>
@@ -41,7 +41,7 @@ export function InviteLinkModal({ isOpen, onClose, inviteLink, email }: InviteLi
               type="text"
               value={inviteLink}
               readOnly
-              className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200"
+              className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200"
             />
             <Button
               variant={copied ? 'primary' : 'secondary'}

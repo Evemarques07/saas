@@ -84,7 +84,7 @@ export function PaymentHistory({ payments, compact = false }: PaymentHistoryProp
                     ? 'bg-yellow-100 dark:bg-yellow-900/30'
                     : status.color === 'danger'
                     ? 'bg-red-100 dark:bg-red-900/30'
-                    : 'bg-gray-100 dark:bg-gray-700'
+                    : 'bg-gray-100 dark:bg-gray-800'
                 }`}
               >
                 <StatusIcon

@@ -329,7 +329,7 @@ export function UpgradeModal({
       <div className="p-4 space-y-6">
         {/* Plan Summary - Always visible except success */}
         {step !== 'success' && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white">
@@ -368,7 +368,7 @@ export function UpgradeModal({
                     className={`relative p-3 rounded-lg border-2 transition-all text-left ${
                       billingCycle === cycle.value
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
                     }`}
                   >
                     <p className="font-medium text-gray-900 dark:text-white">
@@ -400,14 +400,14 @@ export function UpgradeModal({
                       className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                         billingType === type.value
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
                       }`}
                     >
                       <div
                         className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                           billingType === type.value
                             ? 'bg-primary-100 dark:bg-primary-800'
-                            : 'bg-gray-100 dark:bg-gray-700'
+                            : 'bg-gray-100 dark:bg-gray-800'
                         }`}
                       >
                         <Icon
@@ -526,7 +526,7 @@ export function UpgradeModal({
                         type="text"
                         value={paymentInfo.pixCopyPaste}
                         readOnly
-                        className="flex-1 p-2 text-xs bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 truncate"
+                        className="flex-1 p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 truncate"
                       />
                       <Button
                         size="sm"
@@ -618,7 +618,7 @@ export function UpgradeModal({
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Seu plano {plan.display_name} ja esta ativo. Aproveite todos os recursos!
             </p>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-left">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-left">
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                 Recursos liberados:
               </h4>

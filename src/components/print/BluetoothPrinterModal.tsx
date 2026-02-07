@@ -248,7 +248,7 @@ export function BluetoothPrinterModal({
 
         {/* Instructions */}
         {state === 'idle' && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
             <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
               Como conectar:
             </h4>

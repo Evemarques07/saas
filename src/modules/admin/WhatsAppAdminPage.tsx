@@ -340,7 +340,7 @@ export function WhatsAppAdminPage() {
 
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
               <WhatsAppIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </div>
             <div>
@@ -405,7 +405,7 @@ export function WhatsAppAdminPage() {
                       className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
                       <BusinessIcon className="text-gray-400" />
                     </div>
                   )}
@@ -480,7 +480,7 @@ export function WhatsAppAdminPage() {
 
               {/* Extra info */}
               {company.wuzapiStatus?.phoneName && (
-                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                   <p className="text-xs text-gray-500">
                     Perfil: {company.wuzapiStatus.phoneName}
                   </p>

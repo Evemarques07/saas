@@ -199,7 +199,7 @@ export function ActivationChecklist() {
             className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
               item.completed
                 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm'
+                : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm'
             }`}
           >
             {/* Status Icon */}

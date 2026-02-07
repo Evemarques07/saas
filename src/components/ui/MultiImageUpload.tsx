@@ -237,7 +237,7 @@ export function MultiImageUpload({
                 ? 'border-primary-500 scale-105'
                 : draggedIndex === index
                   ? 'border-primary-300 opacity-50'
-                  : 'border-gray-200 dark:border-gray-700'
+                  : 'border-gray-200 dark:border-gray-800'
             }`}
           >
             <img

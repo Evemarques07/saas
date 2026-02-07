@@ -222,6 +222,15 @@ export function UsersPage() {
   const handleConfirmToggle = async () => {
     if (!toggleModal.member) return;
 
+    const isReactivating = !toggleModal.member.is_active;
+
+    // Verificar limite ao reativar usuário
+    if (isReactivating && !canAddUser()) {
+      toast.error('Limite de usuarios atingido. Faca upgrade do seu plano para reativar este usuario.');
+      handleCloseToggleModal();
+      return;
+    }
+
     setToggling(true);
     try {
       const { error } = await supabase
@@ -249,6 +258,11 @@ export function UsersPage() {
     m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     m.profile?.email?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const userLimit = limits?.users?.limit ?? null;
+  const userUsed = limits?.users?.used ?? 0;
+  const userLimitReached = userLimit !== null && userUsed >= userLimit;
+  const userLimitNear = userLimit !== null && userUsed >= userLimit * 0.8;
 
   const columns: TableColumn<CompanyMember>[] = [
     {
@@ -304,12 +318,15 @@ export function UsersPage() {
               </button>
               <button
                 onClick={() => handleOpenToggleModal(m)}
+                disabled={!m.is_active && userLimitReached}
                 className={`p-1 transition-colors ${
-                  m.is_active
-                    ? 'text-gray-500 hover:text-red-600'
-                    : 'text-gray-500 hover:text-green-600'
+                  !m.is_active && userLimitReached
+                    ? 'text-gray-700 cursor-not-allowed opacity-50'
+                    : m.is_active
+                      ? 'text-gray-500 hover:text-red-600'
+                      : 'text-gray-500 hover:text-green-600'
                 }`}
-                title={m.is_active ? 'Desativar' : 'Ativar'}
+                title={!m.is_active && userLimitReached ? 'Limite de usuarios atingido' : m.is_active ? 'Desativar' : 'Ativar'}
               >
                 <BlockIcon className="w-4 h-4" />
               </button>
@@ -341,11 +358,6 @@ export function UsersPage() {
       </PageContainer>
     );
   }
-
-  const userLimit = limits?.users?.limit ?? null;
-  const userUsed = limits?.users?.used ?? 0;
-  const userLimitReached = userLimit !== null && userUsed >= userLimit;
-  const userLimitNear = userLimit !== null && userUsed >= userLimit * 0.8;
 
   return (
     <PageContainer
@@ -425,7 +437,7 @@ export function UsersPage() {
         loading={loading}
         emptyMessage="Nenhum usuário encontrado"
         mobileCardRender={(m) => (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -446,7 +458,7 @@ export function UsersPage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2">
                 <Badge
                   variant={m.role === 'admin' ? 'info' : m.role === 'manager' ? 'warning' : 'default'}
@@ -462,14 +474,14 @@ export function UsersPage() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleOpenEditModal(m)}
-                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                     title="Editar função"
                   >
                     <EditIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleOpenToggleModal(m)}
-                    className={`p-2 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    className={`p-2 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${
                       m.is_active
                         ? 'text-gray-500 hover:text-red-600'
                         : 'text-gray-500 hover:text-green-600'

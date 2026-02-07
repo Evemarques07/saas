@@ -54,7 +54,7 @@ function UsageBar({ label, used, limit, icon, unit = '' }: UsageBarProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${
             isAtLimit
@@ -85,7 +85,7 @@ function UsageBar({ label, used, limit, icon, unit = '' }: UsageBarProps) {
 export function UsageCard({ usage, plan }: UsageCardProps) {
   return (
     <Card>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <h3 className="font-semibold text-gray-900 dark:text-white">
           Uso do Plano
         </h3>

@@ -40,14 +40,14 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   };
 
   return (
-    <header className="z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 mb-2 md:mb-4 flex-shrink-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+    <header className="z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 mb-2 md:mb-4 flex-shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
       {/* Left Side - Menu button (mobile) + Company Selector */}
       <div className="flex items-center gap-1 md:gap-2">
         {/* Mobile Menu Button */}
         {isMobile && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Menu"
           >
             <MenuIcon />
@@ -60,7 +60,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
             companies.length > 1 ? (
               <button
                 onClick={() => setShowCompanyMenu(!showCompanyMenu)}
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 {currentCompany?.logo_url ? (
                   <img
@@ -97,7 +97,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         {showCompanyMenu && companies.length > 1 && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowCompanyMenu(false)} />
-            <div className="absolute left-0 top-full mt-1 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+            <div className="absolute left-0 top-full mt-1 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-20">
               {companies.map((membership) => (
                 <button
                   key={membership.company?.id}
@@ -111,7 +111,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
                     w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
                     ${currentCompany?.id === membership.company?.id
                       ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }
                   `}
                 >
@@ -138,7 +138,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           title={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
         >
           {theme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
@@ -148,7 +148,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {avatarUrl ? (
               <img
@@ -171,8 +171,8 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
           {showUserMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-20">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}

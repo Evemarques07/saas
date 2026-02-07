@@ -121,7 +121,7 @@ export function BillingPage() {
       subtitle="Gerencie seu plano e pagamentos"
     >
       {/* Tabs - responsivas */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="border-b border-gray-200 dark:border-gray-800 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
         <nav className="-mb-px flex justify-between sm:justify-start sm:space-x-6">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -196,7 +196,7 @@ export function BillingPage() {
               {/* Recent Payments */}
               {payments.length > 0 && (
                 <Card>
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       Pagamentos Recentes
                     </h3>
@@ -257,7 +257,7 @@ export function BillingPage() {
               </div>
 
               {/* Features Comparison Note */}
-              <Card className="bg-gray-50 dark:bg-gray-800/50">
+              <Card className="bg-gray-50 dark:bg-gray-900/50">
                 <div className="p-3 sm:p-4">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm sm:text-base">
                     Todos os planos incluem:
@@ -300,7 +300,7 @@ export function BillingPage() {
                 <>
                   {/* Payment Method */}
                   <Card>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         Metodo de Pagamento
                       </h3>
@@ -308,7 +308,7 @@ export function BillingPage() {
                     <div className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                             <CreditCardIcon className="w-5 h-5 text-gray-500" />
                           </div>
                           <div>
@@ -338,7 +338,7 @@ export function BillingPage() {
 
                   {/* Payment History */}
                   <Card>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         Historico de Pagamentos
                       </h3>

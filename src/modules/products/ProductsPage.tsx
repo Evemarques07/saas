@@ -539,7 +539,7 @@ export function ProductsPage() {
             className="w-12 h-12 rounded-lg object-cover"
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <ImageIcon className="w-6 h-6 text-gray-400" />
           </div>
         )
@@ -725,7 +725,7 @@ export function ProductsPage() {
         loading={loading}
         emptyMessage="Nenhum produto encontrado"
         mobileCardRender={(p) => (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex gap-3">
               {/* Image */}
               {p.image_url ? (
@@ -735,7 +735,7 @@ export function ProductsPage() {
                   className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
                   <ImageIcon className="w-8 h-8 text-gray-400" />
                 </div>
               )}
@@ -765,19 +765,19 @@ export function ProductsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               {p.show_in_catalog && p.is_active && (
                 <>
                   <button
                     onClick={() => handleCopyProductLink(p.id)}
-                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                     title="Copiar link"
                   >
                     <LinkIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleOpenProductLink(p.id)}
-                    className="p-2 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                     title="Abrir"
                   >
                     <OpenInNewIcon className="w-5 h-5" />
@@ -787,7 +787,7 @@ export function ProductsPage() {
               <div className="flex-1" />
               <button
                 onClick={() => handleOpenModal(p)}
-                className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 title="Editar"
               >
                 <EditIcon className="w-5 h-5" />
@@ -795,7 +795,7 @@ export function ProductsPage() {
               {canManageProducts && (
                 <button
                   onClick={() => handleOpenDeleteModal(p)}
-                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   title="Excluir"
                 >
                   <DeleteIcon className="w-5 h-5" />
@@ -1004,9 +1004,9 @@ export function ProductsPage() {
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Preview ({importPreview.length} produtos)
               </p>
-              <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-800 rounded-lg">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                  <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
                     <tr>
                       <th className="px-3 py-2 text-left">Nome</th>
                       <th className="px-3 py-2 text-left">Preço</th>

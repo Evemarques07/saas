@@ -189,7 +189,7 @@ export const ImageUpload = forwardRef<HTMLInputElement, ImageUploadProps>(
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center">
-              <div className={`${compact ? 'p-2 mb-2' : 'p-3 mb-3'} bg-gray-100 dark:bg-gray-700 rounded-full`}>
+              <div className={`${compact ? 'p-2 mb-2' : 'p-3 mb-3'} bg-gray-100 dark:bg-gray-800 rounded-full`}>
                 {isDragging ? (
                   <ImageOutlined className={compact ? 'w-5 h-5' : 'w-6 h-6'} style={{ fontSize: compact ? 20 : 24 }} />
                 ) : (

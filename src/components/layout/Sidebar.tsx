@@ -130,7 +130,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
   return (
     <aside
       className={`
-        fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+        fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
         transition-all duration-300 z-50 shadow-lg overflow-hidden
         ${isMobile
           ? 'left-0 top-0 bottom-0 w-72 rounded-r-2xl'
@@ -139,7 +139,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
       `}
     >
       {/* Logo */}
-      <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-700 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+      <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-800 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {(isMobile || !collapsed) && (
           <img
             src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
@@ -149,7 +149,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
         )}
         <button
           onClick={isMobile ? onClose : onToggle}
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           {isMobile ? <CloseIcon /> : collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
         </button>
@@ -171,7 +171,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
                 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative
                 ${isActive
                   ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                 }
               `}
               title={!showLabel ? `${item.label}${showBadge ? ` (${item.badge})` : ''}` : undefined}
@@ -209,7 +209,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
             handleOpenCatalog();
             handleNavClick();
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
           title={!isMobile && collapsed ? 'Catalogo Publico' : undefined}
         >
           <span className="w-5 h-5 flex-shrink-0"><StorefrontIcon /></span>

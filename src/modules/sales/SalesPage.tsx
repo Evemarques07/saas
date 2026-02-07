@@ -558,7 +558,7 @@ export function SalesPage() {
         emptyMessage="Nenhuma venda encontrada"
         mobileCardRender={(s) => (
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
+            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
             onClick={() => handleViewSale(s)}
           >
             <div className="flex items-start justify-between gap-3">
@@ -582,7 +582,7 @@ export function SalesPage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {s.items?.length || 0} item(s)
               </span>
@@ -647,7 +647,7 @@ export function SalesPage() {
               </button>
             </div>
             {productSearch && (
-              <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-800 rounded-lg">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.slice(0, 20).map((p) => (
                     <button
@@ -660,8 +660,8 @@ export function SalesPage() {
                       disabled={p.stock <= 0}
                       className={`
                         w-full flex items-center justify-between px-3 py-2 text-sm text-left
-                        hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
-                        border-b border-gray-100 dark:border-gray-700 last:border-0
+                        hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
+                        border-b border-gray-100 dark:border-gray-800 last:border-0
                         ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
                       `}
                     >
@@ -683,7 +683,7 @@ export function SalesPage() {
                   </div>
                 )}
                 {filteredProducts.length > 20 && (
-                  <div className="px-3 py-2 text-xs text-gray-400 text-center bg-gray-50 dark:bg-gray-700/50">
+                  <div className="px-3 py-2 text-xs text-gray-400 text-center bg-gray-50 dark:bg-gray-800/50">
                     Mostrando 20 de {filteredProducts.length} produtos. Refine sua busca.
                   </div>
                 )}
@@ -693,11 +693,11 @@ export function SalesPage() {
 
           {/* Cart */}
           {cart.length > 0 && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
               {/* Mobile: Cards */}
               <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {cart.map((item) => (
-                  <div key={item.product.id} className="p-3 bg-white dark:bg-gray-800">
+                  <div key={item.product.id} className="p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
@@ -723,7 +723,7 @@ export function SalesPage() {
                         onChange={(e) =>
                           handleUpdateQuantity(item.product.id, parseInt(e.target.value))
                         }
-                        className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                        className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
                       />
                       <span className="font-medium text-primary-600">
                         {formatCurrency(item.product.price * item.quantity)}
@@ -736,7 +736,7 @@ export function SalesPage() {
               {/* Desktop: Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                         Produto
@@ -768,7 +768,7 @@ export function SalesPage() {
                                 parseInt(e.target.value)
                               )
                             }
-                            className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
+                            className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded dark:bg-gray-900 dark:border-gray-600"
                           />
                         </td>
                         <td className="px-4 py-2 text-sm text-right">
@@ -795,7 +795,7 @@ export function SalesPage() {
           )}
 
           {/* Totals */}
-          <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="space-y-2 border-t border-gray-200 dark:border-gray-800 pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Subtotal:</span>
               <span>{formatCurrency(subtotal)}</span>
@@ -879,11 +879,11 @@ export function SalesPage() {
             </div>
 
             {/* Items */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
               {/* Mobile: Cards */}
               <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {viewingSale.items?.map((item: SaleItem) => (
-                  <div key={item.id} className="p-3 bg-white dark:bg-gray-800">
+                  <div key={item.id} className="p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-gray-900 dark:text-gray-100 text-sm flex-1">
                         {item.product_name}
@@ -903,7 +903,7 @@ export function SalesPage() {
               {/* Desktop: Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                         Produto
@@ -940,7 +940,7 @@ export function SalesPage() {
             </div>
 
             {/* Totals */}
-            <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="space-y-2 border-t border-gray-200 dark:border-gray-800 pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal:</span>
                 <span>{formatCurrency(viewingSale.subtotal)}</span>
@@ -962,7 +962,7 @@ export function SalesPage() {
             </div>
 
             {/* Print and Share Actions */}
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
               <PrintButton
                 sale={viewingSale}
                 company={currentCompany!}
@@ -985,7 +985,7 @@ export function SalesPage() {
 
             {/* Status Actions */}
             {isAdmin && viewingSale.status !== 'cancelled' && (
-              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
                 {viewingSale.status === 'pending' && (
                   <Button
                     variant="primary"
@@ -1047,7 +1047,7 @@ export function SalesPage() {
               rows={3}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
                 focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
                 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>

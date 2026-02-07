@@ -238,7 +238,7 @@ export function CategoriesPage() {
         loading={loading}
         emptyMessage="Nenhuma categoria encontrada"
         mobileCardRender={(c) => (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -255,7 +255,7 @@ export function CategoriesPage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleOpenModal(c)}
-                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   title="Editar"
                 >
                   <EditIcon className="w-5 h-5" />
@@ -263,7 +263,7 @@ export function CategoriesPage() {
                 {canManageProducts && (
                   <button
                     onClick={() => handleOpenDeleteModal(c)}
-                    className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                     title="Excluir"
                   >
                     <DeleteIcon className="w-5 h-5" />

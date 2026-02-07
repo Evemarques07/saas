@@ -30,7 +30,7 @@ export function PageContainer({ title, subtitle, action, toolbar, children }: Pa
 
       {/* Toolbar - fica sticky no topo */}
       {toolbar && (
-        <div className="sticky top-0 z-10 px-3 md:px-4 pb-3 bg-white dark:bg-gray-800">
+        <div className="sticky top-0 z-10 px-3 md:px-4 pb-3 bg-white dark:bg-gray-900">
           {toolbar}
         </div>
       )}

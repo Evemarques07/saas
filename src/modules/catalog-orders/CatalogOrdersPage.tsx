@@ -453,7 +453,7 @@ export function CatalogOrdersPage() {
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   statusFilter === 'all'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-600'
                 }`}
               >
                 Todos ({statusCounts.all})
@@ -553,7 +553,7 @@ export function CatalogOrdersPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                   <Button
                     variant="secondary"
                     size="sm"
@@ -627,7 +627,7 @@ export function CatalogOrdersPage() {
               <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                 Dados do Cliente
               </h4>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-2">
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedOrder.customer_name}
                 </p>
@@ -647,7 +647,7 @@ export function CatalogOrdersPage() {
               <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                 Itens do Pedido
               </h4>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3">
                 {selectedOrder.items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-300">
