@@ -116,7 +116,7 @@ export function InlineReceiptPreview({
   return (
     <div className="flex justify-center">
       <div
-        className={`${widthClass} bg-white p-4 rounded-lg shadow-lg border border-gray-200 font-mono`}
+        className={`${widthClass} bg-white text-black p-4 rounded-lg shadow-lg border border-gray-200 font-mono`}
       >
         {/* Header */}
         <div className="border-t-2 border-black mb-2" />
@@ -124,40 +124,40 @@ export function InlineReceiptPreview({
         <div className="border-t-2 border-black mb-2" />
 
         {company.phone && (
-          <p className="text-center text-gray-600">Tel: {company.phone}</p>
+          <p className="text-center text-gray-800">Tel: {company.phone}</p>
         )}
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Sale info */}
         <p>DATA: {formatDateTime(sale.created_at)}</p>
         <p className="font-bold">VENDA #{sale.id.slice(0, 8).toUpperCase()}</p>
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Customer */}
         <p>CLIENTE: {getCustomerName()}</p>
         {getCustomerPhone() && <p>Tel: {getCustomerPhone()}</p>}
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Items */}
         <p className="font-bold mb-1">ITENS:</p>
-        <div className="border-t border-dashed border-gray-400 mb-2" />
+        <div className="border-t border-dashed border-gray-500 mb-2" />
 
         {sale.items?.map((item) => (
           <div key={item.id} className="mb-2">
             <p className="font-medium">
               {item.quantity}x {item.product_name}
             </p>
-            <div className="flex justify-between pl-2 text-gray-600">
+            <div className="flex justify-between pl-2 text-gray-800">
               <span>{formatMoney(item.unit_price)} cada</span>
               <span className="font-medium text-black">{formatMoney(item.total)}</span>
             </div>
           </div>
         ))}
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Totals */}
         <div className="flex justify-between">
@@ -165,31 +165,38 @@ export function InlineReceiptPreview({
           <span>{formatMoney(sale.subtotal)}</span>
         </div>
 
-        {sale.discount > 0 && (
+        {(sale.discount ?? 0) > 0 && (
           <div className="flex justify-between text-red-600">
             <span>DESCONTO:</span>
             <span>-{formatMoney(sale.discount)}</span>
           </div>
         )}
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        {sale.subtotal !== sale.total && (sale.discount ?? 0) === 0 && (
+          <div className="flex justify-between text-red-600">
+            <span>DESCONTO:</span>
+            <span>-{formatMoney(sale.subtotal - sale.total)}</span>
+          </div>
+        )}
+
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         <div className="flex justify-between font-bold text-sm">
           <span>TOTAL:</span>
           <span>{formatMoney(sale.total)}</span>
         </div>
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Payment */}
         <p>PAGAMENTO: {getPaymentLabel(sale.payment_method)}</p>
 
-        <div className="border-t border-dashed border-gray-400 my-2" />
+        <div className="border-t border-dashed border-gray-500 my-2" />
 
         {/* Footer */}
         <div className="text-center mt-3">
           <p className="font-bold">OBRIGADO PELA PREFERENCIA!</p>
-          <p className="text-gray-600">Volte sempre!</p>
+          <p className="text-gray-800">Volte sempre!</p>
         </div>
 
         <div className="border-t-2 border-black mt-2" />

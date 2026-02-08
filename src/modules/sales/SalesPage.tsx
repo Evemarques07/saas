@@ -945,11 +945,11 @@ export function SalesPage() {
                 <span className="text-gray-500">Subtotal:</span>
                 <span>{formatCurrency(viewingSale.subtotal)}</span>
               </div>
-              {viewingSale.discount > 0 && (
+              {((viewingSale.discount ?? 0) > 0 || viewingSale.subtotal !== viewingSale.total) && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Desconto:</span>
                   <span className="text-red-500">
-                    -{formatCurrency(viewingSale.discount)}
+                    -{formatCurrency((viewingSale.discount ?? 0) > 0 ? viewingSale.discount : viewingSale.subtotal - viewingSale.total)}
                   </span>
                 </div>
               )}

@@ -413,6 +413,7 @@ export function CatalogCustomerProvider({
         .select('*')
         .eq('company_id', companyId)
         .eq('is_active', true)
+        .neq('is_public', false)
         .or(`valid_until.is.null,valid_until.gt.${now}`)
         .lte('valid_from', now);
 

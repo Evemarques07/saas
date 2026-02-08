@@ -37,6 +37,7 @@ export function CouponsPage() {
   const [validUntil, setValidUntil] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [firstPurchaseOnly, setFirstPurchaseOnly] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     if (currentCompany) {
@@ -75,6 +76,7 @@ export function CouponsPage() {
     setValidUntil('');
     setIsActive(true);
     setFirstPurchaseOnly(false);
+    setIsPublic(true);
     setEditingCoupon(null);
   };
 
@@ -96,6 +98,7 @@ export function CouponsPage() {
     setValidUntil(coupon.valid_until ? coupon.valid_until.split('T')[0] : '');
     setIsActive(coupon.is_active);
     setFirstPurchaseOnly(coupon.first_purchase_only);
+    setIsPublic(coupon.is_public ?? true);
     setModalOpen(true);
   };
 
@@ -133,6 +136,7 @@ export function CouponsPage() {
       per_customer_limit: perCustomerLimit ? parseInt(perCustomerLimit) : 1,
       valid_until: validUntil ? new Date(validUntil + 'T23:59:59').toISOString() : null,
       is_active: isActive,
+      is_public: isPublic,
       first_purchase_only: firstPurchaseOnly,
     };
 
@@ -527,6 +531,18 @@ export function CouponsPage() {
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   Apenas para primeira compra
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!isPublic}
+                  onChange={(e) => setIsPublic(!e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Cupom secreto (nao aparece no catalogo)
                 </span>
               </label>
             </div>

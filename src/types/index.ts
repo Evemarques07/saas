@@ -312,6 +312,7 @@ export interface Coupon {
   valid_from: string;
   valid_until: string | null;
   is_active: boolean;
+  is_public: boolean;
   first_purchase_only: boolean;
   created_at: string;
   updated_at: string;

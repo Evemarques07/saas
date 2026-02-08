@@ -148,8 +148,12 @@ export function generateESCPOSReceipt(
   // Totals
   encoder.columns('SUBTOTAL:', formatMoney(sale.subtotal));
 
-  if (sale.discount > 0) {
-    encoder.columns('DESCONTO:', `-${formatMoney(sale.discount)}`);
+  const discountAmount = (sale.discount ?? 0) > 0
+    ? sale.discount
+    : sale.subtotal !== sale.total ? sale.subtotal - sale.total : 0;
+
+  if (discountAmount > 0) {
+    encoder.columns('DESCONTO:', `-${formatMoney(discountAmount)}`);
   }
 
   encoder.divider();
@@ -360,16 +364,16 @@ export function generateHTMLReceipt(
       <span>${formatMoney(sale.subtotal)}</span>
     </div>
 
-    ${
-      sale.discount > 0
-        ? `
+    ${(() => {
+      const disc = (sale.discount ?? 0) > 0
+        ? sale.discount
+        : sale.subtotal !== sale.total ? sale.subtotal - sale.total : 0;
+      return disc > 0 ? `
     <div class="row">
       <span>DESCONTO:</span>
-      <span>-${formatMoney(sale.discount)}</span>
-    </div>
-    `
-        : ''
-    }
+      <span>-${formatMoney(disc)}</span>
+    </div>` : '';
+    })()}
 
     <div class="divider"></div>
 
@@ -406,8 +410,10 @@ export function generateTextReceipt(data: ReceiptData): string {
     .map((item) => `  ${item.quantity}x ${item.product_name}: ${formatMoney(item.total)}`)
     .join('\n');
 
-  const discountLine =
-    sale.discount > 0 ? `*Desconto:* -${formatMoney(sale.discount)}\n` : '';
+  const discountAmt = (sale.discount ?? 0) > 0
+    ? sale.discount
+    : sale.subtotal !== sale.total ? sale.subtotal - sale.total : 0;
+  const discountLine = discountAmt > 0 ? `*Desconto:* -${formatMoney(discountAmt)}\n` : '';
 
   return `
 *${company.name}*
