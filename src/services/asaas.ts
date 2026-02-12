@@ -227,9 +227,10 @@ export async function getCompanyUsage(companyId: string): Promise<UsageLimits> {
   const plan = subscription?.plan;
 
   // Se não tem plano ativo, usar limites do plano gratuito
-  const productLimit = plan?.product_limit ?? FREE_PLAN_LIMITS.product_limit;
-  const userLimit = plan?.user_limit ?? FREE_PLAN_LIMITS.user_limit;
-  const storageLimit = plan?.storage_limit_mb ?? FREE_PLAN_LIMITS.storage_limit_mb;
+  // IMPORTANTE: null = ilimitado, só usar fallback quando não existe plano
+  const productLimit = plan ? plan.product_limit : FREE_PLAN_LIMITS.product_limit;
+  const userLimit = plan ? plan.user_limit : FREE_PLAN_LIMITS.user_limit;
+  const storageLimit = plan ? plan.storage_limit_mb : FREE_PLAN_LIMITS.storage_limit_mb;
 
   // Buscar contagem de produtos
   const { count: productCount } = await supabase
