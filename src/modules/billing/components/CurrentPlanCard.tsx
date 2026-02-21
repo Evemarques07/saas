@@ -74,19 +74,19 @@ export function CurrentPlanCard({ plan, subscription, onUpgrade }: CurrentPlanCa
         <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100 dark:border-gray-800">
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {plan?.product_limit || '∞'}
+              {plan?.product_limit != null ? plan.product_limit : '∞'}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Produtos</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {plan?.user_limit || '∞'}
+              {plan?.user_limit != null ? plan.user_limit : '∞'}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Usuarios</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {plan?.storage_limit_mb
+              {plan?.storage_limit_mb != null
                 ? plan.storage_limit_mb >= 1000
                   ? `${(plan.storage_limit_mb / 1000).toFixed(0)}GB`
                   : `${plan.storage_limit_mb}MB`

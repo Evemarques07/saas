@@ -5,6 +5,7 @@ import {
   getCompanyUsage,
   canAddProduct,
   canAddUser,
+  FREE_PLAN_LIMITS,
   type UsageLimits,
 } from '../services/asaas';
 import type { PlanFeatures, Subscription, Plan } from '../types';
@@ -17,13 +18,6 @@ const FREE_PLAN_FEATURES: PlanFeatures = {
   promotions: false,
   loyalty_program: false,
   coupons: false,
-};
-
-// Limites padrao do plano gratuito
-const FREE_PLAN_LIMITS = {
-  product_limit: 20,
-  user_limit: 1,
-  storage_limit_mb: 100,
 };
 
 interface UsePlanFeaturesResult {
@@ -63,10 +57,8 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
     setError(null);
 
     try {
-      const [subscriptionData, usageData] = await Promise.all([
-        getCompanySubscription(currentCompany.id),
-        getCompanyUsage(currentCompany.id),
-      ]);
+      const subscriptionData = await getCompanySubscription(currentCompany.id);
+      const usageData = await getCompanyUsage(currentCompany.id, subscriptionData);
 
       setSubscription(subscriptionData);
       setLimits(usageData);
@@ -83,8 +75,12 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
   }, [loadData]);
 
   // Obter features do plano atual (ou usar free como fallback)
-  const features: PlanFeatures = subscription?.plan?.features || FREE_PLAN_FEATURES;
-  const plan = subscription?.plan || null;
+  // Verificar status: so considerar plano valido se active ou overdue
+  const isSubscriptionValid = subscription?.status === 'active' || subscription?.status === 'overdue';
+  const features: PlanFeatures = isSubscriptionValid
+    ? (subscription?.plan?.features || FREE_PLAN_FEATURES)
+    : FREE_PLAN_FEATURES;
+  const plan = isSubscriptionValid ? (subscription?.plan || null) : null;
 
   // Helper para verificar se tem uma feature
   const hasFeature = useCallback(
@@ -126,4 +122,4 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
 }
 
 // Export dos defaults para uso em outros lugares
-export { FREE_PLAN_FEATURES, FREE_PLAN_LIMITS };
+export { FREE_PLAN_FEATURES };

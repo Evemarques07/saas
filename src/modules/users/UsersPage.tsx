@@ -481,12 +481,15 @@ export function UsersPage() {
                   </button>
                   <button
                     onClick={() => handleOpenToggleModal(m)}
-                    className={`p-2 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                      m.is_active
-                        ? 'text-gray-500 hover:text-red-600'
-                        : 'text-gray-500 hover:text-green-600'
+                    disabled={!m.is_active && userLimitReached}
+                    className={`p-2 transition-colors rounded-lg ${
+                      !m.is_active && userLimitReached
+                        ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed'
+                        : m.is_active
+                          ? 'text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          : 'text-gray-500 hover:text-green-600 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
-                    title={m.is_active ? 'Desativar' : 'Ativar'}
+                    title={!m.is_active && userLimitReached ? 'Limite de usuarios atingido' : m.is_active ? 'Desativar' : 'Ativar'}
                   >
                     <BlockIcon className="w-5 h-5" />
                   </button>

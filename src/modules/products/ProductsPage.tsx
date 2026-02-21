@@ -203,15 +203,16 @@ export function ProductsPage() {
   const handleImportProducts = async () => {
     if (!currentCompany || importPreview.length === 0) return;
 
-    // Verificar limite antes de importar
-    if (usageLimits && usageLimits.products.limit !== null) {
-      const availableSlots = usageLimits.products.limit - usageLimits.products.used;
+    // Recarregar limites antes de importar para evitar dados stale
+    const freshUsage = await getCompanyUsage(currentCompany.id);
+    if (freshUsage.products.limit !== null) {
+      const availableSlots = freshUsage.products.limit - freshUsage.products.used;
       if (availableSlots <= 0) {
         toast.error('Limite de produtos atingido. Faca upgrade do seu plano para importar produtos.');
         return;
       }
       if (importPreview.length > availableSlots) {
-        toast.error(`Voce pode importar apenas ${availableSlots} produto(s). Seu plano permite ${usageLimits.products.limit} produtos.`);
+        toast.error(`Voce pode importar apenas ${availableSlots} produto(s). Seu plano permite ${freshUsage.products.limit} produtos.`);
         return;
       }
     }
@@ -340,8 +341,9 @@ export function ProductsPage() {
       return;
     }
 
-    // Verificar limite de produtos ao criar novo
-    if (!editingProduct && usageLimits && !canAddProduct(usageLimits)) {
+    // Verificar limite de produtos ao criar novo ou reativar
+    const isReactivating = editingProduct && !editingProduct.is_active && formData.is_active;
+    if ((!editingProduct || isReactivating) && usageLimits && !canAddProduct(usageLimits)) {
       toast.error('Limite de produtos atingido. Faca upgrade do seu plano para adicionar mais produtos.');
       return;
     }

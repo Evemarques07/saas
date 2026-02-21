@@ -108,19 +108,19 @@ export function PlanCard({
           <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
             <span>Produtos</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {plan.product_limit || 'Ilimitado'}
+              {plan.product_limit != null ? plan.product_limit : 'Ilimitado'}
             </span>
           </div>
           <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
             <span>Usuarios</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {plan.user_limit || 'Ilimitado'}
+              {plan.user_limit != null ? plan.user_limit : 'Ilimitado'}
             </span>
           </div>
           <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
             <span>Storage</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {plan.storage_limit_mb
+              {plan.storage_limit_mb != null
                 ? plan.storage_limit_mb >= 1000
                   ? `${(plan.storage_limit_mb / 1000).toFixed(0)} GB`
                   : `${plan.storage_limit_mb} MB`

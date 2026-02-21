@@ -623,9 +623,9 @@ export function UpgradeModal({
                 Recursos liberados:
               </h4>
               <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <li>• Ate {plan.product_limit || 'ilimitados'} produtos</li>
-                <li>• Ate {plan.user_limit || 'ilimitados'} usuarios</li>
-                <li>• {plan.storage_limit_mb ? `${plan.storage_limit_mb} MB` : 'Ilimitado'} de armazenamento</li>
+                <li>• {plan.product_limit != null ? `Ate ${plan.product_limit} produtos` : 'Produtos ilimitados'}</li>
+                <li>• {plan.user_limit != null ? `Ate ${plan.user_limit} usuarios` : 'Usuarios ilimitados'}</li>
+                <li>• {plan.storage_limit_mb != null ? `${plan.storage_limit_mb} MB de armazenamento` : 'Armazenamento ilimitado'}</li>
               </ul>
             </div>
           </div>

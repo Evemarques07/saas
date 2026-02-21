@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
@@ -35,14 +35,8 @@ export function BillingPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
-  // Evitar recarregar dados se ja foram carregados para esta empresa
-  const loadedCompanyRef = useRef<string | null>(null);
-
   useEffect(() => {
-    const companyId = currentCompany?.id;
-    // So carregar se mudou de empresa ou se nunca carregou
-    if (companyId && loadedCompanyRef.current !== companyId) {
-      loadedCompanyRef.current = companyId;
+    if (currentCompany?.id) {
       loadBillingData();
     }
   }, [currentCompany?.id]);
@@ -52,11 +46,11 @@ export function BillingPage() {
 
     setLoading(true);
     try {
-      const [plansData, subscriptionData, usageData] = await Promise.all([
+      const [plansData, subscriptionData] = await Promise.all([
         getPlans(),
         getCompanySubscription(currentCompany.id),
-        getCompanyUsage(currentCompany.id),
       ]);
+      const usageData = await getCompanyUsage(currentCompany.id, subscriptionData);
 
       setPlans(plansData);
       setSubscription(subscriptionData);

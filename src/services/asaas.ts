@@ -93,6 +93,7 @@ export async function getCompanySubscription(companyId: string): Promise<Subscri
     .from('subscriptions')
     .select('*, plan:plans(*)')
     .eq('company_id', companyId)
+    .in('status', ['active', 'overdue'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -215,16 +216,21 @@ export interface UsageLimits {
 }
 
 // Limites padrão do plano gratuito (quando não há subscription)
-const FREE_PLAN_LIMITS = {
+export const FREE_PLAN_LIMITS = {
   product_limit: 20,
   user_limit: 1,
   storage_limit_mb: 100,
 };
 
-export async function getCompanyUsage(companyId: string): Promise<UsageLimits> {
-  // Buscar subscription para pegar limites do plano
-  const subscription = await getCompanySubscription(companyId);
-  const plan = subscription?.plan;
+export async function getCompanyUsage(
+  companyId: string,
+  subscription?: Subscription | null
+): Promise<UsageLimits> {
+  // Se nao recebeu subscription, buscar (backward-compatible)
+  const sub = subscription !== undefined
+    ? subscription
+    : await getCompanySubscription(companyId);
+  const plan = sub?.plan;
 
   // Se não tem plano ativo, usar limites do plano gratuito
   // IMPORTANTE: null = ilimitado, só usar fallback quando não existe plano
@@ -333,7 +339,7 @@ export async function getSubscriptionStatus(subscriptionId: string): Promise<{
   // Usar a Edge Function para buscar status (contorna RLS)
   const token = await getAuthToken();
   if (!token) {
-    return { status: 'pending', isActive: false };
+    throw new Error('Sessao expirada. Faca login novamente.');
   }
 
   try {
