@@ -4,11 +4,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 // Types
 type BillingType = 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'UNDEFINED';
@@ -239,6 +235,8 @@ function getNextDueDate(): string {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -765,6 +763,7 @@ serve(async (req: Request) => {
           .from('subscriptions')
           .select('*, plan:plans(*)')
           .eq('company_id', companyId)
+          .in('status', ['active', 'overdue'])
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -813,6 +812,144 @@ serve(async (req: Request) => {
 
         return new Response(
           JSON.stringify({ success: true, data: { status: subscription.status } }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // ============================================
+      // REACTIVATE SUBSCRIPTION
+      // ============================================
+      case 'reactivate-subscription': {
+        const { subscriptionId } = body as { action: string; subscriptionId: string };
+
+        if (!subscriptionId) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'subscriptionId obrigatorio' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get current subscription
+        const { data: subscription, error: subError } = await supabase
+          .from('subscriptions')
+          .select('*, plan:plans(*)')
+          .eq('id', subscriptionId)
+          .single();
+
+        if (subError || !subscription) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Assinatura nao encontrada' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Verify permission
+        if (!auth.isSuperAdmin && !(await isCompanyMember(auth.userId!, subscription.company_id))) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Voce nao tem permissao' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Only canceled subscriptions can be reactivated
+        if (subscription.status === 'active') {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Assinatura ja esta ativa' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get customer ID from existing subscription
+        const asaasCustomerId = subscription.asaas_customer_id;
+        if (!asaasCustomerId) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Cliente Asaas nao encontrado. Crie uma nova assinatura.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Calculate price
+        const plan = subscription.plan;
+        const billingCycle = subscription.billing_cycle || 'MONTHLY';
+        const price = billingCycle === 'YEARLY' && plan.price_yearly
+          ? plan.price_yearly
+          : plan.price_monthly * (billingCycle === 'QUARTERLY' ? 3 : billingCycle === 'SEMIANNUALLY' ? 6 : 1);
+
+        // Create new subscription in Asaas
+        const newAsaasSubscription = await asaasRequest<{ id: string; status: string }>(
+          '/subscriptions',
+          'POST',
+          {
+            customer: asaasCustomerId,
+            billingType: subscription.billing_type || 'PIX',
+            value: price,
+            nextDueDate: getNextDueDate(),
+            cycle: billingCycle,
+            description: `Assinatura ${plan.display_name} - Mercado Virtual`,
+          }
+        );
+
+        // Update subscription in database
+        const { data: updatedSub, error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            asaas_subscription_id: newAsaasSubscription.id,
+            status: 'pending',
+            canceled_at: null,
+            price,
+            next_due_date: getNextDueDate(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', subscriptionId)
+          .select('*, plan:plans(*)')
+          .single();
+
+        if (updateError) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Erro ao reativar assinatura' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Try to fetch first payment data
+        let paymentData: Record<string, unknown> = {};
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const payments = await asaasRequest<{
+            data: Array<{ id: string; invoiceUrl?: string; bankSlipUrl?: string; status: string; dueDate: string }>;
+          }>(`/payments?subscription=${newAsaasSubscription.id}`);
+
+          if (payments.data?.length > 0) {
+            const firstPayment = payments.data[0];
+            paymentData = {
+              paymentId: firstPayment.id,
+              invoiceUrl: firstPayment.invoiceUrl,
+              bankSlipUrl: firstPayment.bankSlipUrl,
+              dueDate: firstPayment.dueDate,
+            };
+
+            await supabase.from('payments').insert({
+              subscription_id: updatedSub.id,
+              asaas_payment_id: firstPayment.id,
+              amount: price,
+              status: 'PENDING',
+              billing_type: subscription.billing_type || 'PIX',
+              due_date: firstPayment.dueDate,
+              invoice_url: firstPayment.invoiceUrl,
+              bank_slip_url: firstPayment.bankSlipUrl,
+            });
+          }
+        } catch (paymentError) {
+          console.error('[asaas-billing] Error fetching reactivation payment data:', paymentError);
+        }
+
+        console.log('[asaas-billing] Subscription reactivated:', subscriptionId);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: { ...updatedSub, payment: paymentData },
+          }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

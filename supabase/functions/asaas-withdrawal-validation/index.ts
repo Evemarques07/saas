@@ -1,23 +1,28 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, asaas-access-token',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Verificar token de autenticação (opcional mas recomendado)
+    // Verificar token de autenticação (OBRIGATORIO)
     const webhookToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN')
     const receivedToken = req.headers.get('asaas-access-token')
 
-    if (webhookToken && receivedToken !== webhookToken) {
+    if (!webhookToken) {
+      console.error('ASAAS_WEBHOOK_TOKEN not configured - rejecting all requests')
+      return new Response(
+        JSON.stringify({ authorized: false, reason: 'Webhook not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!receivedToken || receivedToken !== webhookToken) {
       console.error('Invalid webhook token')
       return new Response(
         JSON.stringify({ authorized: false, reason: 'Invalid token' }),
@@ -26,7 +31,7 @@ serve(async (req) => {
     }
 
     const body = await req.json()
-    console.log('Withdrawal validation request:', JSON.stringify(body, null, 2))
+    console.log('Withdrawal validation request:', JSON.stringify({ id: body.id, value: body.value, scheduleDate: body.scheduleDate }, null, 2))
 
     // Dados do saque
     const {
@@ -36,17 +41,32 @@ serve(async (req) => {
       scheduleDate, // Data agendada
     } = body
 
-    // Por padrão, autoriza todos os saques
-    // Você pode adicionar regras de validação aqui:
-    // - Verificar se o valor está dentro de limites
-    // - Verificar horário permitido
-    // - Verificar conta bancária autorizada
-    // - Notificar administradores
+    // Regras de validacao de saque
+    const MAX_WITHDRAWAL_VALUE = 50000 // R$ 50.000 limite por saque
+    const MIN_WITHDRAWAL_VALUE = 10    // R$ 10 minimo
 
-    const authorized = true
-    const reason = authorized ? 'Saque autorizado automaticamente' : 'Saque não autorizado'
+    let authorized = true
+    let reason = 'Saque autorizado'
 
-    console.log(`Withdrawal ${id}: ${authorized ? 'AUTHORIZED' : 'DENIED'} - Value: R$ ${value}`)
+    // Validar valor minimo
+    if (!value || value < MIN_WITHDRAWAL_VALUE) {
+      authorized = false
+      reason = `Valor minimo para saque: R$ ${MIN_WITHDRAWAL_VALUE}`
+    }
+
+    // Validar valor maximo
+    if (value > MAX_WITHDRAWAL_VALUE) {
+      authorized = false
+      reason = `Valor maximo por saque: R$ ${MAX_WITHDRAWAL_VALUE}. Para valores maiores, entre em contato.`
+    }
+
+    // Validar se tem dados bancarios
+    if (!bankAccount) {
+      authorized = false
+      reason = 'Conta bancaria nao informada'
+    }
+
+    console.log(`Withdrawal ${id}: ${authorized ? 'AUTHORIZED' : 'DENIED'} - Value: R$ ${value} - Reason: ${reason}`)
 
     return new Response(
       JSON.stringify({

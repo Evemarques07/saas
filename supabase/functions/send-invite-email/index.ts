@@ -2,13 +2,9 @@
 // Deploy: npx supabase functions deploy send-invite-email
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 const MAILERSEND_API_URL = 'https://api.mailersend.com/v1/email';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 interface InviteEmailRequest {
   email: string;
@@ -18,6 +14,8 @@ interface InviteEmailRequest {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });

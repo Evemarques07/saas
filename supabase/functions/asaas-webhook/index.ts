@@ -8,11 +8,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, asaas-access-token',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 // Eventos do Asaas que nos interessam
 type AsaasEvent =
@@ -44,6 +40,8 @@ interface AsaasWebhookPayload {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -52,12 +50,19 @@ serve(async (req: Request) => {
   console.log('[asaas-webhook] Webhook received');
 
   try {
-    // Verificar token de autenticação do webhook (opcional mas recomendado)
+    // Verificar token de autenticação do webhook (OBRIGATORIO)
     const webhookToken = req.headers.get('asaas-access-token');
     const expectedToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
 
-    // Se configurou token, valida
-    if (expectedToken && webhookToken !== expectedToken) {
+    if (!expectedToken) {
+      console.error('[asaas-webhook] ASAAS_WEBHOOK_TOKEN not configured - rejecting all requests');
+      return new Response(
+        JSON.stringify({ error: 'Webhook not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!webhookToken || webhookToken !== expectedToken) {
       console.error('[asaas-webhook] Invalid webhook token');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
