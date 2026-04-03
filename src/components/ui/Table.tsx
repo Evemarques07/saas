@@ -73,8 +73,8 @@ export function Table<T>({
     return (item as Record<string, unknown>)[key as string] as ReactNode;
   };
 
-  // Paginacao para cards
-  const shouldPaginate = isCardView && mobileCardRender && !disablePagination && data.length > pageSize;
+  // Paginacao para cards e tabela
+  const shouldPaginate = !disablePagination && data.length > pageSize;
   const totalPages = shouldPaginate ? Math.ceil(data.length / pageSize) : 1;
 
   const paginatedData = useMemo(() => {
@@ -227,7 +227,7 @@ export function Table<T>({
                 </td>
               </tr>
             ) : (
-              data.map((item) => (
+              paginatedData.map((item) => (
                 <tr
                   key={keyExtractor(item)}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
@@ -243,6 +243,42 @@ export function Table<T>({
           </tbody>
         </table>
       </div>
+
+      {/* Paginação desktop */}
+      {shouldPaginate && totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, data.length)} de {data.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className={`p-1.5 rounded-lg transition-colors ${
+                currentPage === 1
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`p-1.5 rounded-lg transition-colors ${
+                currentPage === totalPages
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

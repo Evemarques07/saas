@@ -727,6 +727,7 @@ export function ProductsPage() {
         keyExtractor={(p) => p.id}
         loading={loading}
         emptyMessage="Nenhum produto encontrado"
+        pageSize={20}
         mobileCardRender={(p) => (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex gap-3">

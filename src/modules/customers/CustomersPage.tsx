@@ -274,6 +274,7 @@ export function CustomersPage() {
         data={filteredCustomers}
         keyExtractor={(c) => c.id}
         loading={loading}
+        pageSize={20}
         emptyMessage="Nenhum cliente encontrado"
         mobileCardRender={(c) => (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">

@@ -571,6 +571,7 @@ export function SalesPage() {
         data={filteredSales}
         keyExtractor={(s) => s.id}
         loading={loading}
+        pageSize={20}
         emptyMessage="Nenhuma venda encontrada"
         mobileCardRender={(s) => (
           <div

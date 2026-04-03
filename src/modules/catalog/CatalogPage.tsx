@@ -136,6 +136,8 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [accountDrawerOpen, setAccountDrawerOpen] = useState(false);
+  const ITEMS_PER_PAGE = 20;
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
@@ -148,6 +150,9 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
     const matchesCategory = !categoryFilter || p.category_id === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
 
   const handleCheckout = () => {
     setCartOpen(false);
@@ -252,7 +257,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
             <Input
               placeholder="Buscar produtos..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
               leftIcon={<SearchIcon className="w-5 h-5" />}
             />
             {search && (
@@ -271,7 +276,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
           {categories.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               <button
-                onClick={() => setCategoryFilter('')}
+                onClick={() => { setCategoryFilter(''); setVisibleCount(ITEMS_PER_PAGE); }}
                 className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
                   !categoryFilter
                     ? 'bg-primary-600 text-white shadow-sm'
@@ -283,7 +288,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setCategoryFilter(categoryFilter === cat.id ? '' : cat.id)}
+                  onClick={() => { setCategoryFilter(categoryFilter === cat.id ? '' : cat.id); setVisibleCount(ITEMS_PER_PAGE); }}
                   className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
                     categoryFilter === cat.id
                       ? 'bg-primary-600 text-white shadow-sm'
@@ -305,8 +310,9 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
               description="Tente ajustar os filtros de busca"
             />
           ) : (
+            <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
-              {filteredProducts.map((product) => {
+              {visibleProducts.map((product) => {
                 const inCart = isInCart(product.id);
                 const quantity = getItemQuantity(product.id);
                 const isOutOfStock = product.stock <= 0;
@@ -393,6 +399,18 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                 );
               })}
             </div>
+
+              {hasMore && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+                    className="px-6 py-2.5 text-sm font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Carregar mais ({filteredProducts.length - visibleCount} restantes)
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Footer dentro do container */}
