@@ -194,18 +194,14 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   return (
     <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-950 flex flex-col p-2 md:p-4">
       {/* Header - Colapsável no mobile ao rolar */}
-      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0 transition-all duration-300 overflow-hidden">
+      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0">
         {/* Mini-bar colapsada (mobile only) */}
-        <div
-          className={`sm:hidden transition-all duration-300 ${
-            headerCollapsed && !headerForceOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
-          <button
-            onClick={() => setHeaderForceOpen(true)}
-            className="w-full flex items-center justify-between px-4 py-2.5"
-          >
-            <div className="flex items-center gap-2 min-w-0">
+        {headerCollapsed && !headerForceOpen && (
+          <div className="sm:hidden flex items-center justify-between px-4 py-2.5">
+            <button
+              onClick={() => setHeaderForceOpen(true)}
+              className="flex items-center gap-2 min-w-0 flex-1"
+            >
               {company.logo_url && (
                 <img src={company.logo_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
               )}
@@ -215,19 +211,30 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
               {(search || categoryFilter) && (
                 <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary-500" />
               )}
+              <KeyboardArrowDownIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            </button>
+            <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setAccountDrawerOpen(true)}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
+                  <PersonIcon className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setLoginModalOpen(true)}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
+                  <LoginIcon className="w-5 h-5" />
+                </button>
+              )}
             </div>
-            <KeyboardArrowDownIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          </button>
-        </div>
+          </div>
+        )}
 
         {/* Header completo + filtros */}
-        <div
-          className={`transition-all duration-300 ${
-            headerCollapsed && !headerForceOpen
-              ? 'max-h-0 opacity-0 overflow-hidden sm:max-h-none sm:opacity-100 sm:overflow-visible'
-              : 'max-h-[500px] opacity-100'
-          }`}
-        >
+        <div className={headerCollapsed && !headerForceOpen ? 'hidden sm:block' : ''}>
           <div className="px-4 py-3 md:py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 md:gap-4">
