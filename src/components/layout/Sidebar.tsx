@@ -4,6 +4,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import InputIcon from '@mui/icons-material/Input';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import CategoryIcon from '@mui/icons-material/Category';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StarsIcon from '@mui/icons-material/Stars';
@@ -51,6 +53,8 @@ const navItemsConfig: NavItemConfig[] = [
   { route: PATHS.PEDIDOS_CATALOGO, label: 'Pedidos', icon: <LocalShippingIcon />, badgeKey: 'pendingOrders' },
   { route: PATHS.CLIENTES, label: 'Clientes', icon: <PeopleIcon /> },
   { route: PATHS.PRODUTOS, label: 'Produtos', icon: <InventoryIcon /> },
+  { route: PATHS.ENTRADA_ESTOQUE, label: 'Entrada Estoque', icon: <InputIcon /> },
+  { route: PATHS.MOVIMENTACOES, label: 'Movimentações', icon: <TimelineIcon /> },
   { route: PATHS.CATEGORIAS, label: 'Categorias', icon: <CategoryIcon /> },
   { route: PATHS.CUPONS, label: 'Cupons', icon: <LocalOfferIcon /> },
   { route: PATHS.FIDELIDADE, label: 'Fidelidade', icon: <StarsIcon /> },

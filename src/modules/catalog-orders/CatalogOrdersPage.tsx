@@ -18,6 +18,7 @@ import { supabase } from '../../services/supabase';
 import { sendTextMessage, formatOrderMessageForCustomer, WhatsAppSettings, defaultWhatsAppSettings, getConnectionState } from '../../services/whatsapp';
 import { exportToExcel, exportToPDF } from '../../services/export';
 import { CatalogOrder, CatalogOrderItem, CatalogOrderStatus } from '../../types';
+import { allocateFifo, updateSaleCostTotals } from '../../services/stock';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
@@ -127,30 +128,27 @@ export function CatalogOrdersPage() {
       total: item.total,
     }));
 
-    const { error: itemsError } = await supabase
+    const { data: insertedItems, error: itemsError } = await supabase
       .from('sale_items')
-      .insert(saleItems);
+      .insert(saleItems)
+      .select('id, product_id, quantity');
 
     if (itemsError) throw itemsError;
 
-    // 3. Update stock for each product
-    for (const item of order.items) {
-      if (item.product_id) {
-        // Get current stock
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.product_id)
-          .single();
-
-        if (product) {
-          const newStock = Math.max(0, product.stock - item.quantity);
-          await supabase
-            .from('products')
-            .update({ stock: newStock })
-            .eq('id', item.product_id);
+    // 3. FIFO: alocar custo de estoque para cada item
+    if (insertedItems) {
+      for (const item of insertedItems) {
+        if (item.product_id) {
+          await allocateFifo({
+            saleItemId: item.id,
+            productId: item.product_id,
+            companyId: currentCompany.id,
+            quantity: item.quantity,
+            sellerId: user.id,
+          });
         }
       }
+      await updateSaleCostTotals(sale.id);
     }
 
     return sale;

@@ -54,6 +54,8 @@ const periodOptions = [
 interface DashboardStats {
   totalSales: number;
   totalRevenue: number;
+  totalCost: number;
+  grossProfit: number;
   totalCustomers: number;
   totalProducts: number;
 }
@@ -88,6 +90,8 @@ export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
     totalRevenue: 0,
+    totalCost: 0,
+    grossProfit: 0,
     totalCustomers: 0,
     totalProducts: 0,
   });
@@ -211,7 +215,7 @@ export function DashboardPage() {
       // Build sales query with date filter
       let salesQuery = supabase
         .from('sales')
-        .select('total, created_at')
+        .select('total, cost_total, gross_profit, created_at')
         .eq('company_id', currentCompany.id)
         .eq('status', 'completed');
 
@@ -252,10 +256,14 @@ export function DashboardPage() {
       ]);
 
       const totalRevenue = salesResult.data?.reduce((acc, sale) => acc + Number(sale.total), 0) || 0;
+      const totalCost = salesResult.data?.reduce((acc, sale) => acc + Number(sale.cost_total || 0), 0) || 0;
+      const grossProfit = salesResult.data?.reduce((acc, sale) => acc + Number(sale.gross_profit || 0), 0) || 0;
 
       setStats({
         totalSales: salesResult.data?.length || 0,
         totalRevenue,
+        totalCost,
+        grossProfit,
         totalCustomers: customersResult.count || 0,
         totalProducts: productsResult.count || 0,
       });
@@ -404,7 +412,11 @@ export function DashboardPage() {
     }).format(value);
   };
 
-  const statCards = [
+  const marginPercent = stats.totalRevenue > 0
+    ? ((stats.grossProfit / stats.totalRevenue) * 100).toFixed(1)
+    : '0.0';
+
+  const statCards: Array<{ title: string; value: string | number; subtitle?: string; icon: React.ReactNode; color: string; bgColor: string }> = [
     {
       title: 'Total de Vendas',
       value: stats.totalSales,
@@ -418,6 +430,21 @@ export function DashboardPage() {
       icon: <AttachMoneyIcon />,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/30',
+    },
+    {
+      title: 'Lucro Bruto',
+      value: formatCurrency(stats.grossProfit),
+      subtitle: stats.grossProfit > 0 ? `Margem: ${marginPercent}%` : undefined,
+      icon: <TrendingUpIcon />,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    },
+    {
+      title: 'CMV',
+      value: formatCurrency(stats.totalCost),
+      icon: <AttachMoneyIcon />,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
     },
     {
       title: 'Clientes',
@@ -532,7 +559,7 @@ export function DashboardPage() {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
         {statCards.map((stat) => (
           <Card key={stat.title} className="p-2.5 sm:p-3 md:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4">
@@ -546,6 +573,11 @@ export function DashboardPage() {
                 <p className="text-base sm:text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                   {loading ? '...' : stat.value}
                 </p>
+                {stat.subtitle && !loading && (
+                  <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
+                    {stat.subtitle}
+                  </p>
+                )}
               </div>
             </div>
           </Card>

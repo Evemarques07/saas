@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { Sale, Customer, Product, SaleItem, TableColumn, SaleStatus } from '../../types';
 import { exportToExcel, exportToPDF } from '../../services/export';
+import { allocateFifo, updateSaleCostTotals, cancelSaleFifo } from '../../services/stock';
 
 interface CartItem {
   product: Product;
@@ -216,18 +217,26 @@ export function SalesPage() {
         total: item.product.price * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase
+      const { data: insertedItems, error: itemsError } = await supabase
         .from('sale_items')
-        .insert(saleItems);
+        .insert(saleItems)
+        .select('id, product_id, quantity');
 
       if (itemsError) throw itemsError;
 
-      // Update product stock
-      for (const item of cart) {
-        await supabase
-          .from('products')
-          .update({ stock: item.product.stock - item.quantity })
-          .eq('id', item.product.id);
+      // FIFO: alocar custo de estoque para cada item vendido
+      if (insertedItems) {
+        for (const item of insertedItems) {
+          await allocateFifo({
+            saleItemId: item.id,
+            productId: item.product_id,
+            companyId: currentCompany!.id,
+            quantity: item.quantity,
+            sellerId: user!.id,
+          });
+        }
+        // Atualizar totais de custo na venda
+        await updateSaleCostTotals(saleData.id);
       }
 
       toast.success('Venda registrada com sucesso!');
@@ -247,6 +256,8 @@ export function SalesPage() {
           total,
           payment_method: paymentMethod || null,
           notes: notes || null,
+          cost_total: null,
+          gross_profit: null,
           customer_name: selectedCustomerData?.name || null,
           customer_phone: selectedCustomerData?.phone || null,
           created_at: saleData.created_at,
@@ -260,6 +271,8 @@ export function SalesPage() {
             quantity: item.quantity,
             unit_price: item.unit_price,
             total: item.total,
+            cost_total: null,
+            profit: null,
             created_at: saleData.created_at,
           })),
         };
@@ -334,7 +347,10 @@ export function SalesPage() {
 
     setCancelling(true);
     try {
-      // Atualizar status e adicionar justificativa nas notas
+      // Cancelar venda com reversão FIFO (restaura estoque nos lotes)
+      await cancelSaleFifo(cancelingSale.id, user?.id);
+
+      // Adicionar justificativa nas notas
       const currentNotes = cancelingSale.notes || '';
       const cancelNote = cancelReason
         ? `[CANCELADO em ${new Date().toLocaleDateString('pt-BR')}] Motivo: ${cancelReason}`
@@ -343,15 +359,10 @@ export function SalesPage() {
         ? `${cancelNote}\n\n${currentNotes}`
         : cancelNote;
 
-      const { error } = await supabase
+      await supabase
         .from('sales')
-        .update({
-          status: 'cancelled',
-          notes: newNotes
-        })
+        .update({ notes: newNotes })
         .eq('id', cancelingSale.id);
-
-      if (error) throw error;
 
       toast.success('Venda cancelada com sucesso!');
       handleCloseCancelModal();

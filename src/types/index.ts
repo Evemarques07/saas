@@ -174,6 +174,8 @@ export interface Sale {
   total: number;
   payment_method: string | null;
   notes: string | null;
+  cost_total: number | null;
+  gross_profit: number | null;
   customer_name: string | null; // Nome do cliente (vendas do catalogo)
   customer_phone: string | null; // Telefone do cliente (vendas do catalogo)
   created_at: string;
@@ -191,6 +193,8 @@ export interface SaleItem {
   quantity: number;
   unit_price: number;
   total: number;
+  cost_total: number | null;
+  profit: number | null;
   created_at: string;
   product?: Product;
 }
@@ -483,6 +487,52 @@ export interface CatalogOrderWithDiscounts extends CatalogOrder {
   points_earned: number;
   promotion_id: string | null;
   promotion_discount: number;
+}
+
+// ============================================
+// FIFO / Stock Types
+// ============================================
+
+export interface StockEntry {
+  id: string;
+  company_id: string;
+  product_id: string;
+  unit_cost: number;
+  quantity_received: number;
+  quantity_remaining: number;
+  supplier: string | null;
+  invoice_number: string | null;
+  notes: string | null;
+  received_at: string;
+  created_at: string;
+  product?: Product;
+}
+
+export interface SaleItemCost {
+  id: string;
+  sale_item_id: string;
+  entry_id: string;
+  quantity: number;
+  unit_cost: number;
+  created_at: string;
+}
+
+export type StockMovementType = 'entry' | 'sale' | 'cancellation' | 'adjustment';
+
+export interface StockMovement {
+  id: string;
+  company_id: string;
+  product_id: string;
+  entry_id: string | null;
+  sale_item_id: string | null;
+  type: StockMovementType;
+  quantity: number;
+  unit_cost: number | null;
+  balance_after: number;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  product?: Product;
 }
 
 // ============================================

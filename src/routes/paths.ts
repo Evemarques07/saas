@@ -24,6 +24,8 @@ export const PATHS = {
   PEDIDOS_CATALOGO: '/pedidos',
   CLIENTES: '/clientes',
   PRODUTOS: '/produtos',
+  ENTRADA_ESTOQUE: '/entrada-estoque',
+  MOVIMENTACOES: '/movimentacoes-estoque',
   CATEGORIAS: '/categorias',
   CUPONS: '/cupons',
   FIDELIDADE: '/fidelidade',

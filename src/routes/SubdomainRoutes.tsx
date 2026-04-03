@@ -13,6 +13,8 @@ import { ProductPage } from "../modules/catalog/ProductPage";
 // App Pages (Tenant)
 import { DashboardPage } from "../modules/dashboard/DashboardPage";
 import { ProductsPage } from "../modules/products/ProductsPage";
+import { StockEntryPage } from "../modules/products/StockEntryPage";
+import { StockMovementsPage } from "../modules/products/StockMovementsPage";
 import { CategoriesPage } from "../modules/categories/CategoriesPage";
 import { CustomersPage } from "../modules/customers/CustomersPage";
 import { SalesPage } from "../modules/sales/SalesPage";
@@ -84,6 +86,8 @@ export function SubdomainRoutes() {
         <Route path="pedidos" element={<CatalogOrdersPage />} />
         <Route path="clientes" element={<CustomersPage />} />
         <Route path="produtos" element={<ProductsPage />} />
+        <Route path="entrada-estoque" element={<StockEntryPage />} />
+        <Route path="movimentacoes-estoque" element={<StockMovementsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="cupons" element={<CouponsPage />} />
         <Route path="fidelidade" element={<LoyaltyPage />} />
