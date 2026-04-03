@@ -398,7 +398,7 @@ export function ProductsPage() {
       const primaryImage = finalImages.find(img => img.isPrimary) || finalImages[0];
       const imageUrl = primaryImage?.url || null;
 
-      const productData = {
+      const productBase = {
         company_id: currentCompany!.id,
         name: formData.name,
         description: formData.description || null,
@@ -406,7 +406,6 @@ export function ProductsPage() {
         ean: formData.ean || null,
         price: parseFloat(formData.price),
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
-        stock: parseInt(formData.stock) || 0,
         min_stock: parseInt(formData.min_stock) || 0,
         category_id: formData.category_id || null,
         is_active: formData.is_active,
@@ -416,17 +415,19 @@ export function ProductsPage() {
       };
 
       if (editingProduct) {
+        // Na edição, NÃO envia stock — controlado por Entrada de Estoque (FIFO)
         const { error } = await supabase
           .from('products')
-          .update(productData)
+          .update(productBase)
           .eq('id', editingProduct.id);
 
         if (error) throw error;
         toast.success('Produto atualizado com sucesso!');
       } else {
+        // Na criação, inclui estoque inicial
         const { error } = await supabase
           .from('products')
-          .insert(productData);
+          .insert({ ...productBase, stock: parseInt(formData.stock) || 0 });
 
         if (error) throw error;
         toast.success('Produto criado com sucesso!');
@@ -895,12 +896,33 @@ export function ProductsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Estoque"
-              type="number"
-              value={formData.stock}
-              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-            />
+            <div>
+              <Input
+                label={editingProduct ? 'Estoque (controlado por entradas)' : 'Estoque Inicial'}
+                type="number"
+                value={formData.stock}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                disabled={!!editingProduct}
+              />
+              {editingProduct && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Use{' '}
+                  <button
+                    type="button"
+                    className="text-primary-600 hover:underline"
+                    onClick={() => {
+                      setShowModal(false);
+                      navigate(
+                        window.location.pathname.replace(/\/produtos.*/, '/entrada-estoque')
+                      );
+                    }}
+                  >
+                    Entrada de Estoque
+                  </button>
+                  {' '}para alterar.
+                </p>
+              )}
+            </div>
             <Input
               label="Estoque Mínimo"
               type="number"

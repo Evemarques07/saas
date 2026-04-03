@@ -37,7 +37,8 @@ export function SalesPage() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [discount, setDiscount] = useState('0');
+  const [discount, setDiscount] = useState('');
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -103,7 +104,8 @@ export function SalesPage() {
   const handleOpenNewSale = () => {
     setSelectedCustomer('');
     setCart([]);
-    setDiscount('0');
+    setDiscount('');
+    setDiscountType('fixed');
     setPaymentMethod('');
     setNotes('');
     setProductSearch('');
@@ -174,7 +176,10 @@ export function SalesPage() {
     (acc, item) => acc + item.product.price * item.quantity,
     0
   );
-  const discountValue = parseFloat(discount) || 0;
+  const rawDiscount = parseFloat(discount) || 0;
+  const discountValue = discountType === 'percent'
+    ? Math.min(subtotal, subtotal * rawDiscount / 100)
+    : Math.min(subtotal, rawDiscount);
   const total = subtotal - discountValue;
 
   const handleSubmitSale = async (e: React.FormEvent) => {
@@ -811,17 +816,53 @@ export function SalesPage() {
               <span className="text-gray-500">Subtotal:</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-2">
               <span className="text-sm text-gray-500">Desconto:</span>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                className="w-32 text-right"
-              />
+              <div className="flex items-center gap-1">
+                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                  <button
+                    type="button"
+                    className={`px-2 py-1 text-xs font-medium transition-colors ${
+                      discountType === 'fixed'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                    }`}
+                    onClick={() => { setDiscountType('fixed'); setDiscount(''); }}
+                  >
+                    R$
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-2 py-1 text-xs font-medium transition-colors ${
+                      discountType === 'percent'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                    }`}
+                    onClick={() => { setDiscountType('percent'); setDiscount(''); }}
+                  >
+                    %
+                  </button>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max={discountType === 'percent' ? '100' : undefined}
+                  step="0.01"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="0"
+                  className="w-28 text-right"
+                />
+              </div>
             </div>
+            {discountValue > 0 && discountType === 'percent' && (
+              <div className="flex justify-end">
+                <span className="text-xs text-gray-400">
+                  = -{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountValue)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold">
               <span>Total:</span>
               <span className="text-primary-600">{formatCurrency(total)}</span>
