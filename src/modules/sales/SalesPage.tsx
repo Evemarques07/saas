@@ -816,34 +816,10 @@ export function SalesPage() {
               <span className="text-gray-500">Subtotal:</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between items-center gap-2">
+            <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Desconto:</span>
-              <div className="flex items-center gap-1">
-                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-                  <button
-                    type="button"
-                    className={`px-2 py-1 text-xs font-medium transition-colors ${
-                      discountType === 'fixed'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                    }`}
-                    onClick={() => { setDiscountType('fixed'); setDiscount(''); }}
-                  >
-                    R$
-                  </button>
-                  <button
-                    type="button"
-                    className={`px-2 py-1 text-xs font-medium transition-colors ${
-                      discountType === 'percent'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                    }`}
-                    onClick={() => { setDiscountType('percent'); setDiscount(''); }}
-                  >
-                    %
-                  </button>
-                </div>
-                <Input
+              <div className="relative w-40">
+                <input
                   type="number"
                   min="0"
                   max={discountType === 'percent' ? '100' : undefined}
@@ -851,15 +827,42 @@ export function SalesPage() {
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="0"
-                  className="w-28 text-right"
+                  placeholder="0,00"
+                  className="w-full pl-3 pr-16 py-2 text-right text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5">
+                  <button
+                    type="button"
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      discountType === 'fixed'
+                        ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                    }`}
+                    onClick={() => { setDiscountType('fixed'); setDiscount(''); }}
+                  >
+                    R$
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      discountType === 'percent'
+                        ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                    }`}
+                    onClick={() => { setDiscountType('percent'); setDiscount(''); }}
+                  >
+                    %
+                  </button>
+                </div>
               </div>
             </div>
-            {discountValue > 0 && discountType === 'percent' && (
+            {discountValue > 0 && (
               <div className="flex justify-end">
                 <span className="text-xs text-gray-400">
-                  = -{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountValue)}
+                  {discountType === 'percent'
+                    ? `${rawDiscount}% = -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountValue)}`
+                    : `-${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountValue)}`
+                  }
                 </span>
               </div>
             )}
