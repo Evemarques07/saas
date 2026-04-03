@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -9,6 +9,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import PersonIcon from '@mui/icons-material/Person';
 import LoginIcon from '@mui/icons-material/Login';
 import GetAppIcon from '@mui/icons-material/GetApp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { supabase } from '../../services/supabase';
 import { getSubdomainSlug, buildCatalogoProductPath } from '../../routes/paths';
 import { Company, Product, Category } from '../../types';
@@ -131,6 +132,27 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [headerForceOpen, setHeaderForceOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const y = el.scrollTop;
+    // Colapsa ao rolar mais de 30px para baixo
+    if (y > 30 && y > lastScrollY.current) {
+      setHeaderCollapsed(true);
+      setHeaderForceOpen(false);
+    }
+    // Expande ao rolar para o topo
+    if (y <= 10) {
+      setHeaderCollapsed(false);
+      setHeaderForceOpen(false);
+    }
+    lastScrollY.current = y;
+  }, []);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -171,139 +193,168 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
 
   return (
     <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-950 flex flex-col p-2 md:p-4">
-      {/* Header - Arredondado */}
-      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0">
-        <div className="px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 md:gap-4">
+      {/* Header - Colapsável no mobile ao rolar */}
+      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0 transition-all duration-300 overflow-hidden">
+        {/* Mini-bar colapsada (mobile only) */}
+        <div
+          className={`sm:hidden transition-all duration-300 ${
+            headerCollapsed && !headerForceOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <button
+            onClick={() => setHeaderForceOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-2.5"
+          >
+            <div className="flex items-center gap-2 min-w-0">
               {company.logo_url && (
-                <img
-                  src={company.logo_url}
-                  alt={company.name}
-                  className="w-10 h-10 rounded-lg object-cover"
-                />
+                <img src={company.logo_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
               )}
-              <div>
-                <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
-                  {company.name}
-                </h1>
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                  Catálogo de Produtos
-                </p>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {company.name}
+              </span>
+              {(search || categoryFilter) && (
+                <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary-500" />
+              )}
+            </div>
+            <KeyboardArrowDownIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          </button>
+        </div>
+
+        {/* Header completo + filtros */}
+        <div
+          className={`transition-all duration-300 ${
+            headerCollapsed && !headerForceOpen
+              ? 'max-h-0 opacity-0 overflow-hidden sm:max-h-none sm:opacity-100 sm:overflow-visible'
+              : 'max-h-[500px] opacity-100'
+          }`}
+        >
+          <div className="px-4 py-3 md:py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 md:gap-4">
+                {company.logo_url && (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="w-10 h-10 rounded-lg object-cover"
+                  />
+                )}
+                <div>
+                  <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {company.name}
+                  </h1>
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                    Catálogo de Produtos
+                  </p>
+                </div>
+              </div>
+
+              {/* Account & Cart Buttons */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {customerLoading ? (
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                ) : isAuthenticated ? (
+                  <button
+                    onClick={() => setAccountDrawerOpen(true)}
+                    className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title={customer?.name || 'Minha Conta'}
+                  >
+                    <PersonIcon className="w-5 h-5" />
+                    <span className="hidden sm:inline font-medium max-w-[120px] truncate">{customer?.name?.split(' ')[0]}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setLoginModalOpen(true)}
+                    className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="Entrar"
+                  >
+                    <LoginIcon className="w-5 h-5" />
+                    <span className="hidden sm:inline font-medium">Entrar</span>
+                  </button>
+                )}
+
+                {isInstallable && !isInstalled && (
+                  <button
+                    onClick={installApp}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                    title="Instalar App"
+                  >
+                    <GetAppIcon className="w-5 h-5" />
+                    <span className="font-medium">Instalar</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setCartOpen(true)}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                >
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  <span className="font-medium">Carrinho</span>
+                  {itemCount > 0 && (
+                    <span className="px-2 py-0.5 text-xs font-bold bg-white text-primary-600 rounded-full">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
+          </div>
 
-            {/* Account & Cart Buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Account Button */}
-              {customerLoading ? (
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
-              ) : isAuthenticated ? (
+          {/* Filtros dentro do header */}
+          <div className="px-4 pb-3 space-y-2">
+            <div className="relative">
+              <Input
+                placeholder="Buscar produtos..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
+                leftIcon={<SearchIcon className="w-5 h-5" />}
+              />
+              {search && (
                 <button
-                  onClick={() => setAccountDrawerOpen(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title={customer?.name || 'Minha Conta'}
+                  onClick={() => setSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  type="button"
+                  aria-label="Limpar busca"
                 >
-                  <PersonIcon className="w-5 h-5" />
-                  <span className="hidden sm:inline font-medium max-w-[120px] truncate">{customer?.name?.split(' ')[0]}</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title="Entrar"
-                >
-                  <LoginIcon className="w-5 h-5" />
-                  <span className="hidden sm:inline font-medium">Entrar</span>
+                  <CloseIcon className="w-4 h-4" />
                 </button>
               )}
-
-              {/* Install Button - Only when installable */}
-              {isInstallable && !isInstalled && (
-                <button
-                  onClick={installApp}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
-                  title="Instalar App"
-                >
-                  <GetAppIcon className="w-5 h-5" />
-                  <span className="font-medium">Instalar</span>
-                </button>
-              )}
-
-              {/* Cart Button - Desktop only (mobile has floating button) */}
-              <button
-                onClick={() => setCartOpen(true)}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-              >
-                <ShoppingCartIcon className="w-5 h-5" />
-                <span className="font-medium">Carrinho</span>
-                {itemCount > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-bold bg-white text-primary-600 rounded-full">
-                    {itemCount}
-                  </span>
-                )}
-              </button>
             </div>
+
+            {categories.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <button
+                  onClick={() => { setCategoryFilter(''); setVisibleCount(ITEMS_PER_PAGE); }}
+                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    !categoryFilter
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Todas
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setCategoryFilter(categoryFilter === cat.id ? '' : cat.id); setVisibleCount(ITEMS_PER_PAGE); }}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      categoryFilter === cat.id
+                        ? 'bg-primary-600 text-white shadow-sm'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content - Container arredondado com scroll interno */}
-      <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col min-h-0">
-        {/* Filters - Sticky no topo */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 px-3 md:px-4 pt-3 md:pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 space-y-2">
-          {/* Search */}
-          <div className="relative">
-            <Input
-              placeholder="Buscar produtos..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
-              leftIcon={<SearchIcon className="w-5 h-5" />}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                type="button"
-                aria-label="Limpar busca"
-              >
-                <CloseIcon className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Category Chips - Horizontal scroll */}
-          {categories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              <button
-                onClick={() => { setCategoryFilter(''); setVisibleCount(ITEMS_PER_PAGE); }}
-                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  !categoryFilter
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                Todas
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => { setCategoryFilter(categoryFilter === cat.id ? '' : cat.id); setVisibleCount(ITEMS_PER_PAGE); }}
-                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    categoryFilter === cat.id
-                      ? 'bg-primary-600 text-white shadow-sm'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
+      <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden min-h-0">
         {/* Products Grid - Área com scroll */}
-        <div className="flex-1 overflow-auto px-3 md:px-4 py-3 md:py-4">
+        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-auto px-3 md:px-4 py-3 md:py-4">
           {filteredProducts.length === 0 ? (
             <EmptyState
               title="Nenhum produto encontrado"
