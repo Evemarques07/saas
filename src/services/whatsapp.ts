@@ -1,14 +1,11 @@
-// WuzAPI Configuration
-// URL deve ser configurada via VITE_WUZAPI_URL no .env.local
-const WUZAPI_URL = import.meta.env.VITE_WUZAPI_URL || '';
+// WuzAPI Service - todas as chamadas passam pela Edge Function wuzapi-admin (seguro)
+// Nenhuma chamada direta ao WuzAPI a partir do browser
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // Constants
-const API_TIMEOUT = 30000; // 30 seconds
-const HEALTH_CHECK_TIMEOUT = 5000; // 5 seconds (quick check)
-const QR_CODE_TIMEOUT = 15000; // 15 seconds for QR code
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const API_TIMEOUT = 30000;
+const QR_CODE_TIMEOUT = 15000;
 
 // Helper: Fetch with timeout
 async function fetchWithTimeout(
@@ -20,55 +17,11 @@ async function fetchWithTimeout(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
+    const response = await fetch(url, { ...options, signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-// Helper: Fetch with retry for transient errors
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries: number = MAX_RETRIES,
-  timeout: number = API_TIMEOUT
-): Promise<Response> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const response = await fetchWithTimeout(url, options, timeout);
-
-      // Retry on 500 errors (server errors like SQLite issues)
-      if (response.status >= 500 && attempt < maxRetries - 1) {
-        console.warn(`[WhatsApp] Server error ${response.status}, retrying... (attempt ${attempt + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (attempt + 1)));
-        continue;
-      }
-
-      return response;
-    } catch (error) {
-      lastError = error as Error;
-
-      // Don't retry on abort (timeout)
-      if ((error as Error).name === 'AbortError') {
-        throw new Error('Timeout: API nao respondeu a tempo');
-      }
-
-      // Retry on network errors
-      if (attempt < maxRetries - 1) {
-        console.warn(`[WhatsApp] Network error, retrying... (attempt ${attempt + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (attempt + 1)));
-        continue;
-      }
-    }
-  }
-
-  throw lastError || new Error('Erro desconhecido na requisicao');
 }
 
 // Types
@@ -124,15 +77,13 @@ export const defaultWhatsAppSettings: WhatsAppSettings = {
 };
 
 // Helper to generate DETERMINISTIC user token from company slug
-// This prevents creating multiple users for the same company
 export function generateUserToken(companySlug: string): string {
-  // Create a simple hash from the slug to make it unique but deterministic
   let hash = 0;
   const str = `ejym_${companySlug}_wuzapi_token`;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   const hashStr = Math.abs(hash).toString(36);
   return `${companySlug}_token_${hashStr}`;
@@ -140,50 +91,39 @@ export function generateUserToken(companySlug: string): string {
 
 // Helper to format phone number for WhatsApp
 export function formatPhoneForWhatsApp(phone: string): string {
-  // Remove tudo que nao for numero
   let cleaned = phone.replace(/\D/g, '');
-
-  // Adiciona 55 se nao tiver codigo do pais
   if (!cleaned.startsWith('55')) {
     cleaned = '55' + cleaned;
   }
-
   return cleaned;
 }
 
-// ==================== EDGE FUNCTION CALLS (SECURE) ====================
+// ==================== EDGE FUNCTION PROXY ====================
 
-// Helper to get Supabase access token for edge function auth
+// Helper to get Supabase access token
 async function getSupabaseAccessToken(): Promise<string | null> {
   try {
     const { supabaseGetAccessToken } = await import('./supabase');
     const token = await supabaseGetAccessToken();
-    if (!token) {
-      console.error('[WhatsApp] No Supabase session found');
-      return null;
-    }
-    return token;
-  } catch (error) {
-    console.error('[WhatsApp] Error getting Supabase access token:', error);
+    return token || null;
+  } catch {
     return null;
   }
 }
 
 // Call edge function with Supabase auth
-async function callEdgeFunction(action: string, data: Record<string, unknown> = {}): Promise<{
+async function callEdgeFunction(action: string, data: Record<string, unknown> = {}, timeout: number = API_TIMEOUT): Promise<{
   success: boolean;
-  data?: unknown;
+  data?: Record<string, unknown>;
   error?: string;
 }> {
   try {
     const accessToken = await getSupabaseAccessToken();
     if (!accessToken) {
-      console.error('[WhatsApp] No Supabase access token available');
       return { success: false, error: 'Usuario nao autenticado' };
     }
 
     const url = `${SUPABASE_URL}/functions/v1/wuzapi-admin`;
-    console.log('[WhatsApp] Calling edge function:', url, 'action:', action);
 
     const response = await fetchWithTimeout(
       url,
@@ -195,11 +135,10 @@ async function callEdgeFunction(action: string, data: Record<string, unknown> = 
         },
         body: JSON.stringify({ action, ...data }),
       },
-      API_TIMEOUT
+      timeout
     );
 
     const result = await response.json();
-    console.log('[WhatsApp] Edge function response:', response.status, result);
 
     if (!response.ok) {
       return { success: false, error: result?.error || 'Erro na requisicao' };
@@ -207,132 +146,76 @@ async function callEdgeFunction(action: string, data: Record<string, unknown> = 
 
     return { success: true, data: result };
   } catch (error) {
-    console.error('[WhatsApp] Edge function error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erro de conexao',
-    };
+    const errorMessage = error instanceof Error
+      ? (error.name === 'AbortError' ? 'Timeout: API nao respondeu a tempo' : error.message)
+      : 'Erro de conexao';
+    return { success: false, error: errorMessage };
   }
 }
 
-// Create user for a company in WuzAPI via edge function (SECURE)
+// ==================== ADMIN ACTIONS ====================
+
+// Create user for a company
 export async function createUser(companySlug: string, userToken: string): Promise<{ success: boolean; error?: string }> {
   const result = await callEdgeFunction('create-user', { companySlug, userToken });
   return { success: result.success, error: result.error };
 }
 
-// List all users via edge function (SECURE - requires admin)
+// List all users (admin only)
 export async function listAllUsers(): Promise<{ success: boolean; users: WuzAPIUser[]; error?: string }> {
   const result = await callEdgeFunction('list-users');
-
-  if (!result.success) {
-    return { success: false, users: [], error: result.error };
-  }
-
-  const data = result.data as { users?: WuzAPIUser[] };
-  return { success: true, users: data?.users || [] };
+  if (!result.success) return { success: false, users: [], error: result.error };
+  return { success: true, users: (result.data as { users?: WuzAPIUser[] })?.users || [] };
 }
 
-// Delete user by ID via edge function (SECURE - requires admin)
+// Delete user by ID (admin only)
 export async function deleteUserById(userId: string): Promise<boolean> {
   const result = await callEdgeFunction('delete-user', { userId });
   return result.success;
 }
 
-// Delete user by slug (finds the user first, then deletes by ID)
+// Delete user by slug
 export async function deleteUser(companySlug: string): Promise<boolean> {
   try {
-    // First, find the user to get the ID
     const { success, users } = await listAllUsers();
     if (!success) return false;
-
     const user = users.find(u => u.name === `ejym-${companySlug}`);
     if (!user) return false;
-
     return await deleteUserById(user.id);
-  } catch (error) {
-    console.error('[WhatsApp] Error deleting user:', error);
+  } catch {
     return false;
   }
 }
 
-// ==================== DIRECT WUZAPI CALLS (USER TOKEN) ====================
+// ==================== SESSION ACTIONS ====================
 
-// Connect session (required before getting QR code)
+// Check API health
+export async function checkApiHealth(): Promise<boolean> {
+  const result = await callEdgeFunction('health-check', {}, 10000);
+  return result.success && !!(result.data as { online?: boolean })?.online;
+}
+
+// Connect session
 export async function connectSession(userToken: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetchWithRetry(`${WUZAPI_URL}/session/connect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': userToken,
-      },
-      body: JSON.stringify({}),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return { success: false, error: errorData?.error || 'Erro ao conectar sessao' };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('[WhatsApp] Error connecting session:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro de conexao com a API';
-    return { success: false, error: errorMessage };
-  }
+  const result = await callEdgeFunction('connect-session', { userToken });
+  return { success: result.success, error: result.error };
 }
 
-// Get connection state
-export async function getConnectionState(userToken: string): Promise<ConnectionState> {
-  try {
-    const response = await fetchWithTimeout(`${WUZAPI_URL}/session/status`, {
-      headers: { 'Token': userToken },
-    }, 10000); // 10 second timeout for status check
-
-    if (!response.ok) {
-      return { state: 'close' };
-    }
-
-    const data = await response.json();
-    if (data?.data?.loggedIn) {
-      return { state: 'open' };
-    } else if (data?.data?.connected) {
-      return { state: 'connecting' };
-    }
-    return { state: 'close' };
-  } catch (error) {
-    console.error('[WhatsApp] Error getting connection state:', error);
-    return { state: 'close' };
-  }
+// Disconnect session
+export async function disconnectSession(userToken: string): Promise<boolean> {
+  const result = await callEdgeFunction('disconnect-session', { userToken });
+  return result.success;
 }
 
-// Get QR Code for connection (with retry)
+// Get QR Code
 export async function getQRCode(userToken: string): Promise<QRCodeResponse | null> {
-  try {
-    const response = await fetchWithRetry(
-      `${WUZAPI_URL}/session/qr`,
-      { headers: { 'Token': userToken } },
-      MAX_RETRIES,
-      QR_CODE_TIMEOUT
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    if (data?.data?.QRCode) {
-      return { base64: data.data.QRCode };
-    }
-    return null;
-  } catch (error) {
-    console.error('[WhatsApp] Error getting QR code:', error);
-    return null;
-  }
+  const result = await callEdgeFunction('get-qr', { userToken }, QR_CODE_TIMEOUT);
+  if (!result.success) return null;
+  const qrCode = (result.data as { qrCode?: string })?.qrCode;
+  return qrCode ? { base64: qrCode } : null;
 }
 
-// Get session status with QR code
+// Get session status
 export async function getSessionStatus(userToken: string): Promise<{
   connected: boolean;
   loggedIn: boolean;
@@ -340,88 +223,61 @@ export async function getSessionStatus(userToken: string): Promise<{
   jid: string | null;
   name: string | null;
 }> {
-  try {
-    const response = await fetchWithRetry(
-      `${WUZAPI_URL}/session/status`,
-      { headers: { 'Token': userToken } },
-      2, // fewer retries for status
-      10000
-    );
-
-    if (!response.ok) {
-      return { connected: false, loggedIn: false, qrcode: null, jid: null, name: null };
-    }
-
-    const data = await response.json();
-    return {
-      connected: data?.data?.connected || false,
-      loggedIn: data?.data?.loggedIn || false,
-      qrcode: data?.data?.qrcode || null,
-      jid: data?.data?.jid || null,
-      name: data?.data?.name || null,
-    };
-  } catch (error) {
-    console.error('[WhatsApp] Error getting session status:', error);
+  const result = await callEdgeFunction('get-session-status', { userToken }, 15000);
+  if (!result.success) {
     return { connected: false, loggedIn: false, qrcode: null, jid: null, name: null };
   }
+  const status = (result.data as { status?: Record<string, unknown> })?.status;
+  return {
+    connected: (status?.connected as boolean) || false,
+    loggedIn: (status?.loggedIn as boolean) || false,
+    qrcode: (status?.qrcode as string) || null,
+    jid: (status?.jid as string) || null,
+    name: (status?.name as string) || null,
+  };
 }
 
-// Disconnect WhatsApp (logout)
-export async function disconnectSession(userToken: string): Promise<boolean> {
-  try {
-    const response = await fetchWithRetry(`${WUZAPI_URL}/session/logout`, {
-      method: 'POST',
-      headers: { 'Token': userToken },
-    });
-
-    return response.ok;
-  } catch (error) {
-    console.error('[WhatsApp] Error disconnecting session:', error);
-    return false;
-  }
+// Get connection state
+export async function getConnectionState(userToken: string): Promise<ConnectionState> {
+  const status = await getSessionStatus(userToken);
+  if (status.loggedIn) return { state: 'open' };
+  if (status.connected) return { state: 'connecting' };
+  return { state: 'close' };
 }
 
-// Check if phone number exists on WhatsApp and get the correct JID
+// Get user status (for admin page)
+export async function getUserStatus(userToken: string): Promise<WuzAPIUserStatus | null> {
+  const result = await callEdgeFunction('get-user-status', { userToken }, 15000);
+  if (!result.success) return null;
+
+  const status = (result.data as { status?: Record<string, unknown> })?.status;
+  return {
+    name: '',
+    token: userToken,
+    connected: (status?.connected as boolean) || false,
+    loggedIn: (status?.loggedIn as boolean) || false,
+    jid: (status?.jid as string) || null,
+    phone: (status?.phone as string) || null,
+    phoneName: (status?.name as string) || null,
+  };
+}
+
+// Check if phone exists on WhatsApp
 export async function checkPhoneOnWhatsApp(
   userToken: string,
   phone: string
 ): Promise<{ exists: boolean; jid: string | null; verifiedName: string | null }> {
   const formattedPhone = formatPhoneForWhatsApp(phone);
+  const result = await callEdgeFunction('check-phone', { userToken, phone: formattedPhone });
 
-  try {
-    const response = await fetchWithRetry(`${WUZAPI_URL}/user/check`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': userToken,
-      },
-      body: JSON.stringify({
-        Phone: [formattedPhone],
-      }),
-    });
+  if (!result.success) return { exists: false, jid: null, verifiedName: null };
 
-    if (!response.ok) {
-      return { exists: false, jid: null, verifiedName: null };
-    }
-
-    const data = await response.json();
-    const user = data?.data?.Users?.[0];
-
-    if (user?.IsInWhatsapp) {
-      // Extract just the phone number from JID (remove @s.whatsapp.net)
-      const jidPhone = user.JID?.split('@')[0]?.split(':')[0] || null;
-      return {
-        exists: true,
-        jid: jidPhone,
-        verifiedName: user.VerifiedName || null,
-      };
-    }
-
-    return { exists: false, jid: null, verifiedName: null };
-  } catch (error) {
-    console.error('[WhatsApp] Error checking phone:', error);
-    return { exists: false, jid: null, verifiedName: null };
-  }
+  const data = result.data as { exists?: boolean; jid?: string; verifiedName?: string };
+  return {
+    exists: data?.exists || false,
+    jid: data?.jid || null,
+    verifiedName: data?.verifiedName || null,
+  };
 }
 
 // Send text message
@@ -430,60 +286,24 @@ export async function sendTextMessage(
   phone: string,
   message: string
 ): Promise<SendMessageResult> {
-  try {
-    // IMPORTANT: First verify the session is connected
-    const connectionState = await getConnectionState(userToken);
-    if (connectionState.state !== 'open') {
-      return {
-        success: false,
-        error: 'WhatsApp nao esta conectado. Reconecte na pagina de Configuracoes.',
-      };
-    }
-
-    // Check if the phone exists on WhatsApp and get the correct JID
-    const checkResult = await checkPhoneOnWhatsApp(userToken, phone);
-
-    if (!checkResult.exists || !checkResult.jid) {
-      return {
-        success: false,
-        error: 'Numero nao encontrado no WhatsApp',
-      };
-    }
-
-    // Use the correct JID returned by WhatsApp - with retry for transient errors
-    const response = await fetchWithRetry(`${WUZAPI_URL}/chat/send/text`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': userToken,
-      },
-      body: JSON.stringify({
-        Phone: checkResult.jid,
-        Body: message,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData?.error || 'Erro ao enviar mensagem',
-      };
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      messageId: data?.data?.Id || data?.data?.id,
-    };
-  } catch (error) {
-    console.error('[WhatsApp] Error sending message:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro de conexao com a API';
-    return {
-      success: false,
-      error: errorMessage,
-    };
+  // Verify connection first
+  const connectionState = await getConnectionState(userToken);
+  if (connectionState.state !== 'open') {
+    return { success: false, error: 'WhatsApp nao esta conectado. Reconecte na pagina de Configuracoes.' };
   }
+
+  // Check phone on WhatsApp
+  const checkResult = await checkPhoneOnWhatsApp(userToken, phone);
+  if (!checkResult.exists || !checkResult.jid) {
+    return { success: false, error: 'Numero nao encontrado no WhatsApp' };
+  }
+
+  const result = await callEdgeFunction('send-text', {
+    userToken, phone: checkResult.jid, message,
+  });
+
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, messageId: (result.data as { messageId?: string })?.messageId };
 }
 
 // Send image message
@@ -493,92 +313,42 @@ export async function sendImageMessage(
   imageBase64: string,
   caption?: string
 ): Promise<SendMessageResult> {
-  try {
-    // IMPORTANT: First verify the session is connected
-    const connectionState = await getConnectionState(userToken);
-    if (connectionState.state !== 'open') {
-      return {
-        success: false,
-        error: 'WhatsApp nao esta conectado. Reconecte na pagina de Configuracoes.',
-      };
-    }
-
-    // Check if the phone exists on WhatsApp and get the correct JID
-    const checkResult = await checkPhoneOnWhatsApp(userToken, phone);
-
-    if (!checkResult.exists || !checkResult.jid) {
-      return {
-        success: false,
-        error: 'Numero nao encontrado no WhatsApp',
-      };
-    }
-
-    // Ensure image has proper data URI prefix
-    let imageData = imageBase64;
-    if (!imageData.startsWith('data:image')) {
-      imageData = `data:image/png;base64,${imageData}`;
-    }
-
-    // Send image via WuzAPI
-    const response = await fetchWithRetry(`${WUZAPI_URL}/chat/send/image`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': userToken,
-      },
-      body: JSON.stringify({
-        Phone: checkResult.jid,
-        Image: imageData,
-        Caption: caption || '',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData?.error || 'Erro ao enviar imagem',
-      };
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      messageId: data?.data?.Id || data?.data?.id,
-    };
-  } catch (error) {
-    console.error('[WhatsApp] Error sending image:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro de conexao com a API';
-    return {
-      success: false,
-      error: errorMessage,
-    };
+  // Verify connection first
+  const connectionState = await getConnectionState(userToken);
+  if (connectionState.state !== 'open') {
+    return { success: false, error: 'WhatsApp nao esta conectado. Reconecte na pagina de Configuracoes.' };
   }
+
+  // Check phone on WhatsApp
+  const checkResult = await checkPhoneOnWhatsApp(userToken, phone);
+  if (!checkResult.exists || !checkResult.jid) {
+    return { success: false, error: 'Numero nao encontrado no WhatsApp' };
+  }
+
+  // Ensure image has proper data URI prefix
+  let imageData = imageBase64;
+  if (!imageData.startsWith('data:image')) {
+    imageData = `data:image/png;base64,${imageData}`;
+  }
+
+  const result = await callEdgeFunction('send-image', {
+    userToken, phone: checkResult.jid, image: imageData, caption,
+  });
+
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, messageId: (result.data as { messageId?: string })?.messageId };
 }
 
-// Check if WuzAPI is reachable (quick health check)
-export async function checkApiHealth(): Promise<boolean> {
-  try {
-    const response = await fetchWithTimeout(
-      `${WUZAPI_URL}/health`,
-      { method: 'GET' },
-      HEALTH_CHECK_TIMEOUT
-    );
-    return response.ok;
-  } catch (error) {
-    // Try root endpoint as fallback
-    try {
-      const response = await fetchWithTimeout(
-        `${WUZAPI_URL}/`,
-        { method: 'GET' },
-        HEALTH_CHECK_TIMEOUT
-      );
-      return response.ok;
-    } catch {
-      console.error('[WhatsApp] API health check failed:', error);
-      return false;
-    }
-  }
+// Force reconnect a session
+export async function forceReconnect(userToken: string): Promise<{ success: boolean; error?: string }> {
+  await disconnectSession(userToken);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return await connectSession(userToken);
+}
+
+// Get API URL for display (now returns edge function URL)
+export function getApiUrl(): string {
+  return import.meta.env.VITE_WUZAPI_DISPLAY_URL || `${SUPABASE_URL}/functions/v1/wuzapi-admin`;
 }
 
 // ==================== ADMIN TYPES ====================
@@ -597,76 +367,6 @@ export interface WuzAPIUserStatus {
   jid: string | null;
   phone: string | null;
   phoneName: string | null;
-}
-
-// Get status for a specific user (uses user token directly)
-export async function getUserStatus(userToken: string): Promise<WuzAPIUserStatus | null> {
-  try {
-    const response = await fetchWithRetry(
-      `${WUZAPI_URL}/session/status`,
-      { headers: { 'Token': userToken } },
-      2,
-      10000
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    const jid = data?.data?.jid || null;
-
-    return {
-      name: '',
-      token: userToken,
-      connected: data?.data?.connected || false,
-      loggedIn: data?.data?.loggedIn || false,
-      jid: jid,
-      phone: jid ? jid.split('@')[0].split(':')[0] : null,
-      phoneName: data?.data?.name || null,
-    };
-  } catch (error) {
-    console.error('[WhatsApp] Error getting user status:', error);
-    return null;
-  }
-}
-
-// Force reconnect a session
-export async function forceReconnect(userToken: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    // First disconnect
-    await fetchWithTimeout(`${WUZAPI_URL}/session/logout`, {
-      method: 'POST',
-      headers: { 'Token': userToken },
-    }, 10000);
-
-    // Wait a bit
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Then reconnect
-    const response = await fetchWithRetry(`${WUZAPI_URL}/session/connect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': userToken,
-      },
-      body: JSON.stringify({}),
-    });
-
-    if (!response.ok) {
-      return { success: false, error: 'Erro ao reconectar' };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('[WhatsApp] Error forcing reconnect:', error);
-    return { success: false, error: 'Erro de conexao' };
-  }
-}
-
-// Get API URL for display
-export function getApiUrl(): string {
-  return WUZAPI_URL;
 }
 
 // ==================== MESSAGE FORMATTING ====================
@@ -784,7 +484,6 @@ export function formatOrderMessageForCompany(
     .map((item) => `  - ${item.quantity}x ${item.product_name}: R$ ${item.subtotal.toFixed(2)}`)
     .join('\n');
 
-  // Build discount section
   const discountLines: string[] = [];
   if (discountInfo) {
     if (discountInfo.couponCode && discountInfo.couponDiscount && discountInfo.couponDiscount > 0) {

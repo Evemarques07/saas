@@ -1,42 +1,33 @@
-// Supabase Edge Function para operações WuzAPI
-// Deploy: npx supabase functions deploy wuzapi-admin --no-verify-jwt
-// Secrets: npx supabase secrets set WUZAPI_URL=https://... WUZAPI_ADMIN_TOKEN=... SUPABASE_SERVICE_ROLE_KEY=...
-//
-// Permissões:
-// - create-user: Qualquer usuário autenticado que seja membro da empresa OU super admin
-// - list-users: Apenas super admin
-// - delete-user: Apenas super admin
-// - get-user-status: Qualquer usuário autenticado (verifica status com o token do usuário)
+// Supabase Edge Function para operações WuzAPI (proxy seguro)
+// TODAS as chamadas ao WuzAPI passam por aqui, autenticadas via Supabase JWT
+// Deploy: npx supabase functions deploy wuzapi-admin --no-verify-jwt --project-ref jyjkeqnmofzjnzpvkugl
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
 
 // Types
-interface CreateUserRequest {
-  action: 'create-user';
-  companySlug: string;
-  userToken: string;
-}
+type ActionType =
+  | 'create-user'
+  | 'delete-user'
+  | 'list-users'
+  | 'get-user-status'
+  | 'health-check'
+  | 'connect-session'
+  | 'disconnect-session'
+  | 'get-qr'
+  | 'get-session-status'
+  | 'check-phone'
+  | 'send-text'
+  | 'send-image';
 
-interface DeleteUserRequest {
-  action: 'delete-user';
-  userId: string;
+interface RequestBody {
+  action: ActionType;
+  [key: string]: unknown;
 }
-
-interface ListUsersRequest {
-  action: 'list-users';
-}
-
-interface GetUserStatusRequest {
-  action: 'get-user-status';
-  userToken: string;
-}
-
-type RequestBody = CreateUserRequest | DeleteUserRequest | ListUsersRequest | GetUserStatusRequest;
 
 // Verify Supabase JWT Token and get user info
-async function verifyAuthBasic(req: Request): Promise<{
+async function verifyAuth(req: Request): Promise<{
   authorized: boolean;
   error?: string;
   userId?: string;
@@ -45,78 +36,42 @@ async function verifyAuthBasic(req: Request): Promise<{
 }> {
   try {
     const authHeader = req.headers.get('Authorization');
-    console.log('[wuzapi-admin] Auth header present:', !!authHeader);
-
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return { authorized: false, error: 'Token de autorizacao ausente' };
     }
 
     const accessToken = authHeader.replace('Bearer ', '');
-    console.log('[wuzapi-admin] Token length:', accessToken.length);
-
-    // Get Supabase config
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    console.log('[wuzapi-admin] Supabase URL present:', !!supabaseUrl);
-    console.log('[wuzapi-admin] Service key present:', !!supabaseServiceKey);
-
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('[wuzapi-admin] Missing Supabase config');
       return { authorized: false, error: 'Configuracao do Supabase ausente' };
     }
 
-    // Create Supabase client with the user's access token to verify it
     const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
     });
 
-    // Verify the token by getting the user
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(accessToken);
-
     if (userError || !user) {
-      console.error('[wuzapi-admin] Token verification failed:', userError);
       return { authorized: false, error: 'Token invalido ou expirado' };
     }
 
-    console.log('[wuzapi-admin] Token verified for user:', user.id, user.email);
-
-    // Use service role key to query profiles (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Check if user exists in profiles table
-    console.log('[wuzapi-admin] Checking profile for UID:', user.id);
-
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('is_super_admin')
       .eq('id', user.id)
       .single();
 
-    if (profileError) {
-      console.error('[wuzapi-admin] Profile query error:', profileError);
-      return { authorized: false, error: 'Erro ao buscar perfil: ' + profileError.message };
-    }
-
-    if (!profile) {
-      console.error('[wuzapi-admin] Profile not found for UID:', user.id);
-      return { authorized: false, error: 'Perfil nao encontrado' };
-    }
-
-    console.log('[wuzapi-admin] Profile found, is_super_admin:', profile.is_super_admin);
-    console.log('[wuzapi-admin] Auth successful for:', user.email);
-
     return {
       authorized: true,
       userId: user.id,
       email: user.email,
-      isSuperAdmin: profile.is_super_admin || false
+      isSuperAdmin: profile?.is_super_admin || false,
     };
   } catch (err) {
-    console.error('[wuzapi-admin] Auth error:', err);
-    return { authorized: false, error: 'Erro ao verificar autorizacao: ' + (err instanceof Error ? err.message : String(err)) };
+    return { authorized: false, error: 'Erro ao verificar autorizacao' };
   }
 }
 
@@ -125,14 +80,9 @@ async function verifyCompanyMembership(userId: string, companySlug: string): Pro
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return false;
-    }
+    if (!supabaseUrl || !supabaseServiceKey) return false;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Check if user is member of the company
     const { data, error } = await supabase
       .from('company_members')
       .select('id, companies!inner(slug)')
@@ -140,263 +90,388 @@ async function verifyCompanyMembership(userId: string, companySlug: string): Pro
       .eq('companies.slug', companySlug)
       .single();
 
-    if (error || !data) {
-      console.log('[wuzapi-admin] User', userId, 'is not member of company', companySlug);
-      return false;
-    }
-
-    console.log('[wuzapi-admin] User', userId, 'is member of company', companySlug);
-    return true;
-  } catch (err) {
-    console.error('[wuzapi-admin] Membership check error:', err);
+    return !error && !!data;
+  } catch {
     return false;
   }
+}
+
+// Verify user has access to a specific user token (owns company with that token)
+async function verifyTokenAccess(userId: string, userToken: string, isSuperAdmin: boolean): Promise<boolean> {
+  if (isSuperAdmin) return true;
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseServiceKey) return false;
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Find companies where user is a member and whatsapp_settings has the token
+    const { data: memberships } = await supabase
+      .from('company_members')
+      .select('company_id, companies!inner(whatsapp_settings)')
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (!memberships) return false;
+
+    return memberships.some((m: { companies: { whatsapp_settings: { user_token?: string } | null } }) =>
+      m.companies?.whatsapp_settings?.user_token === userToken
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Proxy call to WuzAPI
+async function wuzapiCall(
+  path: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string } = {}
+): Promise<Response> {
+  const WUZAPI_URL = Deno.env.get('WUZAPI_URL');
+  if (!WUZAPI_URL) throw new Error('WUZAPI_URL not configured');
+
+  const url = `${WUZAPI_URL}${path}`;
+  const response = await fetch(url, {
+    method: options.method || 'GET',
+    headers: options.headers || {},
+    body: options.body,
+  });
+  return response;
+}
+
+function jsonResponse(data: unknown, status: number, corsHeaders: Record<string, string>): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 serve(async (req: Request) => {
   const corsHeaders = getCorsHeaders(req);
 
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
-
-  console.log('[wuzapi-admin] Request received:', req.method);
 
   try {
     const WUZAPI_URL = Deno.env.get('WUZAPI_URL');
     const WUZAPI_ADMIN_TOKEN = Deno.env.get('WUZAPI_ADMIN_TOKEN');
 
-    console.log('[wuzapi-admin] WUZAPI_URL present:', !!WUZAPI_URL);
-    console.log('[wuzapi-admin] WUZAPI_ADMIN_TOKEN present:', !!WUZAPI_ADMIN_TOKEN);
-
     if (!WUZAPI_URL || !WUZAPI_ADMIN_TOKEN) {
-      console.error('[wuzapi-admin] Missing WUZAPI_URL or WUZAPI_ADMIN_TOKEN');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Configuracao do WuzAPI ausente no servidor' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: 'WuzAPI nao configurado' }, 500, corsHeaders);
     }
 
-    // Verify basic authentication first
-    const auth = await verifyAuthBasic(req);
+    // Verify auth
+    const auth = await verifyAuth(req);
     if (!auth.authorized) {
-      console.error('[wuzapi-admin] Auth failed:', auth.error);
-      return new Response(
-        JSON.stringify({ success: false, error: auth.error }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: auth.error }, 401, corsHeaders);
     }
 
     const body: RequestBody = await req.json();
-    console.log('[wuzapi-admin] Action:', body.action, 'User:', auth.email, 'SuperAdmin:', auth.isSuperAdmin);
+    const { action } = body;
 
-    // Route based on action
-    switch (body.action) {
+    switch (action) {
+      // ==================== ADMIN ACTIONS (require super admin) ====================
+
       case 'create-user': {
-        const { companySlug, userToken } = body as CreateUserRequest;
+        const { companySlug, userToken } = body as { action: string; companySlug: string; userToken: string };
 
         if (!companySlug || !userToken) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'companySlug e userToken sao obrigatorios' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: 'companySlug e userToken sao obrigatorios' }, 400, corsHeaders);
         }
 
-        // For create-user: Allow if user is super admin OR is member of the company
+        // Allow super admin or company member
         if (!auth.isSuperAdmin) {
           const isMember = await verifyCompanyMembership(auth.userId!, companySlug);
           if (!isMember) {
-            console.error('[wuzapi-admin] User is not member of company:', companySlug);
-            return new Response(
-              JSON.stringify({ success: false, error: 'Voce nao tem permissao para configurar WhatsApp desta empresa' }),
-              { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
           }
         }
 
-        // First check if user already exists
-        const listResponse = await fetch(`${WUZAPI_URL}/admin/users`, {
-          headers: { 'Authorization': WUZAPI_ADMIN_TOKEN },
+        // Check if user already exists
+        const listResp = await wuzapiCall('/admin/users', {
+          headers: { Authorization: WUZAPI_ADMIN_TOKEN },
         });
-
-        if (listResponse.ok) {
-          const listData = await listResponse.json();
-          const existingUser = listData?.data?.find((u: { token: string }) => u.token === userToken);
-          if (existingUser) {
-            console.log(`[wuzapi-admin] User already exists: ejym-${companySlug}`);
-            return new Response(
-              JSON.stringify({ success: true, message: 'Usuario ja existe' }),
-              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+        if (listResp.ok) {
+          const listData = await listResp.json();
+          const existing = listData?.data?.find((u: { token: string }) => u.token === userToken);
+          if (existing) {
+            return jsonResponse({ success: true, message: 'Usuario ja existe' }, 200, corsHeaders);
           }
         }
 
-        // Create user
-        const createResponse = await fetch(`${WUZAPI_URL}/admin/users`, {
+        const createResp = await wuzapiCall('/admin/users', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': WUZAPI_ADMIN_TOKEN,
-          },
-          body: JSON.stringify({
-            name: `ejym-${companySlug}`,
-            token: userToken,
-          }),
+          headers: { 'Content-Type': 'application/json', Authorization: WUZAPI_ADMIN_TOKEN },
+          body: JSON.stringify({ name: `ejym-${companySlug}`, token: userToken }),
         });
 
-        if (!createResponse.ok) {
-          const errorData = await createResponse.json().catch(() => ({}));
-          // User already exists is not an error
-          if (createResponse.status === 409 || errorData?.error?.includes('already exists')) {
-            return new Response(
-              JSON.stringify({ success: true, message: 'Usuario ja existe' }),
-              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+        if (!createResp.ok) {
+          const err = await createResp.json().catch(() => ({}));
+          if (createResp.status === 409) {
+            return jsonResponse({ success: true, message: 'Usuario ja existe' }, 200, corsHeaders);
           }
-          console.error('[wuzapi-admin] Create user error:', errorData);
-          return new Response(
-            JSON.stringify({ success: false, error: errorData?.error || 'Erro ao criar usuario' }),
-            { status: createResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: err?.error || 'Erro ao criar usuario' }, createResp.status, corsHeaders);
         }
 
-        console.log(`[wuzapi-admin] User created: ejym-${companySlug}`);
-        return new Response(
-          JSON.stringify({ success: true }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ success: true }, 200, corsHeaders);
       }
 
       case 'list-users': {
-        // Only super admins can list all users
         if (!auth.isSuperAdmin) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'Acesso negado. Apenas super administradores.' }),
-            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: 'Apenas super admin' }, 403, corsHeaders);
         }
 
-        console.log('[wuzapi-admin] Listing users from:', WUZAPI_URL);
-
-        const response = await fetch(`${WUZAPI_URL}/admin/users`, {
-          headers: { 'Authorization': WUZAPI_ADMIN_TOKEN },
+        const resp = await wuzapiCall('/admin/users', {
+          headers: { Authorization: WUZAPI_ADMIN_TOKEN },
         });
 
-        console.log('[wuzapi-admin] WuzAPI response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[wuzapi-admin] List users error:', errorText);
-          return new Response(
-            JSON.stringify({ success: false, error: 'Erro ao listar usuarios' }),
-            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        if (!resp.ok) {
+          return jsonResponse({ success: false, error: 'Erro ao listar usuarios' }, resp.status, corsHeaders);
         }
 
-        const data = await response.json();
+        const data = await resp.json();
         const users = (data?.data || []).map((u: { id: string; name: string; token: string }) => ({
-          id: u.id,
-          name: u.name,
-          token: u.token,
+          id: u.id, name: u.name, token: u.token,
         }));
 
-        console.log('[wuzapi-admin] Found', users.length, 'users');
-
-        return new Response(
-          JSON.stringify({ success: true, users }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ success: true, users }, 200, corsHeaders);
       }
 
       case 'delete-user': {
-        // Only super admins can delete users
         if (!auth.isSuperAdmin) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'Acesso negado. Apenas super administradores.' }),
-            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: 'Apenas super admin' }, 403, corsHeaders);
         }
 
-        const { userId } = body as DeleteUserRequest;
-
+        const { userId } = body as { action: string; userId: string };
         if (!userId) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'userId e obrigatorio' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: 'userId obrigatorio' }, 400, corsHeaders);
         }
 
-        const response = await fetch(`${WUZAPI_URL}/admin/users/${userId}`, {
+        const resp = await wuzapiCall(`/admin/users/${userId}`, {
           method: 'DELETE',
-          headers: { 'Authorization': WUZAPI_ADMIN_TOKEN },
+          headers: { Authorization: WUZAPI_ADMIN_TOKEN },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          return new Response(
-            JSON.stringify({ success: false, error: errorData?.error || 'Erro ao deletar usuario' }),
-            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        if (!resp.ok) {
+          return jsonResponse({ success: false, error: 'Erro ao deletar' }, resp.status, corsHeaders);
         }
 
-        console.log(`[wuzapi-admin] User deleted: ${userId}`);
-        return new Response(
-          JSON.stringify({ success: true }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ success: true }, 200, corsHeaders);
       }
 
-      case 'get-user-status': {
-        const { userToken } = body as GetUserStatusRequest;
+      // ==================== SESSION ACTIONS (require token access) ====================
 
+      case 'health-check': {
+        // Any authenticated user can check health
+        try {
+          const resp = await wuzapiCall('/admin/users', {
+            headers: { Authorization: WUZAPI_ADMIN_TOKEN },
+          });
+          return jsonResponse({ success: true, online: resp.ok }, 200, corsHeaders);
+        } catch {
+          return jsonResponse({ success: true, online: false }, 200, corsHeaders);
+        }
+      }
+
+      case 'connect-session': {
+        const { userToken } = body as { action: string; userToken: string };
         if (!userToken) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'userToken e obrigatorio' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: false, error: 'userToken obrigatorio' }, 400, corsHeaders);
         }
 
-        const response = await fetch(`${WUZAPI_URL}/session/status`, {
-          headers: { 'Token': userToken },
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/session/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Token: userToken },
+          body: JSON.stringify({}),
         });
 
-        if (!response.ok) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'Erro ao obter status' }),
-            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          return jsonResponse({ success: false, error: err?.error || 'Erro ao conectar' }, resp.status, corsHeaders);
         }
 
-        const data = await response.json();
-        return new Response(
-          JSON.stringify({
+        return jsonResponse({ success: true }, 200, corsHeaders);
+      }
+
+      case 'disconnect-session': {
+        const { userToken } = body as { action: string; userToken: string };
+        if (!userToken) {
+          return jsonResponse({ success: false, error: 'userToken obrigatorio' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/session/logout', {
+          method: 'POST',
+          headers: { Token: userToken },
+        });
+
+        return jsonResponse({ success: resp.ok }, 200, corsHeaders);
+      }
+
+      case 'get-qr': {
+        const { userToken } = body as { action: string; userToken: string };
+        if (!userToken) {
+          return jsonResponse({ success: false, error: 'userToken obrigatorio' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/session/qr', {
+          headers: { Token: userToken },
+        });
+
+        if (!resp.ok) {
+          return jsonResponse({ success: false, qrCode: null }, 200, corsHeaders);
+        }
+
+        const data = await resp.json();
+        return jsonResponse({ success: true, qrCode: data?.data?.QRCode || null }, 200, corsHeaders);
+      }
+
+      case 'get-session-status':
+      case 'get-user-status': {
+        const { userToken } = body as { action: string; userToken: string };
+        if (!userToken) {
+          return jsonResponse({ success: false, error: 'userToken obrigatorio' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/session/status', {
+          headers: { Token: userToken },
+        });
+
+        if (!resp.ok) {
+          return jsonResponse({
             success: true,
-            status: {
-              connected: data?.data?.connected || false,
-              loggedIn: data?.data?.loggedIn || false,
-              jid: data?.data?.jid || null,
-              name: data?.data?.name || null,
-            },
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+            status: { connected: false, loggedIn: false, jid: null, phone: null, name: null, qrcode: null },
+          }, 200, corsHeaders);
+        }
+
+        const data = await resp.json();
+        const jid = data?.data?.jid || null;
+        const phone = jid ? jid.split('@')[0].split(':')[0] : null;
+
+        return jsonResponse({
+          success: true,
+          status: {
+            connected: data?.data?.connected || false,
+            loggedIn: data?.data?.loggedIn || false,
+            jid,
+            phone,
+            name: data?.data?.name || null,
+            qrcode: data?.data?.qrcode || null,
+          },
+        }, 200, corsHeaders);
+      }
+
+      case 'check-phone': {
+        const { userToken, phone } = body as { action: string; userToken: string; phone: string };
+        if (!userToken || !phone) {
+          return jsonResponse({ success: false, error: 'userToken e phone obrigatorios' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/user/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Token: userToken },
+          body: JSON.stringify({ Phone: [phone] }),
+        });
+
+        if (!resp.ok) {
+          return jsonResponse({ success: true, exists: false, jid: null, verifiedName: null }, 200, corsHeaders);
+        }
+
+        const data = await resp.json();
+        const user = data?.data?.Users?.[0];
+
+        if (user?.IsInWhatsapp) {
+          const jidPhone = user.JID?.split('@')[0]?.split(':')[0] || null;
+          return jsonResponse({
+            success: true, exists: true, jid: jidPhone, verifiedName: user.VerifiedName || null,
+          }, 200, corsHeaders);
+        }
+
+        return jsonResponse({ success: true, exists: false, jid: null, verifiedName: null }, 200, corsHeaders);
+      }
+
+      case 'send-text': {
+        const { userToken, phone, message } = body as { action: string; userToken: string; phone: string; message: string };
+        if (!userToken || !phone || !message) {
+          return jsonResponse({ success: false, error: 'userToken, phone e message obrigatorios' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/chat/send/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Token: userToken },
+          body: JSON.stringify({ Phone: phone, Body: message }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          return jsonResponse({ success: false, error: err?.error || 'Erro ao enviar' }, resp.status, corsHeaders);
+        }
+
+        const data = await resp.json();
+        return jsonResponse({ success: true, messageId: data?.data?.Id || data?.data?.id }, 200, corsHeaders);
+      }
+
+      case 'send-image': {
+        const { userToken, phone, image, caption } = body as {
+          action: string; userToken: string; phone: string; image: string; caption?: string;
+        };
+        if (!userToken || !phone || !image) {
+          return jsonResponse({ success: false, error: 'userToken, phone e image obrigatorios' }, 400, corsHeaders);
+        }
+
+        if (!await verifyTokenAccess(auth.userId!, userToken, auth.isSuperAdmin!)) {
+          return jsonResponse({ success: false, error: 'Sem permissao' }, 403, corsHeaders);
+        }
+
+        const resp = await wuzapiCall('/chat/send/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Token: userToken },
+          body: JSON.stringify({ Phone: phone, Image: image, Caption: caption || '' }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          return jsonResponse({ success: false, error: err?.error || 'Erro ao enviar imagem' }, resp.status, corsHeaders);
+        }
+
+        const data = await resp.json();
+        return jsonResponse({ success: true, messageId: data?.data?.Id || data?.data?.id }, 200, corsHeaders);
       }
 
       default:
-        return new Response(
-          JSON.stringify({ success: false, error: 'Acao invalida' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ success: false, error: 'Acao invalida' }, 400, corsHeaders);
     }
   } catch (error) {
     console.error('[wuzapi-admin] Exception:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido',
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+    }, 500, corsHeaders);
   }
 });
