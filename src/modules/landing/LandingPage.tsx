@@ -1109,8 +1109,8 @@ export function LandingPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-              <Link to="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link>
-              <Link to="/termos" className="hover:text-white transition-colors">Termos de Serviço</Link>
+              <a href="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</a>
+              <a href="/termos" className="hover:text-white transition-colors">Termos de Serviço</a>
               <span>&copy; {new Date().getFullYear()} Mercado Virtual</span>
             </div>
           </div>
