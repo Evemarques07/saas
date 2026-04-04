@@ -111,7 +111,7 @@ export function ScannerPreview() {
         <div className="absolute bottom-3 left-3 right-3">
           {state === 'ready' && (
             <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 text-center">
-              <p className="text-white text-sm">Posicione o codigo de barras</p>
+              <p className="text-white text-sm">Posicione o código de barras</p>
             </div>
           )}
           {state === 'scanning' && (
@@ -141,7 +141,7 @@ export function ScannerPreview() {
       {(state === 'scanned' || state === 'saved') && (
         <div className="flex-1 space-y-3 animate-fade-in">
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-            <label className="text-xs text-gray-500 dark:text-gray-400">Codigo de Barras</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400">Código de Barras</label>
             <p className="font-mono text-sm text-gray-900 dark:text-white">{scannedProduct.barcode}</p>
           </div>
 
@@ -162,7 +162,7 @@ export function ScannerPreview() {
           </div>
 
           <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-800">
-            <label className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Preco de Venda</label>
+            <label className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Preço de Venda</label>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-gray-500">R$</span>
               <input

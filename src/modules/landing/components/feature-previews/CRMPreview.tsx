@@ -127,7 +127,7 @@ export function CRMPreview() {
             <p className="text-sm font-bold text-gray-900 dark:text-white">
               {selectedCustomer.lastOrder}
             </p>
-            <p className="text-[10px] text-gray-500">Ultimo pedido</p>
+            <p className="text-[10px] text-gray-500">Último pedido</p>
           </div>
         </div>
 
@@ -158,7 +158,7 @@ export function CRMPreview() {
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {{ historico: 'Histórico', dados: 'Dados', notas: 'Notas' }[tab]}
             </button>
           ))}
         </div>

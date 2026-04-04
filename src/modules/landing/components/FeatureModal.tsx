@@ -125,7 +125,7 @@ export function FeatureModal({ isOpen, onClose, title, icon, color, children }: 
         {/* Footer hint */}
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            Role a pagina para fechar este preview
+            Role a página para fechar este preview
           </p>
         </div>
       </div>

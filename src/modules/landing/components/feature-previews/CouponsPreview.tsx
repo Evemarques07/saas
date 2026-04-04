@@ -208,7 +208,7 @@ export function CouponsPreview() {
               {/* Code */}
               <div>
                 <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
-                  Codigo do cupom
+                  Código do cupom
                 </label>
                 <input
                   type="text"

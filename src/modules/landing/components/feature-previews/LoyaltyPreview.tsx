@@ -24,8 +24,8 @@ const tiers = [
 const rewards = [
   { id: 1, points: 100, value: 'R$ 5', description: 'de desconto', available: true },
   { id: 2, points: 250, value: 'R$ 15', description: 'de desconto', available: true },
-  { id: 3, points: 500, value: 'Produto', description: 'gratis ate R$ 30', available: false },
-  { id: 4, points: 1000, value: 'Frete', description: 'gratis por 1 mes', available: false },
+  { id: 3, points: 500, value: 'Produto', description: 'grátis até R$ 30', available: false },
+  { id: 4, points: 1000, value: 'Frete', description: 'grátis por 1 mês', available: false },
 ];
 
 const history = [
@@ -181,7 +181,7 @@ export function LoyaltyPreview() {
       {/* History */}
       <div className="flex-1 overflow-hidden">
         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-          Historico de Pontos
+          Histórico de Pontos
         </h4>
         <div className="space-y-2">
           {history.map((item) => (

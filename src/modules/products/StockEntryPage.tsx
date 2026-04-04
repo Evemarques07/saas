@@ -4,13 +4,13 @@ import AddIcon from '@mui/icons-material/Add';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SearchIcon from '@mui/icons-material/Search';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Select, Card, Modal, ModalFooter } from '../../components/ui';
+import { Button, Input, Select, Card, Table, Modal, ModalFooter, Badge } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { registerStockEntry, getStockEntries } from '../../services/stock';
-import { Product, StockEntry } from '../../types';
+import { Product, StockEntry, TableColumn } from '../../types';
 
 export function StockEntryPage() {
   const { currentCompany } = useTenant();
@@ -148,6 +148,67 @@ export function StockEntryPage() {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('pt-BR');
 
+  const entryColumns: TableColumn<StockEntry>[] = [
+    {
+      key: 'received_at',
+      label: 'Data',
+      render: (e) => formatDate(e.received_at),
+    },
+    {
+      key: 'product_id',
+      label: 'Produto',
+      render: (e) => (
+        <span className="font-medium">
+          {(e.product as unknown as { name: string })?.name || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'quantity_received',
+      label: 'Qtd Recebida',
+      render: (e) => <span className="text-right block">{e.quantity_received}</span>,
+    },
+    {
+      key: 'quantity_remaining',
+      label: 'Qtd Restante',
+      render: (e) => (
+        <span className={`text-right block font-medium ${
+          e.quantity_remaining === 0
+            ? 'text-gray-400'
+            : e.quantity_remaining < e.quantity_received
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : 'text-green-600 dark:text-green-400'
+        }`}>
+          {e.quantity_remaining}
+        </span>
+      ),
+    },
+    {
+      key: 'unit_cost',
+      label: 'Custo Unit.',
+      render: (e) => <span className="text-right block">{formatCurrency(e.unit_cost)}</span>,
+    },
+    {
+      key: 'total' as keyof StockEntry,
+      label: 'Total',
+      render: (e) => (
+        <span className="text-right block font-medium">
+          {formatCurrency(e.quantity_received * e.unit_cost)}
+        </span>
+      ),
+    },
+    {
+      key: 'supplier',
+      label: 'Fornecedor',
+      render: (e) => <span className="text-gray-500">{e.supplier || '—'}</span>,
+    },
+    {
+      key: 'invoice_number',
+      label: 'NF',
+      render: (e) => <span className="text-gray-500">{e.invoice_number || '—'}</span>,
+    },
+  ];
+
   return (
     <PageContainer
       title="Entrada de Estoque"
@@ -179,10 +240,8 @@ export function StockEntryPage() {
         </div>
       </Card>
 
-      {/* Tabela de Entradas */}
-      {loading ? (
-        <div className="text-center py-12 text-gray-500">Carregando...</div>
-      ) : filteredEntries.length === 0 ? (
+      {/* Entradas */}
+      {filteredEntries.length === 0 && !loading ? (
         <EmptyState
           icon={<InventoryIcon className="w-16 h-16" />}
           title="Nenhuma entrada registrada"
@@ -194,76 +253,122 @@ export function StockEntryPage() {
           }
         />
       ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Data</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Produto</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Qtd Recebida</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Qtd Restante</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Custo Unit.</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Total</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Fornecedor</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">NF</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEntries.map((entry) => {
-                  const product = entry.product as unknown as { name: string } | undefined;
-                  return (
-                    <tr
-                      key={entry.id}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <td className="py-3 px-4">{formatDate(entry.received_at)}</td>
-                      <td className="py-3 px-4 font-medium">{product?.name || '—'}</td>
-                      <td className="py-3 px-4 text-right">{entry.quantity_received}</td>
-                      <td className="py-3 px-4 text-right">
-                        <span
-                          className={
-                            entry.quantity_remaining === 0
-                              ? 'text-gray-400'
-                              : entry.quantity_remaining < entry.quantity_received
-                                ? 'text-yellow-600'
-                                : 'text-green-600'
-                          }
-                        >
-                          {entry.quantity_remaining}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">{formatCurrency(entry.unit_cost)}</td>
-                      <td className="py-3 px-4 text-right font-medium">
+        <>
+          <Table<StockEntry>
+            columns={entryColumns}
+            data={filteredEntries}
+            keyExtractor={(e) => e.id}
+            loading={loading}
+            pageSize={20}
+            emptyMessage="Nenhuma entrada encontrada"
+            mobileCardRender={(entry) => {
+              const product = entry.product as unknown as { name: string } | undefined;
+              const fifoStatus = entry.quantity_remaining === 0
+                ? 'depleted'
+                : entry.quantity_remaining < entry.quantity_received
+                  ? 'partial'
+                  : 'full';
+              const fifoConfig = {
+                full: { label: 'Integral', variant: 'success' as const },
+                partial: { label: 'Parcial', variant: 'warning' as const },
+                depleted: { label: 'Esgotado', variant: 'default' as const },
+              };
+              const config = fifoConfig[fifoStatus];
+              const percentage = entry.quantity_received > 0
+                ? (entry.quantity_remaining / entry.quantity_received) * 100
+                : 0;
+
+              return (
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {product?.name || '—'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {formatDate(entry.received_at)}
+                        {entry.supplier && ` · ${entry.supplier}`}
+                        {entry.invoice_number && ` · ${entry.invoice_number}`}
+                      </p>
+                    </div>
+                    <Badge variant={config.variant} className="flex-shrink-0">
+                      {config.label}
+                    </Badge>
+                  </div>
+
+                  {/* FIFO Progress Bar */}
+                  <div className="mt-3 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        fifoStatus === 'depleted'
+                          ? 'bg-gray-400'
+                          : fifoStatus === 'partial'
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">Recebido</span>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{entry.quantity_received}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">Restante</span>
+                        <p className={`font-medium ${
+                          entry.quantity_remaining === 0
+                            ? 'text-gray-400'
+                            : entry.quantity_remaining < entry.quantity_received
+                              ? 'text-yellow-600 dark:text-yellow-400'
+                              : 'text-green-600 dark:text-green-400'
+                        }`}>{entry.quantity_remaining}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">Custo Unit.</span>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(entry.unit_cost)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">Total</span>
+                      <p className="font-semibold text-primary-600 dark:text-primary-400">
                         {formatCurrency(entry.quantity_received * entry.unit_cost)}
-                      </td>
-                      <td className="py-3 px-4 text-gray-500">{entry.supplier || '—'}</td>
-                      <td className="py-3 px-4 text-gray-500">{entry.invoice_number || '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-300 dark:border-gray-600">
-                  <td colSpan={2} className="py-3 px-4 font-semibold">Total</td>
-                  <td className="py-3 px-4 text-right font-semibold">
-                    {filteredEntries.reduce((sum, e) => sum + e.quantity_received, 0)}
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold">
-                    {filteredEntries.reduce((sum, e) => sum + e.quantity_remaining, 0)}
-                  </td>
-                  <td className="py-3 px-4"></td>
-                  <td className="py-3 px-4 text-right font-semibold">
-                    {formatCurrency(
-                      filteredEntries.reduce((sum, e) => sum + e.quantity_received * e.unit_cost, 0)
-                    )}
-                  </td>
-                  <td colSpan={2}></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </Card>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }}
+          />
+
+          {/* Totais */}
+          {filteredEntries.length > 0 && (
+            <Card className="mt-4 p-3 md:p-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">Total Recebido</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {filteredEntries.reduce((sum, e) => sum + e.quantity_received, 0)} un
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">Total Restante</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {filteredEntries.reduce((sum, e) => sum + e.quantity_remaining, 0)} un
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">Custo Total</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {formatCurrency(filteredEntries.reduce((sum, e) => sum + e.quantity_received * e.unit_cost, 0))}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Modal Nova Entrada */}

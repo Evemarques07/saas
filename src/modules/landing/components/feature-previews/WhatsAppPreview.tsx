@@ -114,8 +114,8 @@ export function WhatsAppPreview() {
         {showConfirmation && (
           <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tr-sm p-4 max-w-[90%] ml-auto animate-fade-in">
             <p className="text-sm text-gray-800 dark:text-gray-200">
-              Ola {orderMessage.customerName.split(' ')[0]}! Pedido confirmado!
-              Seu pedido sera enviado em ate 2 dias uteis. Obrigado pela preferencia!
+              Olá {orderMessage.customerName.split(' ')[0]}! Pedido confirmado!
+              Seu pedido será enviado em até 2 dias úteis. Obrigado pela preferência!
             </p>
             <div className="flex justify-end items-center gap-1 mt-2">
               <span className="text-[10px] text-gray-500">10:33</span>

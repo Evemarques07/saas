@@ -6,12 +6,12 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import UndoIcon from '@mui/icons-material/Undo';
 import TuneIcon from '@mui/icons-material/Tune';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Input, Select, Card, Badge } from '../../components/ui';
+import { Input, Select, Card, Table, Badge } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { getStockMovements } from '../../services/stock';
-import { Product, StockMovement, StockMovementType } from '../../types';
+import { Product, StockMovement, StockMovementType, TableColumn } from '../../types';
 
 type BadgeVariant = 'success' | 'danger' | 'warning' | 'default' | 'info';
 
@@ -105,6 +105,71 @@ export function StockMovementsPage() {
       minute: '2-digit',
     });
 
+  const movementColumns: TableColumn<StockMovement>[] = [
+    {
+      key: 'created_at',
+      label: 'Data/Hora',
+      render: (m) => <span className="text-gray-500 whitespace-nowrap">{formatDateTime(m.created_at)}</span>,
+    },
+    {
+      key: 'type',
+      label: 'Tipo',
+      render: (m) => {
+        const config = TYPE_CONFIG[m.type];
+        const Icon = config.icon;
+        return (
+          <Badge variant={config.variant}>
+            <Icon className="w-3 h-3 mr-1" />
+            {config.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'product_id',
+      label: 'Produto',
+      render: (m) => (
+        <span className="font-medium">
+          {(m.product as unknown as { name: string })?.name || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'quantity',
+      label: 'Quantidade',
+      render: (m) => (
+        <span className={`text-right block font-medium ${
+          m.quantity > 0
+            ? 'text-green-600 dark:text-green-400'
+            : m.quantity < 0
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-gray-400'
+        }`}>
+          {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+        </span>
+      ),
+    },
+    {
+      key: 'unit_cost',
+      label: 'Custo Unit.',
+      render: (m) => <span className="text-right block">{formatCurrency(m.unit_cost)}</span>,
+    },
+    {
+      key: 'balance_after',
+      label: 'Saldo Após',
+      render: (m) => <span className="text-right block font-medium">{m.balance_after}</span>,
+    },
+    {
+      key: 'notes',
+      label: 'Observação',
+      render: (m) => (
+        <span className="text-gray-500 text-xs max-w-xs truncate block">
+          {m.notes || '—'}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <PageContainer
       title="Movimentações de Estoque"
@@ -160,75 +225,81 @@ export function StockMovementsPage() {
         </div>
       </Card>
 
-      {/* Tabela */}
-      {loading ? (
-        <div className="text-center py-12 text-gray-500">Carregando...</div>
-      ) : filteredMovements.length === 0 ? (
+      {/* Movimentações */}
+      {filteredMovements.length === 0 && !loading ? (
         <EmptyState
           icon={<TimelineIcon className="w-16 h-16" />}
           title="Nenhuma movimentação encontrada"
           description="As movimentações aparecerão aqui quando você registrar entradas ou realizar vendas."
         />
       ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Data/Hora</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Tipo</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Produto</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Quantidade</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Custo Unit.</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Saldo Após</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMovements.map((mov) => {
-                  const product = mov.product as unknown as { name: string } | undefined;
-                  const config = TYPE_CONFIG[mov.type];
-                  const Icon = config.icon;
-                  return (
-                    <tr
-                      key={mov.id}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
-                        {formatDateTime(mov.created_at)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={config.variant}>
-                          <Icon className="w-3 h-3 mr-1" />
-                          {config.label}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 font-medium">{product?.name || '—'}</td>
-                      <td className="py-3 px-4 text-right">
-                        <span
-                          className={
-                            mov.quantity > 0
-                              ? 'text-green-600 font-medium'
-                              : mov.quantity < 0
-                                ? 'text-red-600 font-medium'
-                                : 'text-gray-400'
-                          }
-                        >
-                          {mov.quantity > 0 ? `+${mov.quantity}` : mov.quantity}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">{formatCurrency(mov.unit_cost)}</td>
-                      <td className="py-3 px-4 text-right font-medium">{mov.balance_after}</td>
-                      <td className="py-3 px-4 text-gray-500 text-xs max-w-xs truncate">
-                        {mov.notes || '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <Table<StockMovement>
+          columns={movementColumns}
+          data={filteredMovements}
+          keyExtractor={(m) => m.id}
+          loading={loading}
+          pageSize={20}
+          emptyMessage="Nenhuma movimentação encontrada"
+          mobileCardRender={(mov) => {
+            const product = mov.product as unknown as { name: string } | undefined;
+            const config = TYPE_CONFIG[mov.type];
+            const Icon = config.icon;
+
+            return (
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {product?.name || '—'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {formatDateTime(mov.created_at)}
+                    </p>
+                  </div>
+                  <Badge variant={config.variant} className="flex-shrink-0">
+                    <Icon className="w-3 h-3 mr-1" />
+                    {config.label}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">Quantidade</span>
+                      <p className={`font-medium ${
+                        mov.quantity > 0
+                          ? 'text-green-600 dark:text-green-400'
+                          : mov.quantity < 0
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-400'
+                      }`}>
+                        {mov.quantity > 0 ? `+${mov.quantity}` : mov.quantity}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">Custo Unit.</span>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatCurrency(mov.unit_cost)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">Saldo Após</span>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      {mov.balance_after}
+                    </p>
+                  </div>
+                </div>
+
+                {mov.notes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">
+                    {mov.notes}
+                  </p>
+                )}
+              </div>
+            );
+          }}
+        />
       )}
     </PageContainer>
   );

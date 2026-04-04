@@ -135,8 +135,8 @@ export function LandingPage() {
     {
       id: 'catalog',
       icon: ShoppingBagIcon,
-      title: 'Catalogo Online',
-      description: 'Catalogo digital profissional que seus clientes podem acessar 24h por dia, de qualquer lugar.',
+      title: 'Catálogo Online',
+      description: 'Catálogo digital profissional que seus clientes podem acessar 24h por dia, de qualquer lugar.',
       color: 'from-blue-500 to-cyan-500',
       bgColor: 'bg-blue-500/10',
       preview: CatalogPreview,
@@ -145,7 +145,7 @@ export function LandingPage() {
       id: 'whatsapp',
       icon: WhatsAppIcon,
       title: 'Pedidos via WhatsApp',
-      description: 'Receba pedidos diretamente no WhatsApp com notificacoes instantaneas.',
+      description: 'Receba pedidos diretamente no WhatsApp com notificações instantâneas.',
       color: 'from-green-500 to-emerald-500',
       bgColor: 'bg-green-500/10',
       preview: WhatsAppPreview,
@@ -154,7 +154,7 @@ export function LandingPage() {
       id: 'dashboard',
       icon: BarChartIcon,
       title: 'Dashboard Inteligente',
-      description: 'Metricas em tempo real: vendas, faturamento e comportamento de clientes.',
+      description: 'Métricas em tempo real: vendas, faturamento e comportamento de clientes.',
       color: 'from-purple-500 to-violet-500',
       bgColor: 'bg-purple-500/10',
       preview: DashboardPreview,
@@ -163,7 +163,7 @@ export function LandingPage() {
       id: 'scanner',
       icon: QrCodeScannerIcon,
       title: 'Scanner de Produtos',
-      description: 'Cadastre produtos em segundos usando a camera do celular.',
+      description: 'Cadastre produtos em segundos usando a câmera do celular.',
       color: 'from-orange-500 to-amber-500',
       bgColor: 'bg-orange-500/10',
       preview: ScannerPreview,
@@ -172,7 +172,7 @@ export function LandingPage() {
       id: 'crm',
       icon: PeopleIcon,
       title: 'CRM de Clientes',
-      description: 'Historico completo de compras e preferencias de cada cliente.',
+      description: 'Histórico completo de compras e preferências de cada cliente.',
       color: 'from-pink-500 to-rose-500',
       bgColor: 'bg-pink-500/10',
       preview: CRMPreview,
@@ -181,7 +181,7 @@ export function LandingPage() {
       id: 'stock',
       icon: InventoryIcon,
       title: 'Controle de Estoque',
-      description: 'Alertas automaticos de produtos acabando e relatorios detalhados.',
+      description: 'Alertas automáticos de produtos acabando e relatórios detalhados.',
       color: 'from-teal-500 to-cyan-500',
       bgColor: 'bg-teal-500/10',
       preview: StockPreview,
@@ -190,7 +190,7 @@ export function LandingPage() {
       id: 'loyalty',
       icon: CardGiftcardIcon,
       title: 'Programa de Fidelidade',
-      description: 'Sistema de pontos automatico que fideliza e aumenta recorrencia.',
+      description: 'Sistema de pontos automático que fideliza e aumenta recorrência.',
       color: 'from-yellow-500 to-orange-500',
       bgColor: 'bg-yellow-500/10',
       preview: LoyaltyPreview,
@@ -209,26 +209,26 @@ export function LandingPage() {
   const comparison = {
     without: [
       'Anotar pedidos em papel ou caderno',
-      'Perder vendas por falta de organizacao',
-      'Nao saber quais produtos vendem mais',
+      'Perder vendas por falta de organização',
+      'Não saber quais produtos vendem mais',
       'Clientes esperando resposta no WhatsApp',
       'Estoque desorganizado e perdas',
       'Sem controle do faturamento real'
     ],
     with: [
       'Pedidos organizados automaticamente',
-      'Catalogo online 24h recebendo pedidos',
+      'Catálogo online 24h recebendo pedidos',
       'Dashboard com metricas em tempo real',
-      'Notificacoes instantaneas de pedidos',
+      'Notificações instantâneas de pedidos',
       'Alertas de estoque baixo',
-      'Relatorios completos de vendas'
+      'Relatórios completos de vendas'
     ]
   };
 
   const stats = [
     { value: 500, label: 'Empresas ativas', icon: RocketLaunchIcon, suffix: '+' },
     { value: 50, label: 'Mil pedidos processados', icon: ShoppingBagIcon, suffix: 'k+' },
-    { value: 24, label: 'Horas disponivel', icon: AccessTimeIcon, suffix: '/7' },
+    { value: 24, label: 'Horas disponível', icon: AccessTimeIcon, suffix: '/7' },
     { value: 30, label: 'Aumento em vendas', icon: TrendingUpIcon, suffix: '%+' }
   ];
 
@@ -236,25 +236,25 @@ export function LandingPage() {
     {
       number: '01',
       title: 'Crie sua conta',
-      description: 'Cadastro gratuito em menos de 1 minuto. Comece com ate 20 produtos.',
+      description: 'Cadastro gratuito em menos de 1 minuto. Comece com até 20 produtos.',
       icon: RocketLaunchIcon,
     },
     {
       number: '02',
       title: 'Configure sua empresa',
-      description: 'Adicione logo, informacoes de contato e configure o WhatsApp.',
+      description: 'Adicione logo, informações de contato e configure o WhatsApp.',
       icon: BarChartIcon,
     },
     {
       number: '03',
       title: 'Cadastre produtos',
-      description: 'Adicione seus produtos com fotos, precos e categorias.',
+      description: 'Adicione seus produtos com fotos, preços e categorias.',
       icon: InventoryIcon,
     },
     {
       number: '04',
       title: 'Compartilhe e venda',
-      description: 'Divulgue seu catalogo e comece a receber pedidos.',
+      description: 'Divulgue seu catálogo e comece a receber pedidos.',
       icon: TrendingUpIcon,
     }
   ];
@@ -264,14 +264,14 @@ export function LandingPage() {
       name: 'Maria Silva',
       role: 'Dona de Confeitaria',
       image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
-      content: 'O Mercado Virtual transformou meu negocio! Antes eu perdia pedidos anotados em papel, agora tudo fica organizado e recebo notificacoes no WhatsApp.',
+      content: 'O Mercado Virtual transformou meu negócio! Antes eu perdia pedidos anotados em papel, agora tudo fica organizado e recebo notificações no WhatsApp.',
       rating: 5,
     },
     {
       name: 'Carlos Santos',
       role: 'Dono de Petshop',
       image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      content: 'Minhas vendas aumentaram 40% depois que comecei a usar o catalogo online. Os clientes adoram poder ver os produtos e fazer pedidos a qualquer hora.',
+      content: 'Minhas vendas aumentaram 40% depois que comecei a usar o catálogo online. Os clientes adoram poder ver os produtos e fazer pedidos a qualquer hora.',
       rating: 5,
     },
     {
@@ -285,28 +285,28 @@ export function LandingPage() {
 
   const faqs = [
     {
-      question: 'O Mercado Virtual e gratuito?',
-      answer: 'Sim! Voce pode criar sua conta e usar o sistema gratuitamente. Oferecemos planos pagos com recursos adicionais para quem precisa de mais funcionalidades.'
+      question: 'O Mercado Virtual é gratuito?',
+      answer: 'Sim! Você pode criar sua conta e usar o sistema gratuitamente. Oferecemos planos pagos com recursos adicionais para quem precisa de mais funcionalidades.'
     },
     {
       question: 'Preciso instalar algum aplicativo?',
-      answer: 'Nao! O Mercado Virtual e um PWA (Progressive Web App) que funciona diretamente no navegador. Voce pode adicionar na tela inicial do celular como um app, mas nao precisa baixar nada.'
+      answer: 'Não! O Mercado Virtual é um PWA (Progressive Web App) que funciona diretamente no navegador. Você pode adicionar na tela inicial do celular como um app, mas não precisa baixar nada.'
     },
     {
       question: 'Como meus clientes fazem pedidos?',
-      answer: 'Seus clientes acessam seu catalogo online pelo link personalizado, escolhem os produtos e finalizam o pedido. O pedido e enviado automaticamente para seu WhatsApp.'
+      answer: 'Seus clientes acessam seu catálogo online pelo link personalizado, escolhem os produtos e finalizam o pedido. O pedido é enviado automaticamente para seu WhatsApp.'
     },
     {
       question: 'Posso usar em mais de uma empresa?',
-      answer: 'Sim! O sistema e multi-empresa. Voce pode gerenciar quantas empresas precisar com uma unica conta.'
+      answer: 'Sim! O sistema é multi-empresa. Você pode gerenciar quantas empresas precisar com uma única conta.'
     },
     {
       question: 'Funciona no celular?',
-      answer: 'Sim! O sistema e 100% responsivo e funciona perfeitamente em celulares, tablets e computadores. Voce pode gerenciar seu negocio de qualquer lugar.'
+      answer: 'Sim! O sistema é 100% responsivo e funciona perfeitamente em celulares, tablets e computadores. Você pode gerenciar seu negócio de qualquer lugar.'
     },
     {
       question: 'Como funciona o programa de fidelidade?',
-      answer: 'Voce configura quantos pontos cada real gasto vale e quais recompensas oferece. O sistema calcula automaticamente os pontos de cada cliente a cada compra.'
+      answer: 'Você configura quantos pontos cada real gasto vale e quais recompensas oferece. O sistema calcula automaticamente os pontos de cada cliente a cada compra.'
     }
   ];
 
@@ -378,7 +378,7 @@ export function LandingPage() {
                 to="/registro"
                 className="group relative bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 flex items-center gap-2 overflow-hidden"
               >
-                <span className="relative z-10">Comecar gratis</span>
+                <span className="relative z-10">Começar grátis</span>
                 <ArrowForwardIcon className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               </Link>
@@ -394,7 +394,7 @@ export function LandingPage() {
             {/* Badge */}
             <div className={`inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 text-indigo-600 dark:text-indigo-400 px-5 py-2 rounded-full text-sm font-semibold mb-8 border border-indigo-200/50 dark:border-indigo-800/50 backdrop-blur-sm transition-all duration-700 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <AutoAwesomeIcon className="h-4 w-4 animate-pulse" />
-              <span>Sistema completo de gestao de vendas</span>
+              <span>Sistema completo de gestão de vendas</span>
               <span className="flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
@@ -403,7 +403,7 @@ export function LandingPage() {
 
             {/* Main Heading */}
             <h1 className={`text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 transition-all duration-700 delay-100 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <span className="text-gray-900 dark:text-white">Sua Loja com catalogo online</span>
+              <span className="text-gray-900 dark:text-white">Sua Loja com catálogo online</span>
               <br />
               <span className="relative">
                 <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
@@ -418,8 +418,8 @@ export function LandingPage() {
 
             {/* Subheading */}
             <p className={`text-xl sm:text-2xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-200 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              Crie seu catalogo digital, receba pedidos via WhatsApp e gerencie
-              suas vendas em um <span className="text-indigo-600 dark:text-indigo-400 font-semibold">unico lugar</span>.
+              Crie seu catálogo digital, receba pedidos via WhatsApp e gerencie
+              suas vendas em um <span className="text-indigo-600 dark:text-indigo-400 font-semibold">único lugar</span>.
             </p>
 
             {/* CTA Buttons */}
@@ -440,7 +440,7 @@ export function LandingPage() {
                 className="group inline-flex items-center justify-center gap-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-xl hover:-translate-y-1"
               >
                 <PlayArrowIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                Ver demonstracao
+                Ver demonstração
               </a>
 */}
             </div>
@@ -449,7 +449,7 @@ export function LandingPage() {
             <div className={`flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400 transition-all duration-700 delay-400 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                <span>Plano gratuito disponivel</span>
+                <span>Plano gratuito disponível</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
@@ -527,9 +527,9 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto relative">
           <div className={`text-center mb-16 transition-all duration-700 ${comparisonSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-6">
-              Seu negocio perde vendas por{' '}
+              Seu negócio perde vendas por{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-                desorganizacao
+                desorganização
               </span>?
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
@@ -546,7 +546,7 @@ export function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-white">Sem o Mercado Virtual</h3>
-                  <p className="text-gray-500">Gestao tradicional</p>
+                  <p className="text-gray-500">Gestão tradicional</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -570,7 +570,7 @@ export function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-white">Com o Mercado Virtual</h3>
-                  <p className="text-gray-500">Gestao inteligente</p>
+                  <p className="text-gray-500">Gestão inteligente</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -598,13 +598,13 @@ export function LandingPage() {
               Recursos poderosos
             </div>
             <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
-              Tudo que voce precisa para{' '}
+              Tudo que você precisa para{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                 vender mais
               </span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Ferramentas poderosas e intuitivas para transformar seu negocio
+              Ferramentas poderosas e intuitivas para transformar seu negócio
             </p>
           </div>
 
@@ -693,10 +693,10 @@ export function LandingPage() {
             </div>
             <div className={`space-y-6 transition-all duration-700 delay-200 ${screenshotsSection.isInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Catalogo profissional para seus clientes
+                Catálogo profissional para seus clientes
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                Seus clientes acessam seu catalogo de qualquer dispositivo,
+                Seus clientes acessam seu catálogo de qualquer dispositivo,
                 escolhem os produtos e fazem pedidos diretamente pelo WhatsApp.
               </p>
               <ul className="space-y-4">
@@ -716,14 +716,14 @@ export function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-24">
             <div className={`order-2 lg:order-1 space-y-6 transition-all duration-700 delay-100 ${screenshotsSection.isInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Cupons e promocoes que funcionam
+                Cupons e promoções que funcionam
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
                 Crie cupons de desconto com regras personalizadas: porcentagem ou valor fixo,
                 limite de usos, validade e muito mais.
               </p>
               <ul className="space-y-4">
-                {['Desconto em porcentagem ou valor', 'Limite de utilizacoes por cupom', 'Metricas de conversao'].map((item, index) => (
+                {['Desconto em porcentagem ou valor', 'Limite de utilizações por cupom', 'Métricas de conversão'].map((item, index) => (
                   <li key={index} className="flex items-center gap-4 group">
                     <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                       <CheckCircleIcon className="text-green-500 h-5 w-5" />
@@ -755,14 +755,14 @@ export function LandingPage() {
             </div>
             <div className={`space-y-6 transition-all duration-700 delay-200 ${screenshotsSection.isInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Promocoes automaticas inteligentes
+                Promoções automáticas inteligentes
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                Configure promocoes que se aplicam automaticamente: aniversario, primeira compra,
-                flash sales, reativacao de clientes inativos e muito mais.
+                Configure promoções que se aplicam automaticamente: aniversário, primeira compra,
+                flash sales, reativação de clientes inativos e muito mais.
               </p>
               <ul className="space-y-4">
-                {['Desconto de aniversario automatico', 'Promocoes por nivel de fidelidade', 'Flash sales com contador regressivo'].map((item, index) => (
+                {['Desconto de aniversário automático', 'Promoções por nível de fidelidade', 'Flash sales com contador regressivo'].map((item, index) => (
                   <li key={index} className="flex items-center gap-4 group">
                     <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                       <CheckCircleIcon className="text-green-500 h-5 w-5" />
@@ -781,11 +781,11 @@ export function LandingPage() {
                 Programa de fidelidade que engaja
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                Crie niveis de fidelidade com beneficios exclusivos. Seus clientes acumulam pontos
+                Crie níveis de fidelidade com benefícios exclusivos. Seus clientes acumulam pontos
                 a cada compra e podem trocar por descontos.
               </p>
               <ul className="space-y-4">
-                {['Pontos por real gasto configuravel', 'Niveis com multiplicadores de pontos', 'Resgate de pontos no checkout'].map((item, index) => (
+                {['Pontos por real gasto configurável', 'Níveis com multiplicadores de pontos', 'Resgate de pontos no checkout'].map((item, index) => (
                   <li key={index} className="flex items-center gap-4 group">
                     <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                       <CheckCircleIcon className="text-green-500 h-5 w-5" />
@@ -824,7 +824,7 @@ export function LandingPage() {
               <span>Multiplataforma</span>
             </div>
             <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-6">
-              Seu negocio no{' '}
+              Seu negócio no{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">
                 bolso
               </span>
@@ -844,7 +844,7 @@ export function LandingPage() {
           {/* Features Cards */}
           <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { icon: AccessTimeIcon, title: 'Sincronizacao instantanea', description: 'Dados atualizados em tempo real', color: 'cyan' },
+              { icon: AccessTimeIcon, title: 'Sincronização instantânea', description: 'Dados atualizados em tempo real', color: 'cyan' },
               { icon: PhoneIphoneIcon, title: 'Instale como app', description: 'Adicione na tela inicial', color: 'indigo' },
               { icon: RocketLaunchIcon, title: 'Funciona offline', description: 'Continue sem internet', color: 'purple' },
             ].map((item, index) => (
@@ -877,7 +877,7 @@ export function LandingPage() {
               </span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Setup rapido e simples para comecar a vender
+              Setup rápido e simples para começar a vender
             </p>
           </div>
 
@@ -927,7 +927,7 @@ export function LandingPage() {
           <div className={`text-center mb-16 transition-all duration-700 ${testimonialsSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
               <StarIcon className="h-4 w-4" />
-              Mais de 500 avaliacoes 5 estrelas
+              Mais de 500 avaliações 5 estrelas
             </div>
             <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
               O que nossos{' '}
@@ -1002,7 +1002,7 @@ export function LandingPage() {
               </span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Tire suas duvidas sobre o Mercado Virtual
+              Tire suas dúvidas sobre o Mercado Virtual
             </p>
           </div>
 
@@ -1071,21 +1071,21 @@ export function LandingPage() {
             </span>?
           </h2>
           <p className="text-xl sm:text-2xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Junte-se a centenas de empreendedores que ja usam o Mercado Virtual
+            Junte-se a centenas de empreendedores que já usam o Mercado Virtual
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/registro"
               className="group relative inline-flex items-center justify-center gap-3 bg-white text-indigo-600 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 overflow-hidden"
             >
-              <span className="relative z-10">Comecar gratuitamente</span>
+              <span className="relative z-10">Começar gratuitamente</span>
               <ArrowForwardIcon className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             </Link>
           </div>
           <p className="mt-6 text-white/60 text-sm flex items-center justify-center gap-2">
             <CheckCircleIcon className="h-5 w-5" />
-            Plano gratuito com ate 20 produtos para voce comecar
+            Plano gratuito com até 20 produtos para você começar
           </p>
         </div>
       </section>
@@ -1109,8 +1109,8 @@ export function LandingPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-              <Link to="/privacidade" className="hover:text-white transition-colors">Politica de Privacidade</Link>
-              <Link to="/termos" className="hover:text-white transition-colors">Termos de Servico</Link>
+              <Link to="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link>
+              <Link to="/termos" className="hover:text-white transition-colors">Termos de Serviço</Link>
               <span>&copy; {new Date().getFullYear()} Mercado Virtual</span>
             </div>
           </div>

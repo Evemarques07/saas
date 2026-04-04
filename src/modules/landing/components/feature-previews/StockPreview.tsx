@@ -2,94 +2,113 @@ import { useState } from 'react';
 import WarningIcon from '@mui/icons-material/Warning';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import UndoIcon from '@mui/icons-material/Undo';
+import TuneIcon from '@mui/icons-material/Tune';
 import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import CloseIcon from '@mui/icons-material/Close';
 
-type StockStatus = 'ok' | 'low' | 'critical';
+type Tab = 'entradas' | 'movimentacoes';
 type Filter = 'todos' | 'baixo' | 'critico';
+type MovementType = 'entry' | 'sale' | 'cancellation' | 'adjustment';
 
-interface Product {
+interface StockEntry {
   id: number;
-  name: string;
-  quantity: number;
-  minQuantity: number;
-  status: StockStatus;
+  product: string;
+  quantityReceived: number;
+  quantityRemaining: number;
+  unitCost: number;
+  supplier: string;
+  invoice: string;
+  date: string;
 }
 
-const initialProducts: Product[] = [
-  { id: 1, name: 'Perfume Floral 100ml', quantity: 45, minQuantity: 10, status: 'ok' },
-  { id: 2, name: 'Serum Vitamina C', quantity: 8, minQuantity: 15, status: 'low' },
-  { id: 3, name: 'Base Liquida Matte', quantity: 2, minQuantity: 20, status: 'critical' },
-  { id: 4, name: 'Hidratante Facial', quantity: 23, minQuantity: 10, status: 'ok' },
-  { id: 5, name: 'Batom Matte Nude', quantity: 5, minQuantity: 10, status: 'low' },
-  { id: 6, name: 'Paleta de Sombras', quantity: 0, minQuantity: 5, status: 'critical' },
-  { id: 7, name: 'Mascara de Cilios', quantity: 18, minQuantity: 10, status: 'ok' },
-];
+interface StockMovement {
+  id: number;
+  product: string;
+  type: MovementType;
+  quantity: number;
+  unitCost: number;
+  balanceAfter: number;
+  date: string;
+  notes: string;
+}
 
-const getStatus = (quantity: number, minQuantity: number): StockStatus => {
-  if (quantity <= 0) return 'critical';
-  if (quantity <= minQuantity) return 'low';
-  return 'ok';
+const TYPE_CONFIG: Record<MovementType, { label: string; color: string; bg: string; icon: typeof ArrowUpwardIcon }> = {
+  entry: { label: 'Entrada', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30', icon: ArrowUpwardIcon },
+  sale: { label: 'Venda', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30', icon: ArrowDownwardIcon },
+  cancellation: { label: 'Cancelamento', color: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30', icon: UndoIcon },
+  adjustment: { label: 'Ajuste', color: 'text-gray-700 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700/50', icon: TuneIcon },
 };
 
+const initialEntries: StockEntry[] = [
+  { id: 1, product: 'Anel Solitario Ouro 18k', quantityReceived: 20, quantityRemaining: 20, unitCost: 189.90, supplier: 'Joias Brasil', invoice: 'NF-4521', date: '02/04' },
+  { id: 2, product: 'Brinco Perola Natural', quantityReceived: 30, quantityRemaining: 18, unitCost: 67.50, supplier: 'Perolas & Cia', invoice: 'NF-4518', date: '01/04' },
+  { id: 3, product: 'Corrente Prata 925', quantityReceived: 50, quantityRemaining: 7, unitCost: 42.00, supplier: 'Silver Store', invoice: 'NF-4510', date: '28/03' },
+  { id: 4, product: 'Pingente Coração Zircônia', quantityReceived: 40, quantityRemaining: 0, unitCost: 28.50, supplier: 'Joias Brasil', invoice: 'NF-4505', date: '25/03' },
+  { id: 5, product: 'Pulseira Riviera', quantityReceived: 15, quantityRemaining: 3, unitCost: 155.00, supplier: 'Gold Premium', invoice: 'NF-4498', date: '22/03' },
+];
+
+const initialMovements: StockMovement[] = [
+  { id: 1, product: 'Anel Solitario Ouro 18k', type: 'entry', quantity: 20, unitCost: 189.90, balanceAfter: 20, date: '02/04 14:30', notes: 'NF-4521 Joias Brasil' },
+  { id: 2, product: 'Brinco Perola Natural', type: 'sale', quantity: -2, unitCost: 67.50, balanceAfter: 18, date: '02/04 11:15', notes: 'Venda #1234' },
+  { id: 3, product: 'Corrente Prata 925', type: 'sale', quantity: -5, unitCost: 42.00, balanceAfter: 7, date: '02/04 10:42', notes: 'Venda #1233' },
+  { id: 4, product: 'Pulseira Riviera', type: 'cancellation', quantity: 1, unitCost: 155.00, balanceAfter: 3, date: '01/04 16:20', notes: 'Cancelamento Venda #1230' },
+  { id: 5, product: 'Brinco Perola Natural', type: 'sale', quantity: -10, unitCost: 67.50, balanceAfter: 20, date: '01/04 14:05', notes: 'Venda #1229' },
+  { id: 6, product: 'Corrente Prata 925', type: 'adjustment', quantity: -3, unitCost: 42.00, balanceAfter: 12, date: '31/03 09:30', notes: 'Ajuste inventario' },
+  { id: 7, product: 'Pingente Coração Zircônia', type: 'sale', quantity: -8, unitCost: 28.50, balanceAfter: 0, date: '30/03 15:50', notes: 'Venda #1225' },
+];
+
+function FifoStatusBadge({ received, remaining }: { received: number; remaining: number }) {
+  if (remaining === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-500">
+        <ErrorIcon className="h-3 w-3" /> Esgotado
+      </span>
+    );
+  }
+  if (remaining < received) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
+        <WarningIcon className="h-3 w-3" /> Parcial
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+      <CheckCircleIcon className="h-3 w-3" /> Integral
+    </span>
+  );
+}
+
 export function StockPreview() {
-  const [products, setProducts] = useState(initialProducts);
-  const [filter, setFilter] = useState<Filter>('todos');
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editQuantity, setEditQuantity] = useState(0);
+  const [tab, setTab] = useState<Tab>('entradas');
+  const [entries, setEntries] = useState(initialEntries);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEntry, setNewEntry] = useState({ product: '', quantity: 10, unitCost: 50.00, supplier: '' });
 
-  const filteredProducts = products.filter(product => {
-    if (filter === 'baixo') return product.status === 'low';
-    if (filter === 'critico') return product.status === 'critical';
-    return true;
-  });
+  const alerts = entries.filter(e => e.quantityRemaining === 0 || e.quantityRemaining <= e.quantityReceived * 0.2).length;
 
-  const alerts = products.filter(p => p.status === 'critical' || p.status === 'low').length;
+  const totalReceived = entries.reduce((s, e) => s + e.quantityReceived, 0);
+  const totalRemaining = entries.reduce((s, e) => s + e.quantityRemaining, 0);
+  const totalCost = entries.reduce((s, e) => s + e.quantityReceived * e.unitCost, 0);
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setEditQuantity(product.quantity);
-  };
-
-  const handleSave = () => {
-    if (!editingProduct) return;
-
-    setProducts(products.map(p => {
-      if (p.id === editingProduct.id) {
-        return {
-          ...p,
-          quantity: editQuantity,
-          status: getStatus(editQuantity, p.minQuantity),
-        };
-      }
-      return p;
-    }));
-    setEditingProduct(null);
-  };
-
-  const statusConfig = {
-    ok: {
-      icon: CheckCircleIcon,
-      color: 'text-green-500',
-      bg: 'bg-green-100 dark:bg-green-900/30',
-      bar: 'bg-green-500',
-      label: 'Ok',
-    },
-    low: {
-      icon: WarningIcon,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-      bar: 'bg-yellow-500',
-      label: 'Baixo',
-    },
-    critical: {
-      icon: ErrorIcon,
-      color: 'text-red-500',
-      bg: 'bg-red-100 dark:bg-red-900/30',
-      bar: 'bg-red-500',
-      label: 'Critico',
-    },
+  const handleAddEntry = () => {
+    if (!newEntry.product) return;
+    const entry: StockEntry = {
+      id: entries.length + 1,
+      product: newEntry.product,
+      quantityReceived: newEntry.quantity,
+      quantityRemaining: newEntry.quantity,
+      unitCost: newEntry.unitCost,
+      supplier: newEntry.supplier || 'Fornecedor',
+      invoice: `NF-${4522 + entries.length}`,
+      date: '04/04',
+    };
+    setEntries([entry, ...entries]);
+    setShowAddModal(false);
+    setNewEntry({ product: '', quantity: 10, unitCost: 50.00, supplier: '' });
   };
 
   return (
@@ -99,128 +118,248 @@ export function StockPreview() {
         <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-3 mb-4 text-white">
           <div className="flex items-center gap-2">
             <WarningIcon className="h-5 w-5" />
-            <span className="font-medium">
-              {alerts} {alerts === 1 ? 'produto precisa' : 'produtos precisam'} de atencao
+            <span className="font-medium text-sm">
+              {alerts} {alerts === 1 ? 'lote FIFO esgotado ou quase' : 'lotes FIFO esgotados ou quase'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Filters */}
+      {/* Tab Selector */}
       <div className="flex gap-2 mb-4">
-        {([
-          { key: 'todos', label: 'Todos' },
-          { key: 'baixo', label: 'Baixo' },
-          { key: 'critico', label: 'Critico' },
-        ] as { key: Filter; label: string }[]).map((f) => (
+        <button
+          onClick={() => setTab('entradas')}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === 'entradas'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+          }`}
+        >
+          Entradas FIFO
+        </button>
+        <button
+          onClick={() => setTab('movimentacoes')}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === 'movimentacoes'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+          }`}
+        >
+          Movimentações
+        </button>
+      </div>
+
+      {tab === 'entradas' ? (
+        <>
+          {/* Add Entry Button */}
           <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-              filter === f.key
-                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-            }`}
+            onClick={() => setShowAddModal(true)}
+            className="w-full mb-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-all flex items-center justify-center gap-2 text-sm font-medium"
           >
-            {f.label}
+            <AddIcon className="h-4 w-4" />
+            Nova Entrada de Estoque
           </button>
-        ))}
-      </div>
 
-      {/* Product List */}
-      <div className="flex-1 space-y-2 overflow-y-auto">
-        {filteredProducts.map((product) => {
-          const config = statusConfig[product.status];
-          const percentage = Math.min((product.quantity / (product.minQuantity * 2)) * 100, 100);
+          {/* FIFO Entries List */}
+          <div className="flex-1 space-y-2 overflow-y-auto">
+            {entries.map((entry) => {
+              const percentage = entry.quantityReceived > 0
+                ? (entry.quantityRemaining / entry.quantityReceived) * 100
+                : 0;
+              return (
+                <div
+                  key={entry.id}
+                  className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-gray-900 dark:text-white text-sm block truncate">
+                        {entry.product}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {entry.supplier} · {entry.invoice} · {entry.date}
+                      </span>
+                    </div>
+                    <FifoStatusBadge received={entry.quantityReceived} remaining={entry.quantityRemaining} />
+                  </div>
 
-          return (
-            <button
-              key={product.id}
-              onClick={() => handleEdit(product)}
-              className="w-full bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 transition-all text-left"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900 dark:text-white text-sm">
-                  {product.name}
-                </span>
-                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
-                  <config.icon className="h-3 w-3" />
-                  {config.label}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${config.bar} transition-all duration-300`}
-                    style={{ width: `${percentage}%` }}
-                  />
+                  {/* FIFO Progress Bar */}
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 rounded-full ${
+                          entry.quantityRemaining === 0
+                            ? 'bg-gray-400'
+                            : entry.quantityRemaining < entry.quantityReceived
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                        }`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quantities Row */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex gap-3">
+                      <span className="text-gray-500">
+                        Recebido: <span className="font-semibold text-gray-700 dark:text-gray-300">{entry.quantityReceived}</span>
+                      </span>
+                      <span className="text-gray-500">
+                        Restante: <span className={`font-semibold ${
+                          entry.quantityRemaining === 0
+                            ? 'text-gray-400'
+                            : entry.quantityRemaining < entry.quantityReceived
+                              ? 'text-yellow-600 dark:text-yellow-400'
+                              : 'text-green-600 dark:text-green-400'
+                        }`}>{entry.quantityRemaining}</span>
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                      R$ {entry.unitCost.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[60px] text-right">
-                  {product.quantity} un
+              );
+            })}
+          </div>
+
+          {/* Totals Footer */}
+          <div className="mt-3 bg-gray-100 dark:bg-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <span className="text-[10px] text-gray-500 block">Recebido</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{totalReceived} un</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-gray-500 block">Restante</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{totalRemaining} un</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-gray-500 block">Custo Total</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Minimo: {product.minQuantity} unidades
-              </p>
-            </button>
-          );
-        })}
-      </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Movements Tab */
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {initialMovements.map((mov) => {
+            const config = TYPE_CONFIG[mov.type];
+            const Icon = config.icon;
+            return (
+              <div
+                key={mov.id}
+                className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between mb-1.5">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium text-gray-900 dark:text-white text-sm block truncate">
+                      {mov.product}
+                    </span>
+                    <span className="text-[10px] text-gray-400">{mov.date}</span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${config.bg} ${config.color}`}>
+                    <Icon className="h-3 w-3" />
+                    {config.label}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex gap-3">
+                    <span className={`font-semibold ${
+                      mov.quantity > 0 ? 'text-green-600 dark:text-green-400' : mov.quantity < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'
+                    }`}>
+                      {mov.quantity > 0 ? `+${mov.quantity}` : mov.quantity} un
+                    </span>
+                    <span className="text-gray-500">
+                      Custo: R$ {mov.unitCost.toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="text-gray-500">
+                    Saldo: <span className="font-semibold text-gray-700 dark:text-gray-300">{mov.balanceAfter}</span>
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1 truncate">{mov.notes}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Edit Modal */}
-      {editingProduct && (
+      {/* Add Entry Modal */}
+      {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-[90%] max-w-sm animate-scale-in">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-bold text-gray-900 dark:text-white">
-                Atualizar Estoque
-              </h4>
+              <h4 className="font-bold text-gray-900 dark:text-white">Nova Entrada</h4>
               <button
-                onClick={() => setEditingProduct(null)}
+                onClick={() => setShowAddModal(false)}
                 className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 <CloseIcon className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {editingProduct.name}
-            </p>
-
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <button
-                onClick={() => setEditQuantity(Math.max(0, editQuantity - 1))}
-                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <RemoveIcon />
-              </button>
-              <input
-                type="number"
-                value={editQuantity}
-                onChange={(e) => setEditQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-24 h-14 text-center text-2xl font-bold bg-gray-100 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 dark:text-white"
-              />
-              <button
-                onClick={() => setEditQuantity(editQuantity + 1)}
-                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <AddIcon />
-              </button>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Produto</label>
+                <input
+                  type="text"
+                  value={newEntry.product}
+                  onChange={(e) => setNewEntry({ ...newEntry, product: e.target.value })}
+                  placeholder="Nome do produto"
+                  className="w-full h-10 px-3 bg-gray-100 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Quantidade</label>
+                  <input
+                    type="number"
+                    value={newEntry.quantity}
+                    onChange={(e) => setNewEntry({ ...newEntry, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                    className="w-full h-10 px-3 bg-gray-100 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Custo Unit. (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newEntry.unitCost}
+                    onChange={(e) => setNewEntry({ ...newEntry, unitCost: Math.max(0, parseFloat(e.target.value) || 0) })}
+                    className="w-full h-10 px-3 bg-gray-100 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Fornecedor</label>
+                <input
+                  type="text"
+                  value={newEntry.supplier}
+                  onChange={(e) => setNewEntry({ ...newEntry, supplier: e.target.value })}
+                  placeholder="Nome do fornecedor"
+                  className="w-full h-10 px-3 bg-gray-100 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <button
-              onClick={handleSave}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-colors"
+              onClick={handleAddEntry}
+              className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-colors"
             >
-              Salvar Alteracao
+              Registrar Entrada
             </button>
           </div>
         </div>
       )}
 
       {/* Hint */}
-      <p className="text-xs text-center text-gray-400 mt-4">
-        Clique em um produto para atualizar o estoque
+      <p className="text-xs text-center text-gray-400 mt-3">
+        {tab === 'entradas' ? 'Controle FIFO: primeiro que entra, primeiro que sai' : 'Histórico completo de entradas e saídas'}
       </p>
     </div>
   );
