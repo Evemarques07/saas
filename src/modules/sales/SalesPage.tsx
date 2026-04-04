@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -59,6 +59,75 @@ export function SalesPage() {
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppSale, setWhatsAppSale] = useState<Sale | null>(null);
 
+  // ============================================
+  // Draft persistence (sessionStorage)
+  // ============================================
+  const DRAFT_KEY = currentCompany ? `mv-sale-draft-${currentCompany.id}` : '';
+  const draftRestored = useRef(false);
+
+  // Salvar draft sempre que o carrinho ou form mudar (só se modal aberto)
+  useEffect(() => {
+    if (!DRAFT_KEY || !showNewSaleModal || cart.length === 0) return;
+    const draft = {
+      cart: cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      selectedCustomer,
+      discount,
+      discountType,
+      paymentMethod,
+      notes,
+      savedAt: Date.now(),
+    };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [cart, selectedCustomer, discount, discountType, paymentMethod, notes, showNewSaleModal, DRAFT_KEY]);
+
+  // Limpar draft quando venda é concluída
+  const clearDraft = useCallback(() => {
+    if (DRAFT_KEY) sessionStorage.removeItem(DRAFT_KEY);
+  }, [DRAFT_KEY]);
+
+  // Restaurar draft quando produtos estiverem carregados
+  const restoreDraft = useCallback(() => {
+    if (!DRAFT_KEY || products.length === 0 || draftRestored.current) return false;
+    draftRestored.current = true;
+
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const draft = JSON.parse(raw);
+
+      // Ignorar drafts com mais de 4 horas
+      if (Date.now() - draft.savedAt > 4 * 60 * 60 * 1000) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return false;
+      }
+
+      // Reconstruir carrinho com os produtos atuais
+      const restoredCart: CartItem[] = [];
+      for (const item of draft.cart) {
+        const product = products.find((p) => p.id === item.productId);
+        if (product) {
+          restoredCart.push({ product, quantity: item.quantity });
+        }
+      }
+
+      if (restoredCart.length === 0) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return false;
+      }
+
+      setCart(restoredCart);
+      setSelectedCustomer(draft.selectedCustomer || '');
+      setDiscount(draft.discount || '');
+      setDiscountType(draft.discountType || 'fixed');
+      setPaymentMethod(draft.paymentMethod || '');
+      setNotes(draft.notes || '');
+      return true;
+    } catch {
+      sessionStorage.removeItem(DRAFT_KEY);
+      return false;
+    }
+  }, [DRAFT_KEY, products]);
+
   useEffect(() => {
     if (currentCompany) {
       fetchData();
@@ -101,7 +170,7 @@ export function SalesPage() {
     setLoading(false);
   };
 
-  const handleOpenNewSale = () => {
+  const resetSaleForm = () => {
     setSelectedCustomer('');
     setCart([]);
     setDiscount('');
@@ -109,7 +178,25 @@ export function SalesPage() {
     setPaymentMethod('');
     setNotes('');
     setProductSearch('');
+    clearDraft();
+  };
+
+  const handleOpenNewSale = () => {
+    setProductSearch('');
+    draftRestored.current = false;
+    // Tentar restaurar draft salvo
+    const hadDraft = restoreDraft();
+    if (hadDraft) {
+      toast.success('Venda em andamento restaurada');
+    } else {
+      resetSaleForm();
+    }
     setShowNewSaleModal(true);
+  };
+
+  const handleClearDraft = () => {
+    resetSaleForm();
+    toast.success('Rascunho descartado');
   };
 
   // Filtrar produtos pela pesquisa (inclui EAN)
@@ -306,6 +393,7 @@ export function SalesPage() {
         }
       }
 
+      clearDraft();
       setShowNewSaleModal(false);
       fetchData();
     } catch {
@@ -614,11 +702,30 @@ export function SalesPage() {
       {/* New Sale Modal */}
       <Modal
         isOpen={showNewSaleModal}
-        onClose={() => setShowNewSaleModal(false)}
+        onClose={() => {
+          setShowNewSaleModal(false);
+          draftRestored.current = false;
+          // Se carrinho vazio, limpar draft
+          if (cart.length === 0) clearDraft();
+        }}
         title="Nova Venda"
         size="xl"
       >
         <form onSubmit={handleSubmitSale} className="space-y-4">
+          {cart.length > 0 && (
+            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                {cart.length} {cart.length === 1 ? 'produto' : 'produtos'} no carrinho
+              </span>
+              <button
+                type="button"
+                onClick={handleClearDraft}
+                className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                Limpar tudo
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Cliente"
@@ -858,7 +965,11 @@ export function SalesPage() {
             <Button
               variant="secondary"
               type="button"
-              onClick={() => setShowNewSaleModal(false)}
+              onClick={() => {
+                setShowNewSaleModal(false);
+                draftRestored.current = false;
+                if (cart.length === 0) clearDraft();
+              }}
             >
               Cancelar
             </Button>

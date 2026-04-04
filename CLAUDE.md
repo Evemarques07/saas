@@ -106,7 +106,7 @@ npx supabase secrets set \
 
 ### Deploy de Edge Functions
 ```bash
-npx supabase functions deploy asaas-billing --project-ref <PROJECT_REF>
+npx supabase functions deploy asaas-billing --no-verify-jwt --project-ref <PROJECT_REF>
 npx supabase functions deploy asaas-webhook --no-verify-jwt --project-ref <PROJECT_REF>
 npx supabase functions deploy asaas-withdrawal-validation --no-verify-jwt --project-ref <PROJECT_REF>
 ```
@@ -313,6 +313,6 @@ ssh evertonapi "cd /var/www/mercadovirtual && git log --oneline -1" && git log -
 
 - A Edge Function `asaas-billing` tem fallback para sandbox se `ASAAS_API_URL` nao estiver definida (linha 177). Sempre manter o secret configurado.
 - Webhooks do Asaas exigem header `asaas-access-token` (verificado na Edge Function). Sem token = 401.
-- Edge Functions `asaas-webhook` e `asaas-withdrawal-validation` usam `--no-verify-jwt` no deploy (recebem requests do Asaas, nao do frontend).
+- Todas as Edge Functions usam `--no-verify-jwt` no deploy. `asaas-billing` tem verificacao propria via `verifyAuth()`. `asaas-webhook` e `asaas-withdrawal-validation` recebem requests do Asaas, nao do frontend.
 - O `SUPABASE_ACCESS_TOKEN` em `.env.local` e para CLI/deploy, nao tem permissao de listar secrets (403). Usar Management API com token adequado se necessario.
 - IDs Asaas de producao seguem padrao `cus_000...`, `sub_...`, `pay_...` (o prefixo `000` NAO indica sandbox).

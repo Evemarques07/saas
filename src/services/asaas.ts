@@ -35,13 +35,20 @@ async function callEdgeFunction<T>(action: string, data?: Record<string, unknown
     body: JSON.stringify({ action, ...data }),
   });
 
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.error || 'Erro na operação');
+  let result: Record<string, unknown>;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(`Edge Function retornou ${response.status}: resposta não-JSON`);
   }
 
-  return result.data;
+  if (!response.ok || !result.success) {
+    // Gateway Supabase retorna {msg: "..."}, Edge Function retorna {error: "..."}
+    const errorMsg = (result.error || result.msg || `Erro ${response.status}`) as string;
+    throw new Error(errorMsg);
+  }
+
+  return result.data as T;
 }
 
 // ============================================
