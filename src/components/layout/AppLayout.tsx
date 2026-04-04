@@ -3,10 +3,15 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { NotificationProvider } from '../../contexts/NotificationContext';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
+import { GracePeriodBanner } from '../../modules/billing/components/GracePeriodBanner';
+import { DowngradeBanner } from '../../modules/billing/components/DowngradeBanner';
 
 const SIDEBAR_COLLAPSED_KEY = 'ejym_sidebar_collapsed';
 
 export function AppLayout() {
+  const { gracePeriod, subscription, limits } = usePlanFeatures();
+
   // Inicializar estado da sidebar a partir do localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -74,6 +79,21 @@ export function AppLayout() {
           `}
         >
           <Header onMenuClick={handleToggleSidebar} isMobile={isMobile} />
+
+          {/* Banners de aviso de plano */}
+          {gracePeriod.isInGracePeriod && (
+            <GracePeriodBanner
+              gracePeriod={gracePeriod}
+              planName={subscription?.plan?.display_name}
+            />
+          )}
+          {gracePeriod.isDowngraded && !gracePeriod.isInGracePeriod && (
+            <DowngradeBanner
+              limits={limits}
+              previousPlanName={subscription?.plan?.display_name}
+            />
+          )}
+
           <main className="px-2 md:px-4 pb-2 md:pb-4 flex-1 overflow-hidden">
             <div className="h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
               <div className="h-full overflow-y-auto overflow-x-hidden p-3 md:p-4">

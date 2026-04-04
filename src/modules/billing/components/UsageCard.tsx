@@ -9,6 +9,7 @@ import type { UsageLimits } from '../../../services/asaas';
 interface UsageCardProps {
   usage: UsageLimits;
   plan: Plan | null;
+  isDowngraded?: boolean;
 }
 
 interface UsageBarProps {
@@ -17,9 +18,10 @@ interface UsageBarProps {
   limit: number | null;
   icon: React.ReactNode;
   unit?: string;
+  overflow?: number;
 }
 
-function UsageBar({ label, used, limit, icon, unit = '' }: UsageBarProps) {
+function UsageBar({ label, used, limit, icon, unit = '', overflow = 0 }: UsageBarProps) {
   const percentage = limit ? Math.min((used / limit) * 100, 100) : 0;
   const isUnlimited = limit === null;
   const isNearLimit = limit && percentage >= 80;
@@ -78,11 +80,20 @@ function UsageBar({ label, used, limit, icon, unit = '' }: UsageBarProps) {
           Proximo do limite. Considere fazer upgrade.
         </p>
       )}
+      {overflow > 0 && (
+        <p className="text-xs text-red-600 dark:text-red-400">
+          {overflow} {label.toLowerCase() === 'armazenamento' ? 'MB excedente' : `desabilitado${overflow > 1 ? 's' : ''}`}. Faca upgrade para recuperar.
+        </p>
+      )}
     </div>
   );
 }
 
-export function UsageCard({ usage, plan }: UsageCardProps) {
+export function UsageCard({ usage, plan, isDowngraded }: UsageCardProps) {
+  // Calcular excedentes (quando downgradado, used pode ser maior que limit)
+  const calcOverflow = (used: number, limit: number | null) =>
+    limit !== null && used > limit ? used - limit : 0;
+
   return (
     <Card>
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
@@ -97,6 +108,7 @@ export function UsageCard({ usage, plan }: UsageCardProps) {
           used={usage.products.used}
           limit={usage.products.limit}
           icon={<InventoryIcon className="w-4 h-4" />}
+          overflow={isDowngraded ? calcOverflow(usage.products.used, usage.products.limit) : 0}
         />
 
         <UsageBar
@@ -104,6 +116,7 @@ export function UsageCard({ usage, plan }: UsageCardProps) {
           used={usage.users.used}
           limit={usage.users.limit}
           icon={<PeopleIcon className="w-4 h-4" />}
+          overflow={isDowngraded ? calcOverflow(usage.users.used, usage.users.limit) : 0}
         />
 
         <UsageBar
@@ -112,6 +125,7 @@ export function UsageCard({ usage, plan }: UsageCardProps) {
           limit={usage.storage.limit}
           icon={<CloudIcon className="w-4 h-4" />}
           unit=" MB"
+          overflow={isDowngraded ? calcOverflow(usage.storage.used, usage.storage.limit) : 0}
         />
       </div>
     </Card>

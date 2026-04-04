@@ -584,6 +584,8 @@ export interface Subscription {
   current_period_start: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
+  grace_period_ends_at: string | null;
+  downgraded_at: string | null;
   created_at: string;
   updated_at: string;
   plan?: Plan;

@@ -20,12 +20,14 @@ import {
   getCompanyUsage,
   type UsageLimits,
 } from '../../services/asaas';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 import type { Plan, Subscription, Payment } from '../../types';
 
 type TabType = 'overview' | 'plans' | 'payments';
 
 export function BillingPage() {
   const { currentCompany, isAdmin } = useTenant();
+  const { gracePeriod } = usePlanFeatures();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -184,7 +186,7 @@ export function BillingPage() {
                 />
 
                 {/* Usage */}
-                {usage && <UsageCard usage={usage} plan={currentPlan || null} />}
+                {usage && <UsageCard usage={usage} plan={currentPlan || null} isDowngraded={gracePeriod.isDowngraded} />}
               </div>
 
               {/* Recent Payments */}

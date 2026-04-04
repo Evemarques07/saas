@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTenant } from '../contexts/TenantContext';
 import {
   getCompanySubscription,
@@ -20,6 +20,13 @@ const FREE_PLAN_FEATURES: PlanFeatures = {
   coupons: false,
 };
 
+interface GracePeriodInfo {
+  isInGracePeriod: boolean;
+  gracePeriodEndsAt: Date | null;
+  daysUntilDowngrade: number | null;
+  isDowngraded: boolean;
+}
+
 interface UsePlanFeaturesResult {
   // Features do plano
   features: PlanFeatures;
@@ -29,6 +36,8 @@ interface UsePlanFeaturesResult {
   subscription: Subscription | null;
   // Plano atual
   plan: Plan | null;
+  // Grace period info
+  gracePeriod: GracePeriodInfo;
   // Helpers
   hasFeature: (feature: keyof PlanFeatures) => boolean;
   canAddProduct: () => boolean;
@@ -38,6 +47,35 @@ interface UsePlanFeaturesResult {
   error: string | null;
   // Refresh
   refresh: () => Promise<void>;
+}
+
+function getGracePeriodInfo(subscription: Subscription | null): GracePeriodInfo {
+  if (!subscription) {
+    return { isInGracePeriod: false, gracePeriodEndsAt: null, daysUntilDowngrade: null, isDowngraded: false };
+  }
+
+  const isDowngraded = subscription.downgraded_at !== null;
+
+  if (isDowngraded) {
+    return { isInGracePeriod: false, gracePeriodEndsAt: null, daysUntilDowngrade: null, isDowngraded: true };
+  }
+
+  if (subscription.status === 'overdue' && subscription.grace_period_ends_at) {
+    const endsAt = new Date(subscription.grace_period_ends_at);
+    const now = new Date();
+    const diffMs = endsAt.getTime() - now.getTime();
+    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const isInGracePeriod = diffMs > 0;
+
+    return {
+      isInGracePeriod,
+      gracePeriodEndsAt: endsAt,
+      daysUntilDowngrade: isInGracePeriod ? daysLeft : 0,
+      isDowngraded: !isInGracePeriod, // grace expirou = efetivamente downgradado
+    };
+  }
+
+  return { isInGracePeriod: false, gracePeriodEndsAt: null, daysUntilDowngrade: null, isDowngraded: false };
 }
 
 export function usePlanFeatures(): UsePlanFeaturesResult {
@@ -74,9 +112,12 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
     loadData();
   }, [loadData]);
 
-  // Obter features do plano atual (ou usar free como fallback)
-  // Verificar status: so considerar plano valido se active ou overdue
-  const isSubscriptionValid = subscription?.status === 'active' || subscription?.status === 'overdue';
+  const gracePeriod = useMemo(() => getGracePeriodInfo(subscription), [subscription]);
+
+  // Subscription valida: active, OU overdue dentro do grace period (nao downgradado)
+  const isSubscriptionValid = subscription?.status === 'active' ||
+    (subscription?.status === 'overdue' && gracePeriod.isInGracePeriod && !gracePeriod.isDowngraded);
+
   const features: PlanFeatures = isSubscriptionValid
     ? (subscription?.plan?.features || FREE_PLAN_FEATURES)
     : FREE_PLAN_FEATURES;
@@ -93,7 +134,6 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
   // Helper para verificar se pode adicionar produto
   const checkCanAddProduct = useCallback((): boolean => {
     if (!limits) {
-      // Se nao tem limits, usar limite do free
       return true; // Vai ser verificado pelo backend
     }
     return canAddProduct(limits);
@@ -112,6 +152,7 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
     limits,
     subscription,
     plan,
+    gracePeriod,
     hasFeature,
     canAddProduct: checkCanAddProduct,
     canAddUser: checkCanAddUser,
@@ -123,3 +164,4 @@ export function usePlanFeatures(): UsePlanFeaturesResult {
 
 // Export dos defaults para uso em outros lugares
 export { FREE_PLAN_FEATURES };
+export type { GracePeriodInfo };

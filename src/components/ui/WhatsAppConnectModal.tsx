@@ -82,7 +82,7 @@ export function WhatsAppConnectModal({
           cleanup();
 
           // Extract phone from jid (format: 5511999998888@s.whatsapp.net)
-          const phone = sessionStatus.jid?.split('@')[0] || null;
+          const phone = sessionStatus.jid?.split('@')[0]?.split(':')[0] || null;
 
           setConnectedPhone(phone);
           setConnectedName(sessionStatus.name);
@@ -162,7 +162,7 @@ export function WhatsAppConnectModal({
       if (state.state === 'open') {
         // Already connected, get info
         const sessionStatus = await getSessionStatus(token);
-        const phone = sessionStatus.jid?.split('@')[0] || null;
+        const phone = sessionStatus.jid?.split('@')[0]?.split(':')[0] || null;
         setConnectedPhone(phone);
         setConnectedName(sessionStatus.name);
         setStatus('connected');
@@ -200,7 +200,7 @@ export function WhatsAppConnectModal({
 
         // Check if already connected
         if (sessionStatus.loggedIn) {
-          const phone = sessionStatus.jid?.split('@')[0] || null;
+          const phone = sessionStatus.jid?.split('@')[0]?.split(':')[0] || null;
           setConnectedPhone(phone);
           setConnectedName(sessionStatus.name);
           setStatus('connected');

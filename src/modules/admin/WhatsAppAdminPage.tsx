@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -23,6 +23,7 @@ import {
   deleteUserById,
   connectSession,
   getQRCode,
+  getSessionStatus,
   WuzAPIUser,
   WuzAPIUserStatus,
 } from '../../services/whatsapp';
@@ -54,6 +55,15 @@ export function WhatsAppAdminPage() {
     userId: undefined,
   });
   const [deleting, setDeleting] = useState(false);
+
+  const qrPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopQrPolling = useCallback(() => {
+    if (qrPollingRef.current) {
+      clearInterval(qrPollingRef.current);
+      qrPollingRef.current = null;
+    }
+  }, []);
 
   const [confirmDisconnect, setConfirmDisconnect] = useState<{ open: boolean; company: CompanyWithWhatsApp | null }>({
     open: false,
@@ -150,7 +160,8 @@ export function WhatsAppAdminPage() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    return () => stopQrPolling();
+  }, [fetchData, stopQrPolling]);
 
   const handleDisconnect = (company: CompanyWithWhatsApp) => {
     setConfirmDisconnect({ open: true, company });
@@ -197,18 +208,36 @@ export function WhatsAppAdminPage() {
     setShowQRModal(true);
     setQrLoading(true);
     setQrCode(null);
+    stopQrPolling();
 
     try {
       if (company.wuzapiUser) {
+        const token = company.wuzapiUser.token;
+
         // Connect session first
-        await connectSession(company.wuzapiUser.token);
+        await connectSession(token);
 
         // Wait a bit then get QR
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        const qr = await getQRCode(company.wuzapiUser.token);
+        const qr = await getQRCode(token);
         if (qr?.base64) {
           setQrCode(qr.base64);
+
+          // Start polling to detect connection
+          qrPollingRef.current = setInterval(async () => {
+            try {
+              const status = await getSessionStatus(token);
+              if (status.connected && status.loggedIn) {
+                stopQrPolling();
+                setShowQRModal(false);
+                toast.success(`WhatsApp de "${company.name}" conectado!`);
+                fetchData();
+              }
+            } catch {
+              // ignore polling errors
+            }
+          }, 3000);
         } else {
           toast.error('Nao foi possivel obter o QR Code');
         }
@@ -265,12 +294,17 @@ export function WhatsAppAdminPage() {
 
   const formatPhone = (phone: string | null): string => {
     if (!phone) return '-';
-    // Format: +55 11 99999-9999
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 13) {
-      return `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
-    } else if (cleaned.length === 12) {
-      return `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
+    if (cleaned.startsWith('55') && cleaned.length >= 12) {
+      const ddd = cleaned.slice(2, 4);
+      const number = cleaned.slice(4);
+
+      if (number.length === 8) {
+        return `+55 ${ddd} ${number.slice(0, 4)}-${number.slice(4)}`;
+      }
+      if (number.length === 9) {
+        return `+55 ${ddd} ${number.slice(0, 5)}-${number.slice(5)}`;
+      }
     }
     return phone;
   };
@@ -546,7 +580,7 @@ export function WhatsAppAdminPage() {
           ) : qrCode ? (
             <>
               <img
-                src={`data:image/png;base64,${qrCode}`}
+                src={qrCode.startsWith('data:') ? qrCode : `data:image/png;base64,${qrCode}`}
                 alt="QR Code"
                 className="w-64 h-64 mx-auto"
               />
@@ -566,7 +600,7 @@ export function WhatsAppAdminPage() {
         </div>
 
         <ModalFooter>
-          <Button variant="secondary" onClick={() => setShowQRModal(false)}>
+          <Button variant="secondary" onClick={() => { stopQrPolling(); setShowQRModal(false); }}>
             Fechar
           </Button>
           {qrCode && (

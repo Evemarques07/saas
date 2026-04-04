@@ -14,6 +14,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import * as XLSX from 'xlsx';
 import WarningIcon from '@mui/icons-material/Warning';
+import LockIcon from '@mui/icons-material/Lock';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button, Input, Table, Badge, Modal, ModalFooter, Select, Card, MultiImageUpload, ConfirmModal, BarcodeScanner } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -21,12 +22,14 @@ import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
 import { uploadProductImage, deleteProductImages, StorageError } from '../../services/storage';
 import { getCompanyUsage, canAddProduct, UsageLimits } from '../../services/asaas';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
 import { Product, Category, TableColumn, ProductImage } from '../../types';
 import { exportToExcel, exportToPDF } from '../../services/export';
 
 export function ProductsPage() {
   const navigate = useNavigate();
   const { currentCompany, canManageProducts } = useTenant();
+  const { gracePeriod } = usePlanFeatures();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -575,9 +578,16 @@ export function ProductsPage() {
       key: 'is_active',
       label: 'Status',
       render: (p) => (
-        <Badge variant={p.is_active ? 'success' : 'default'}>
-          {p.is_active ? 'Ativo' : 'Inativo'}
-        </Badge>
+        p.is_active ? (
+          <Badge variant="success">Ativo</Badge>
+        ) : gracePeriod.isDowngraded ? (
+          <span className="inline-flex items-center gap-1" title="Desabilitado por limite do plano. Faca upgrade para reativar.">
+            <LockIcon className="w-3.5 h-3.5 text-gray-400" />
+            <Badge variant="default">Bloqueado</Badge>
+          </span>
+        ) : (
+          <Badge variant="default">Inativo</Badge>
+        )
       ),
     },
     {
@@ -751,9 +761,16 @@ export function ProductsPage() {
                     <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{p.name}</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{p.sku || 'Sem SKU'}</p>
                   </div>
-                  <Badge variant={p.is_active ? 'success' : 'default'} className="flex-shrink-0">
-                    {p.is_active ? 'Ativo' : 'Inativo'}
-                  </Badge>
+                  {p.is_active ? (
+                    <Badge variant="success" className="flex-shrink-0">Ativo</Badge>
+                  ) : gracePeriod.isDowngraded ? (
+                    <span className="inline-flex items-center gap-1 flex-shrink-0" title="Desabilitado por limite do plano">
+                      <LockIcon className="w-3.5 h-3.5 text-gray-400" />
+                      <Badge variant="default">Bloqueado</Badge>
+                    </span>
+                  ) : (
+                    <Badge variant="default" className="flex-shrink-0">Inativo</Badge>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4 mt-2 text-sm">

@@ -188,7 +188,7 @@ export function SettingsPage() {
           // If connected, get phone info
           if (isConnected) {
             const sessionStatus = await getSessionStatus(whatsAppSettings.user_token);
-            const phone = sessionStatus.jid?.split('@')[0] || null;
+            const phone = sessionStatus.jid?.split('@')[0]?.split(':')[0] || null;
             setWhatsAppSettings((prev) => ({
               ...prev,
               connected: true,
@@ -943,7 +943,7 @@ export function SettingsPage() {
                           {whatsAppSettings.phone_name && (
                             <span className="font-medium">{whatsAppSettings.phone_name} - </span>
                           )}
-                          {whatsAppSettings.phone ? formatPhoneNumber(whatsAppSettings.phone.replace('55', '')) : 'Numero conectado'}
+                          {whatsAppSettings.phone ? formatPhoneNumber(whatsAppSettings.phone.startsWith('55') ? whatsAppSettings.phone.slice(2) : whatsAppSettings.phone) : 'Numero conectado'}
                         </span>
                       </div>
                     </div>

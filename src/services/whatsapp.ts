@@ -409,7 +409,7 @@ export async function checkPhoneOnWhatsApp(
 
     if (user?.IsInWhatsapp) {
       // Extract just the phone number from JID (remove @s.whatsapp.net)
-      const jidPhone = user.JID?.split('@')[0] || null;
+      const jidPhone = user.JID?.split('@')[0]?.split(':')[0] || null;
       return {
         exists: true,
         jid: jidPhone,
@@ -622,7 +622,7 @@ export async function getUserStatus(userToken: string): Promise<WuzAPIUserStatus
       connected: data?.data?.connected || false,
       loggedIn: data?.data?.loggedIn || false,
       jid: jid,
-      phone: jid ? jid.split('@')[0] : null,
+      phone: jid ? jid.split('@')[0].split(':')[0] : null,
       phoneName: data?.data?.name || null,
     };
   } catch (error) {

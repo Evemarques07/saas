@@ -239,11 +239,17 @@ export async function getCompanyUsage(
     : await getCompanySubscription(companyId);
   const plan = sub?.plan;
 
-  // Se não tem plano ativo, usar limites do plano gratuito
-  // IMPORTANTE: null = ilimitado, só usar fallback quando não existe plano
-  const productLimit = plan ? plan.product_limit : FREE_PLAN_LIMITS.product_limit;
-  const userLimit = plan ? plan.user_limit : FREE_PLAN_LIMITS.user_limit;
-  const storageLimit = plan ? plan.storage_limit_mb : FREE_PLAN_LIMITS.storage_limit_mb;
+  // Verificar se subscription esta efetivamente downgradada
+  const isDowngraded = sub?.downgraded_at !== null && sub?.downgraded_at !== undefined;
+  const isGraceExpired = sub?.status === 'overdue' &&
+    sub?.grace_period_ends_at &&
+    new Date(sub.grace_period_ends_at).getTime() < Date.now();
+  const useFreeLimits = !plan || isDowngraded || isGraceExpired;
+
+  // Se downgradado ou sem plano, usar limites do plano gratuito
+  const productLimit = useFreeLimits ? FREE_PLAN_LIMITS.product_limit : plan!.product_limit;
+  const userLimit = useFreeLimits ? FREE_PLAN_LIMITS.user_limit : plan!.user_limit;
+  const storageLimit = useFreeLimits ? FREE_PLAN_LIMITS.storage_limit_mb : plan!.storage_limit_mb;
 
   // Buscar contagem de produtos
   const { count: productCount } = await supabase

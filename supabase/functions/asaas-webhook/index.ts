@@ -209,11 +209,13 @@ serve(async (req: Request) => {
             console.error('[asaas-webhook] Error updating payment:', paymentError);
           }
 
-          // Atualizar subscription como ativa
+          // Atualizar subscription como ativa e limpar grace period/downgrade
           const { error: subError } = await supabase
             .from('subscriptions')
             .update({
               status: 'active',
+              grace_period_ends_at: null,
+              downgraded_at: null,
               updated_at: new Date().toISOString(),
             })
             .eq('id', subscriptionId);
@@ -233,16 +235,21 @@ serve(async (req: Request) => {
             .update({ status: 'OVERDUE' })
             .eq('asaas_payment_id', payment.id);
 
-          // Atualizar subscription como overdue
+          // Calcular grace period (2 dias a partir de agora)
+          const gracePeriodEnds = new Date();
+          gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 2);
+
+          // Atualizar subscription como overdue com grace period
           await supabase
             .from('subscriptions')
             .update({
               status: 'overdue',
+              grace_period_ends_at: gracePeriodEnds.toISOString(),
               updated_at: new Date().toISOString(),
             })
             .eq('id', subscriptionId);
 
-          console.log('[asaas-webhook] Payment overdue:', payment.id);
+          console.log('[asaas-webhook] Payment overdue, grace period until:', gracePeriodEnds.toISOString());
           break;
         }
 
