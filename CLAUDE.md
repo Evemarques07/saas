@@ -2,7 +2,46 @@
 
 ## Visao Geral
 
-SaaS de gestao para lojas (Mercado Virtual). Frontend React + Vite, backend Supabase (Edge Functions, Postgres, Auth, Storage). Billing via Asaas (producao).
+SaaS de gestao para lojas (Mercado Virtual). Frontend React + Vite, backend Supabase (Edge Functions, Postgres, Auth, Storage). Billing via Asaas.
+
+---
+
+## ⚠️ ESTADO ATUAL (atualizado em 2026-07-22)
+
+### Billing Asaas está em SANDBOX (modo teste), NAO producao
+Nesta sessao o projeto foi reativado apos um periodo pausado e a cobranca foi colocada em **sandbox** para validar o fluxo:
+- `ASAAS_API_URL` = `https://sandbox.asaas.com/api/v3`
+- `ASAAS_API_KEY` = chave de **sandbox** (`$aact_hmlg_...`), ja configurada no Supabase secrets
+- A chave de **producao antiga foi ROTACIONADA/invalidada** (retornava "chave de API invalida"). Para voltar a producao e preciso gerar uma NOVA chave de producao valida no painel Asaas.
+- O webhook foi reconfigurado no painel **sandbox** com um `ASAAS_WEBHOOK_TOKEN` novo (gerado nesta sessao).
+
+**Para voltar a PRODUCAO** (sandbox e producao sao ambientes 100% separados: chaves, webhooks e logins diferentes):
+```bash
+# 1. Gerar nova chave de PRODUCAO no painel Asaas (www.asaas.com) -> Integracoes -> Chave de API
+# 2. Apontar os secrets para producao:
+npx supabase secrets set ASAAS_API_URL="https://api.asaas.com/v3" --project-ref jyjkeqnmofzjnzpvkugl
+npx supabase secrets set ASAAS_API_KEY="<NOVA_CHAVE_PRODUCAO>" --project-ref jyjkeqnmofzjnzpvkugl
+# 3. Reconfigurar o webhook no painel de PRODUCAO (mesma URL da funcao) com o mesmo ASAAS_WEBHOOK_TOKEN
+```
+
+### Segredos sao write-only no Supabase
+`npx supabase secrets list --project-ref jyjkeqnmofzjnzpvkugl` mostra apenas **nome + hash SHA-256**, nunca o valor. Para descobrir a qual URL o `ASAAS_API_URL` aponta sem le-lo: comparar o SHA-256 de `https://api.asaas.com/v3` vs `https://sandbox.asaas.com/api/v3` com o hash exibido. O CLI local ja esta autenticado (credenciais no Windows Credential Manager), entao `secrets list/set` e `functions list/deploy` funcionam sem passar token.
+
+---
+
+## Reativacao do Projeto (checklist do zero)
+
+Se o projeto estiver "fora do ar", verificar nesta ordem:
+
+1. **SSH na VPS:** `ssh evertonapi` (root@177.153.64.167). Se aparecer `REMOTE HOST IDENTIFICATION HAS CHANGED` (VPS reinstalada), rodar `ssh-keygen -R 177.153.64.167` e reconectar aceitando a nova chave.
+2. **Nginx / site no ar:** o servico costuma estar ativo, mas o site precisa do symlink em `sites-enabled`. Se o dominio servir "Welcome to nginx!", o site esta desabilitado:
+   ```bash
+   ssh evertonapi "ln -sf /etc/nginx/sites-available/mercadovirtual.app /etc/nginx/sites-enabled/ && nginx -t && systemctl reload nginx"
+   ```
+3. **Supabase pausado:** projeto free pausa por inatividade. Despausar no dashboard (nao da por CLI). Testar: `curl <VITE_SUPABASE_URL>/auth/v1/health -H "apikey: <ANON_KEY>"` deve dar 200.
+4. **Asaas:** conferir estado dos secrets (ver secao ESTADO ATUAL). Validar a chave: `curl https://sandbox.asaas.com/api/v3/myAccount -H "access_token: <KEY>"` (ou a URL de producao).
+5. **SSL wildcard:** ver secao "SSL / Certificados" abaixo — subdominios `*.mercadovirtual.app` usam cert separado que ja auto-renova.
+6. **Git defasado:** o codigo as vezes e commitado direto na VPS. SEMPRE rodar `git fetch origin` e comparar `HEAD..origin/main` antes de editar no local. Normalmente o local e ancestral -> `git pull --ff-only origin main`.
 
 ## Stack
 
@@ -39,9 +78,9 @@ docs/                   # Documentacao detalhada
 ### Supabase Secrets (Edge Functions)
 Configurados via `npx supabase secrets set KEY=VALUE --project-ref <REF>`
 
-- `ASAAS_API_KEY` - Chave de producao do Asaas ($aact_prod_...)
-- `ASAAS_API_URL` - https://api.asaas.com/v3
-- `ASAAS_WEBHOOK_TOKEN` - Token de autenticacao do webhook
+- `ASAAS_API_KEY` - Chave do Asaas. **ATUALMENTE sandbox** (`$aact_hmlg_...`) - ver secao ESTADO ATUAL. Producao usa `$aact_prod_...`
+- `ASAAS_API_URL` - **ATUALMENTE** `https://sandbox.asaas.com/api/v3` (producao: `https://api.asaas.com/v3`)
+- `ASAAS_WEBHOOK_TOKEN` - Token de autenticacao do webhook (regenerado em 2026-07-22; precisa bater com o campo "Token de autenticacao" do webhook no painel Asaas)
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` - Auto-configurados
 - `MAILERSEND_API_TOKEN`, `MAILERSEND_FROM_EMAIL`, `MAILERSEND_FROM_NAME` - Email
 - `WUZAPI_URL`, `WUZAPI_ADMIN_TOKEN` - WhatsApp
@@ -202,10 +241,11 @@ curl -s "https://api.asaas.com/v3/payments/<PAYMENT_ID>/pixQrCode" \
 - `PAYMENT_DELETED` - Remove pagamento do DB
 
 ### Webhook configurado no Asaas
-- **Nome:** MercadoVirtualWebHook
-- **URL:** `https://jyjkeqnmofzjnzpvkugl.supabase.co/functions/v1/asaas-webhook`
-- **Auth:** Header `asaas-access-token` com token configurado
-- **Eventos:** PAYMENT_* e SUBSCRIPTION_*
+- **Nome:** MercadoVirtualWebHook (configurado no painel **sandbox** nesta sessao)
+- **URL:** `https://jyjkeqnmofzjnzpvkugl.supabase.co/functions/v1/asaas-webhook` (mesma URL para sandbox e producao)
+- **Auth:** Header `asaas-access-token` = valor do secret `ASAAS_WEBHOOK_TOKEN` (senao a funcao retorna 401)
+- **Eventos:** apenas `PAYMENT_*` (a funcao ignora `SUBSCRIPTION_*` - so processa o objeto `payment`). Marcar: PAYMENT_CREATED, PAYMENT_CONFIRMED, PAYMENT_RECEIVED, PAYMENT_OVERDUE, PAYMENT_REFUNDED, PAYMENT_DELETED, PAYMENT_UPDATED
+- **Confirmar PIX no sandbox** (nao ha pagamento real): via API `POST /payments/{id}/receiveInCash`, ou pela pagina da fatura `sandbox.asaas.com/i/{id}`, ou no painel. A confirmacao dispara `PAYMENT_RECEIVED` -> webhook -> assinatura vira `active`.
 
 ## Planos
 
@@ -287,6 +327,24 @@ npx supabase functions deploy asaas-withdrawal-validation --no-verify-jwt --proj
 - `/assets/` - cache 1 ano imutavel (arquivos com hash no nome)
 - Todas as rotas fazem fallback para `/index.html` (SPA)
 - Gzip habilitado
+
+### SSL / Certificados (Let's Encrypt)
+
+Sao DOIS certificados separados (o config Nginx referencia ambos):
+- `mercadovirtual.app` -> cobre apex + `www`. Renova sozinho via **HTTP-01** (padrao certbot).
+- `mercadovirtual.app-0001` -> cobre o **wildcard `*.mercadovirtual.app`** (todos os subdominios de loja). Exige **DNS-01**.
+
+**DNS do dominio fica na Hostinger** (nameservers `ns1/ns2.dns-parking.com`), NAO na KingHost. O wildcard antes nao renovava sozinho (validacao DNS manual) e expirou. Em 2026-07-22 foi configurada **auto-renovacao via API DNS da Hostinger**:
+- Hooks: `/etc/letsencrypt/hostinger-auth-hook.sh` (cria o TXT `_acme-challenge`) e `/etc/letsencrypt/hostinger-cleanup-hook.sh` (remove). Ja gravados no `renewal/mercadovirtual.app-0001.conf`.
+- Token da API Hostinger: `/root/.secrets/hostinger_token` (perm 600). **Tem validade** - se a auto-renovacao falhar, provavelmente o token expirou: gerar novo em hPanel (https://hpanel.hostinger.com/api) e substituir o conteudo do arquivo.
+- API usada: `PUT/DELETE https://developers.hostinger.com/api/dns/v1/zones/mercadovirtual.app`. PUT: `{"overwrite":true,"zone":[{name,type,ttl,records:[{content}]}]}` (overwrite e scoped por name+type - seguro, nao apaga outros registros). DELETE: `{"filters":[{name,type}]}`.
+- ⚠️ A NS autoritativa nao responde direto da VPS e o resolver padrao cacheia velho - o hook checa propagacao via `@1.1.1.1`.
+- Renova automatico pelo `certbot.timer`. Testar/forcar:
+```bash
+ssh evertonapi "certbot renew --cert-name mercadovirtual.app-0001 --dry-run"   # simula
+ssh evertonapi "certbot certificates"                                          # ver validades
+ssh evertonapi "systemctl list-timers certbot.timer"                           # timer ativo?
+```
 
 ### Comandos uteis na VPS
 ```bash

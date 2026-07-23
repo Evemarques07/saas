@@ -144,28 +144,29 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
           {theme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
         </button>
 
-        {/* User Menu */}
+        {/* Divisoria sutil entre controles e conta */}
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
+
+        {/* User Menu - apenas a foto de perfil (nome/email vao no dropdown) */}
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center rounded-full p-0.5 ring-2 ring-transparent hover:ring-primary-200 dark:hover:ring-primary-800/60 transition-all"
+            title={profile?.full_name || profile?.email || 'Conta'}
+            aria-label="Abrir menu da conta"
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={profile?.full_name || 'Avatar'}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-9 h-9 rounded-full object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                 <PersonIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
             )}
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">
-              {profile?.full_name || profile?.email}
-            </span>
-            <KeyboardArrowDownIcon className="w-4 h-4 text-gray-400" />
           </button>
 
           {showUserMenu && (

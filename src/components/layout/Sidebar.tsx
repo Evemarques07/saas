@@ -104,7 +104,6 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
     }));
 
   const catalogUrl = buildFullCatalogoUrl(slug);
-  const dashboardPath = buildAppPath(slug, PATHS.DASHBOARD);
 
   const handleOpenCatalog = () => {
     window.open(catalogUrl, '_blank');
@@ -134,7 +133,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
   return (
     <aside
       className={`
-        fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+        fixed flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
         transition-all duration-300 z-50 shadow-lg overflow-hidden
         ${isMobile
           ? 'left-0 top-0 bottom-0 w-72 rounded-r-2xl'
@@ -143,7 +142,7 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
       `}
     >
       {/* Logo */}
-      <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-800 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+      <div className={`h-16 flex-shrink-0 flex items-center border-b border-gray-200 dark:border-gray-800 ${!isMobile && collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {(isMobile || !collapsed) && (
           <img
             src={theme === 'dark' ? '/mercadoVirtualBranco.png' : '/mercadoVirtualPreto.png'}
@@ -159,8 +158,8 @@ export function Sidebar({ collapsed, onToggle, isOpen = false, isMobile = false,
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-5rem)]">
+      {/* Navigation - ocupa o espaco restante e rola internamente (ultimo item nunca corta) */}
+      <nav className="flex-1 min-h-0 overflow-y-auto p-2 pb-3 space-y-1">
         {navItems.map((item) => {
           const isActive = isActiveRoute(item.path, item.route);
           const showLabel = isMobile || !collapsed;
