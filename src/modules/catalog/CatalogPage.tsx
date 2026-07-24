@@ -13,13 +13,14 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { supabase } from '../../services/supabase';
 import { getSubdomainSlug, buildCatalogoProductPath } from '../../routes/paths';
 import { Company, Product, Category } from '../../types';
-import { Input, Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui';
+import { Input, Card, Button, ImageCarousel, ImageLightbox, CustomSelect } from '../../components/ui';
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { CartProvider, useCart } from '../../contexts/CartContext';
 import { CatalogCustomerProvider, useCatalogCustomer } from '../../contexts/CatalogCustomerContext';
 import { CartDrawer, CheckoutModal, CustomerLoginModal, CustomerAccountDrawer, CatalogInstallPrompt } from './components';
 import { useCatalogPWA } from '../../hooks/useCatalogPWA';
+import { trackCatalogEvent } from '../../services/analytics';
 
 export function CatalogPage() {
   const { slug: urlSlug } = useParams<{ slug: string }>();
@@ -131,6 +132,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   } = useCatalogPWA({ company });
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [sortBy, setSortBy] = useState('relevance');
   const [cartOpen, setCartOpen] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [headerForceOpen, setHeaderForceOpen] = useState(false);
@@ -161,6 +163,17 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   const ITEMS_PER_PAGE = 20;
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
+  // Analytics: registra visita ao catalogo (uma vez por montagem)
+  useEffect(() => {
+    trackCatalogEvent(company.id, 'catalog_view');
+  }, [company.id]);
+
+  // Adiciona ao carrinho + registra evento de analytics
+  const handleAddToCart = (product: Product) => {
+    addItem(product);
+    trackCatalogEvent(company.id, 'add_to_cart', product.id);
+  };
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -173,8 +186,22 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
     return matchesSearch && matchesCategory;
   });
 
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredProducts.length;
+  // Ordenacao (relevancia = ordem original, que ja vem por nome do banco)
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'price_asc':
+        return a.price - b.price;
+      case 'price_desc':
+        return b.price - a.price;
+      case 'name':
+        return a.name.localeCompare(b.name, 'pt-BR');
+      default:
+        return 0;
+    }
+  });
+
+  const visibleProducts = sortedProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < sortedProducts.length;
 
   const handleCheckout = () => {
     setCartOpen(false);
@@ -307,24 +334,39 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
           </div>
 
           {/* Filtros dentro do header */}
-          <div className="px-4 pb-3 space-y-2">
-            <div className="relative">
-              <Input
-                placeholder="Buscar produtos..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
-                leftIcon={<SearchIcon className="w-5 h-5" />}
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  type="button"
-                  aria-label="Limpar busca"
-                >
-                  <CloseIcon className="w-4 h-4" />
-                </button>
-              )}
+          <div className="px-4 pb-3 space-y-2.5">
+            {/* Busca + Ordenacao */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
+                  leftIcon={<SearchIcon className="w-5 h-5" />}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    type="button"
+                    aria-label="Limpar busca"
+                  >
+                    <CloseIcon className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="sm:w-52 flex-shrink-0">
+                <CustomSelect
+                  value={sortBy}
+                  onChange={(v) => { setSortBy(v); setVisibleCount(ITEMS_PER_PAGE); }}
+                  options={[
+                    { value: 'relevance', label: 'Ordenar: Relevância' },
+                    { value: 'price_asc', label: 'Menor preço' },
+                    { value: 'price_desc', label: 'Maior preço' },
+                    { value: 'name', label: 'Nome (A-Z)' },
+                  ]}
+                />
+              </div>
             </div>
 
             {categories.length > 0 && (
@@ -354,6 +396,15 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                 ))}
               </div>
             )}
+
+            {/* Contagem de resultados */}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{sortedProducts.length}</span>{' '}
+              {sortedProducts.length === 1 ? 'produto' : 'produtos'}
+              {categoryFilter && categories.find((c) => c.id === categoryFilter) && (
+                <> em <span className="font-medium text-gray-600 dark:text-gray-300">{categories.find((c) => c.id === categoryFilter)?.name}</span></>
+              )}
+            </p>
           </div>
         </div>
       </header>
@@ -376,7 +427,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                 const isOutOfStock = product.stock <= 0;
 
                 return (
-                  <Card key={product.id} padding="none" className="overflow-hidden flex flex-col">
+                  <Card key={product.id} padding="none" className="overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg dark:hover:shadow-glow hover:-translate-y-0.5">
                     {/* Product Image - clicável para detalhes */}
                     <Link to={buildCatalogoProductPath(company.slug, product.id)} className="relative block">
                       <ImageCarousel
@@ -386,10 +437,14 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                         onImageClick={(index) => handleOpenLightbox(product, index)}
                         className="bg-gray-100 dark:bg-gray-800"
                       />
-                      {isOutOfStock && (
+                      {isOutOfStock ? (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                           <span className="text-white font-semibold text-sm md:text-lg">Esgotado</span>
                         </div>
+                      ) : product.stock <= 5 && (
+                        <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white shadow-sm pointer-events-none">
+                          Últimas {product.stock}
+                        </span>
                       )}
                     </Link>
 
@@ -444,7 +499,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
                           </div>
                         ) : (
                           <Button
-                            onClick={() => addItem(product)}
+                            onClick={() => handleAddToCart(product)}
                             icon={<AddShoppingCartIcon className="w-4 h-4" />}
                             className="w-full text-xs md:text-sm"
                           >

@@ -13,6 +13,7 @@ import { Card, Button, ImageCarousel, ImageLightbox } from '../../components/ui'
 import { PageLoader } from '../../components/ui/Loader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { CartProvider, useCart } from '../../contexts/CartContext';
+import { trackCatalogEvent } from '../../services/analytics';
 
 export function ProductPage() {
   const { slug: urlSlug, productId } = useParams<{ slug: string; productId: string }>();
@@ -66,6 +67,9 @@ export function ProductPage() {
 
     setProduct(productData);
     setLoading(false);
+
+    // Analytics: registra visualizacao do produto
+    trackCatalogEvent(companyData.id, 'product_view', productData.id);
   };
 
   if (loading) {

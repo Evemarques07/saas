@@ -16,6 +16,19 @@
   body {
     @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
   }
+
+  /* Variaveis dos toasts (react-hot-toast usa via var() em App.tsx).
+     Sem estas definicoes o fundo ficava transparente/ilegivel. */
+  :root {
+    --toast-bg: #ffffff;
+    --toast-color: #111827;
+    --toast-border: #e5e7eb;
+  }
+  .dark {
+    --toast-bg: #1f2937;
+    --toast-color: #f9fafb;
+    --toast-border: #374151;
+  }
 }
 
 @layer components {

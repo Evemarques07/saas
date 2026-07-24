@@ -25,6 +25,8 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -33,10 +35,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-hot-toast';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Card, Button, Select } from '../../components/ui';
+import { Card, Button, CustomSelect } from '../../components/ui';
 import { ActivationChecklist } from '../../components/dashboard/ActivationChecklist';
 import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../services/supabase';
+import { getCatalogAnalytics, CatalogAnalytics } from '../../services/analytics';
 import { useTheme } from '../../contexts/ThemeContext';
 
 type PeriodFilter = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'thisMonth' | 'lastMonth' | 'all';
@@ -107,6 +110,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [chartsReady, setChartsReady] = useState(false);
   const [period, setPeriod] = useState<PeriodFilter>('last30days');
+  const [catalogAnalytics, setCatalogAnalytics] = useState<CatalogAnalytics | null>(null);
   const salesChartRef = useRef<HTMLDivElement>(null);
   const productsChartRef = useRef<HTMLDivElement>(null);
   const funnelChartRef = useRef<HTMLDivElement>(null);
@@ -210,6 +214,9 @@ export function DashboardPage() {
 
     setLoading(true);
     const { startDate, endDate } = getDateRange(period);
+
+    // Analytics do catalogo (nao bloqueia o resto do dashboard)
+    getCatalogAnalytics(currentCompany.id, startDate, endDate).then(setCatalogAnalytics);
 
     try {
       // Build sales query with date filter
@@ -549,14 +556,67 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="w-full sm:w-48">
-            <Select
+            <CustomSelect
               value={period}
-              onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+              onChange={(v) => setPeriod(v as PeriodFilter)}
               options={periodOptions}
             />
           </div>
         </div>
       </Card>
+
+      {/* Analytics do Catalogo Publico */}
+      {catalogAnalytics && (
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <StorefrontIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Catálogo público
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+            {[
+              { label: 'Visitas', value: catalogAnalytics.catalog_views.toLocaleString('pt-BR'), icon: <StorefrontIcon className="w-5 h-5" />, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+              { label: 'Visitantes únicos', value: catalogAnalytics.unique_visitors.toLocaleString('pt-BR'), icon: <PeopleIcon className="w-5 h-5" />, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+              { label: 'Views de produtos', value: catalogAnalytics.product_views.toLocaleString('pt-BR'), icon: <VisibilityIcon className="w-5 h-5" />, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/20' },
+              { label: 'Add ao carrinho', value: catalogAnalytics.add_to_cart.toLocaleString('pt-BR'), icon: <AddShoppingCartIcon className="w-5 h-5" />, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+              { label: 'Conversão', value: catalogAnalytics.catalog_views > 0 ? `${((catalogAnalytics.orders / catalogAnalytics.catalog_views) * 100).toFixed(1)}%` : '—', icon: <TrendingUpIcon className="w-5 h-5" />, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
+            ].map((kpi) => (
+              <Card key={kpi.label} className="p-2.5 sm:p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <div className={`p-2 rounded-lg ${kpi.bg} flex-shrink-0 self-start sm:self-auto`}>
+                    <span className={kpi.color}>{kpi.icon}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">{kpi.value}</p>
+                    <p className="text-[11px] md:text-xs text-gray-500 dark:text-gray-400 leading-tight">{kpi.label}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {catalogAnalytics.top_products.length > 0 && (
+            <Card className="p-3 md:p-4 mt-3 md:mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Produtos mais vistos</h4>
+              <ol className="space-y-2">
+                {catalogAnalytics.top_products.map((p, i) => (
+                  <li key={p.product_id} className="flex items-center gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate text-sm text-gray-700 dark:text-gray-200">{p.name}</span>
+                    <span className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {p.views} {p.views === 1 ? 'view' : 'views'}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">

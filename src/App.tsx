@@ -18,6 +18,9 @@ function App() {
               style: {
                 background: "var(--toast-bg)",
                 color: "var(--toast-color)",
+                border: "1px solid var(--toast-border)",
+                boxShadow: "0 8px 24px -6px rgba(0, 0, 0, 0.25)",
+                fontSize: "13px",
               },
             }}
           />

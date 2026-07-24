@@ -30,6 +30,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     localStorage.setItem(STORAGE_KEY, theme);
+
+    // Atualiza a cor da barra de status do dispositivo (PWA/mobile) para acompanhar
+    // o tema do APP (nao o do sistema). Cria o meta se nao existir.
+    const themeColor = theme === 'dark' ? '#111827' : '#ffffff';
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', themeColor);
   }, [theme]);
 
   const toggleTheme = () => {

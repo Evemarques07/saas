@@ -4,7 +4,7 @@ import AddIcon from '@mui/icons-material/Add';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SearchIcon from '@mui/icons-material/Search';
 import { PageContainer } from '../../components/layout/PageContainer';
-import { Button, Input, Select, Card, Table, Modal, ModalFooter, Badge } from '../../components/ui';
+import { Button, Input, CustomSelect, Card, Table, Modal, ModalFooter, Badge } from '../../components/ui';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { useTenant } from '../../contexts/TenantContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -231,9 +231,10 @@ export function StockEntryPage() {
             />
           </div>
           <div className="w-full sm:w-64">
-            <Select
+            <CustomSelect
+              searchable
               value={filterProduct}
-              onChange={(e) => setFilterProduct(e.target.value)}
+              onChange={setFilterProduct}
               options={[{ value: '', label: 'Todos os produtos' }, ...productOptions]}
             />
           </div>
@@ -379,11 +380,11 @@ export function StockEntryPage() {
         size="md"
       >
         <div className="space-y-4">
-          <Select
+          <CustomSelect
             label="Produto *"
+            searchable
             value={formData.product_id}
-            onChange={(e) => {
-              const productId = e.target.value;
+            onChange={(productId) => {
               setFormData((prev) => {
                 const product = products.find((p) => p.id === productId);
                 return {
