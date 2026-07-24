@@ -843,7 +843,7 @@ export function SettingsPage() {
               <div className={`relative p-4 rounded-xl border-2 transition-all ${
                 whatsAppSettings.connected
                   ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                  : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
               }`}>
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
@@ -885,7 +885,7 @@ export function SettingsPage() {
               <div className={`relative p-4 rounded-xl border-2 transition-all ${
                 !whatsAppSettings.connected && companyPhone
                   ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                  : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
               }`}>
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
@@ -974,7 +974,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Notification Settings */}
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">
                     Notificacoes Automaticas
                   </h3>
@@ -983,7 +983,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_new_order
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1022,7 +1022,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_confirm
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1061,7 +1061,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_complete
                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1100,7 +1100,7 @@ export function SettingsPage() {
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       whatsAppSettings.notify_on_cancel
                         ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}>
                       <input
                         type="checkbox"
@@ -1146,7 +1146,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Test Message */}
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">
                     Testar Envio de Mensagem
                   </h3>
@@ -1199,7 +1199,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Manual Mode Section */}
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TouchAppIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1439,7 +1439,7 @@ export function SettingsPage() {
                 )}
 
                 {/* Test Connection and Save */}
-                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="secondary"
                     onClick={handleTestPrinter}

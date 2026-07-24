@@ -96,7 +96,7 @@ export function UsageCard({ usage, plan, isDowngraded }: UsageCardProps) {
 
   return (
     <Card>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h3 className="font-semibold text-gray-900 dark:text-white">
           Uso do Plano
         </h3>

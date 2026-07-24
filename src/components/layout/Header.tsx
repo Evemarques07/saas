@@ -40,7 +40,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   };
 
   return (
-    <header className="z-40 h-14 mx-2 md:mx-4 mt-2 md:mt-4 mb-2 md:mb-4 flex-shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-2 md:px-4">
+    <header className="z-40 h-14 mx-2 mt-2 mb-2 flex-shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm dark:shadow-glow flex items-center justify-between px-2 md:px-4">
       {/* Left Side - Menu button (mobile) + Company Selector */}
       <div className="flex items-center gap-1 md:gap-2">
         {/* Mobile Menu Button */}
@@ -97,7 +97,7 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         {showCompanyMenu && companies.length > 1 && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowCompanyMenu(false)} />
-            <div className="absolute left-0 top-full mt-1 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-20">
+            <div className="absolute left-0 top-full mt-1 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
               {companies.map((membership) => (
                 <button
                   key={membership.company?.id}
@@ -172,8 +172,8 @@ export function Header({ onMenuClick, isMobile = false }: HeaderProps) {
           {showUserMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-20">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}

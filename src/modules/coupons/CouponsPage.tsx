@@ -341,7 +341,7 @@ export function CouponsPage() {
                   : { label: 'Ativo', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
 
               return (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex-shrink-0">
@@ -392,7 +392,7 @@ export function CouponsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
                     <button
                       onClick={() => openEditModal(coupon)}
                       className="p-2 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"

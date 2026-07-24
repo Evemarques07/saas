@@ -663,7 +663,7 @@ export function SalesPage() {
         emptyMessage="Nenhuma venda encontrada"
         mobileCardRender={(s) => (
           <div
-            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
+            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
             onClick={() => handleViewSale(s)}
           >
             <div className="flex items-start justify-between gap-3">
@@ -687,7 +687,7 @@ export function SalesPage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {s.items?.length || 0} item(s)
               </span>
@@ -771,7 +771,7 @@ export function SalesPage() {
               </button>
             </div>
             {productSearch && (
-              <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.slice(0, 20).map((p) => (
                     <button
@@ -785,7 +785,7 @@ export function SalesPage() {
                       className={`
                         w-full flex items-center justify-between px-3 py-2 text-sm text-left
                         hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
-                        border-b border-gray-100 dark:border-gray-800 last:border-0
+                        border-b border-gray-100 dark:border-gray-700 last:border-0
                         ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
                       `}
                     >
@@ -817,7 +817,7 @@ export function SalesPage() {
 
           {/* Cart */}
           {cart.length > 0 && (
-            <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               {/* Mobile: Cards */}
               <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {cart.map((item) => (
@@ -919,7 +919,7 @@ export function SalesPage() {
           )}
 
           {/* Totals */}
-          <div className="space-y-2 border-t border-gray-200 dark:border-gray-800 pt-4">
+          <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Subtotal:</span>
               <span>{formatCurrency(subtotal)}</span>
@@ -1027,7 +1027,7 @@ export function SalesPage() {
             </div>
 
             {/* Items */}
-            <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               {/* Mobile: Cards */}
               <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {viewingSale.items?.map((item: SaleItem) => (
@@ -1088,7 +1088,7 @@ export function SalesPage() {
             </div>
 
             {/* Totals */}
-            <div className="space-y-2 border-t border-gray-200 dark:border-gray-800 pt-4">
+            <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal:</span>
                 <span>{formatCurrency(viewingSale.subtotal)}</span>
@@ -1110,7 +1110,7 @@ export function SalesPage() {
             </div>
 
             {/* Print and Share Actions */}
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
               <PrintButton
                 sale={viewingSale}
                 company={currentCompany!}
@@ -1133,7 +1133,7 @@ export function SalesPage() {
 
             {/* Status Actions */}
             {isAdmin && viewingSale.status !== 'cancelled' && (
-              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                 {viewingSale.status === 'pending' && (
                   <Button
                     variant="primary"

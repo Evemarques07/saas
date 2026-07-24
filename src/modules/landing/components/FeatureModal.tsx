@@ -94,11 +94,11 @@ export function FeatureModal({ isOpen, onClose, title, icon, color, children }: 
           bg-white dark:bg-gray-900
           shadow-2xl shadow-black/20
           animate-slide-in-left
-          border-r border-gray-200 dark:border-gray-800
+          border-r border-gray-200 dark:border-gray-700
         `}
       >
         {/* Header */}
-        <div className={`flex items-center gap-4 p-6 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r ${color}`}>
+        <div className={`flex items-center gap-4 p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r ${color}`}>
           <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white">
             {icon}
           </div>
@@ -123,7 +123,7 @@ export function FeatureModal({ isOpen, onClose, title, icon, color, children }: 
         </div>
 
         {/* Footer hint */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             Role a página para fechar este preview
           </p>
@@ -146,7 +146,7 @@ export function FeatureModal({ isOpen, onClose, title, icon, color, children }: 
         `}
       >
         {/* Header */}
-        <div className={`flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r ${color}`}>
+        <div className={`flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r ${color}`}>
           <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white">
             {icon}
           </div>

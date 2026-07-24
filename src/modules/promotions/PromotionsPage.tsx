@@ -434,7 +434,7 @@ export function PromotionsPage() {
             {categories.length === 0 ? (
               <p className="text-sm text-gray-500">Nenhuma categoria cadastrada</p>
             ) : (
-              <div className="max-h-40 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <div className="max-h-40 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                 {categories.map((category) => (
                   <label key={category.id} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -466,7 +466,7 @@ export function PromotionsPage() {
             {products.length === 0 ? (
               <p className="text-sm text-gray-500">Nenhum produto cadastrado</p>
             ) : (
-              <div className="max-h-40 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <div className="max-h-40 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                 {products.map((product) => (
                   <label key={product.id} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -557,7 +557,7 @@ export function PromotionsPage() {
                   : { label: 'Ativo', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
 
               return (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex-shrink-0">
@@ -597,7 +597,7 @@ export function PromotionsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
                     <button
                       onClick={() => openEditModal(promotion)}
                       className="p-2 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
@@ -645,7 +645,7 @@ export function PromotionsPage() {
                       flex items-center gap-2 p-3 rounded-lg border text-left transition-colors
                       ${promotionType === type.value
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }
                     `}
                   >

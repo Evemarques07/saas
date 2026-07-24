@@ -454,7 +454,7 @@ export function CompaniesPage() {
         loading={loading}
         emptyMessage="Nenhuma empresa encontrada"
         mobileCardRender={(c) => (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-start gap-3">
               {/* Logo */}
               {c.logo_url ? (
@@ -505,7 +505,7 @@ export function CompaniesPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
               <span className="text-xs text-gray-500">
                 Criada em {new Date(c.created_at).toLocaleDateString('pt-BR')}
               </span>
@@ -598,7 +598,7 @@ export function CompaniesPage() {
 
           {/* Campo de email do admin - só aparece ao criar nova empresa */}
           {!editingCompany && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <Input
                 label="Email do Administrador"
                 type="email"

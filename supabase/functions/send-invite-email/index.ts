@@ -6,6 +6,18 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 
 const MAILERSEND_API_URL = 'https://api.mailersend.com/v1/email';
 
+// Escapa caracteres HTML para prevenir injecao de HTML/XSS no corpo do email.
+// companyName e invitedByName vem de dados controlados pelo usuario (nome da
+// empresa / do convidador), entao NUNCA devem ser interpolados crus no HTML.
+function escapeHtml(unsafe: string): string {
+  return String(unsafe)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface InviteEmailRequest {
   email: string;
   companyName: string;
@@ -43,6 +55,11 @@ serve(async (req: Request) => {
       );
     }
 
+    // Versoes escapadas para uso no HTML (o subject e texto puro, nao precisa)
+    const safeCompanyName = escapeHtml(companyName);
+    const safeInvitedByName = invitedByName ? escapeHtml(invitedByName) : '';
+    const safeInviteLink = escapeHtml(inviteLink);
+
     const subject = `Você foi convidado para gerenciar ${companyName} no Mercado Virtual`;
 
     const html = `
@@ -78,12 +95,12 @@ serve(async (req: Request) => {
               </h2>
 
               <p style="margin: 0 0 16px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
-                ${invitedByName ? `<strong>${invitedByName}</strong> convidou você` : 'Você foi convidado'} para ser <strong>administrador</strong> da empresa:
+                ${invitedByName ? `<strong>${safeInvitedByName}</strong> convidou você` : 'Você foi convidado'} para ser <strong>administrador</strong> da empresa:
               </p>
 
               <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
                 <p style="margin: 0; color: #6366f1; font-size: 24px; font-weight: 700;">
-                  ${companyName}
+                  ${safeCompanyName}
                 </p>
               </div>
 
@@ -94,7 +111,7 @@ serve(async (req: Request) => {
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center">
-                    <a href="${inviteLink}"
+                    <a href="${safeInviteLink}"
                        style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
                       Aceitar Convite
                     </a>
@@ -104,7 +121,7 @@ serve(async (req: Request) => {
 
               <p style="margin: 24px 0 0; color: #71717a; font-size: 14px; line-height: 1.6;">
                 Ou copie e cole este link no seu navegador:<br>
-                <a href="${inviteLink}" style="color: #6366f1; word-break: break-all;">${inviteLink}</a>
+                <a href="${safeInviteLink}" style="color: #6366f1; word-break: break-all;">${safeInviteLink}</a>
               </p>
 
               <hr style="margin: 32px 0; border: none; border-top: 1px solid #e4e4e7;">

@@ -339,7 +339,7 @@ export function LandingPage() {
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
-          ? 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl shadow-lg shadow-gray-900/5 border-b border-gray-200/50 dark:border-gray-800/50'
+          ? 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl shadow-lg shadow-gray-900/5 border-b border-gray-200/50 dark:border-gray-700/50'
           : 'bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -489,7 +489,7 @@ export function LandingPage() {
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className={`group relative bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 transition-all duration-700 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 hover:border-indigo-200 dark:hover:border-indigo-800 ${
+                className={`group relative bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-700 transition-all duration-700 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 hover:border-indigo-200 dark:hover:border-indigo-800 ${
                   statsSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
                 style={{ transitionDelay: `${index * 100}ms` }}
@@ -615,7 +615,7 @@ export function LandingPage() {
               <button
                 key={feature.id}
                 onClick={() => handleFeatureCardClick(feature.id)}
-                className={`group relative bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 overflow-hidden text-left cursor-pointer ${
+                className={`group relative bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 overflow-hidden text-left cursor-pointer ${
                   featuresSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 } ${isCardActive ? 'shadow-2xl -translate-y-3 border-indigo-300 dark:border-indigo-700' : ''}`}
                 style={{ transitionDelay: `${index * 50}ms` }}
@@ -893,7 +893,7 @@ export function LandingPage() {
                   <div className="hidden lg:block absolute top-20 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-indigo-200 dark:from-indigo-800 to-transparent" />
                 )}
 
-                <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 h-full transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-indigo-500/10 group-hover:-translate-y-3 group-hover:border-indigo-200 dark:group-hover:border-indigo-800">
+                <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-700 h-full transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-indigo-500/10 group-hover:-translate-y-3 group-hover:border-indigo-200 dark:group-hover:border-indigo-800">
                   {/* Step number */}
                   <div className="flex items-center gap-4 mb-6">
                     <div className="relative">
@@ -939,7 +939,7 @@ export function LandingPage() {
 
           {/* Testimonials Carousel */}
           <div className={`relative max-w-4xl mx-auto transition-all duration-700 delay-200 ${testimonialsSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 sm:p-12 shadow-2xl border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 sm:p-12 shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-hidden">
               {/* Quote icon */}
               <FormatQuoteIcon className="absolute top-6 left-6 h-16 w-16 text-indigo-100 dark:text-indigo-900/50" />
 
@@ -1013,7 +1013,7 @@ export function LandingPage() {
                 className={`bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden transition-all duration-500 ${
                   openFaq === index
                     ? 'border-indigo-200 dark:border-indigo-800 shadow-xl shadow-indigo-500/5'
-                    : 'border-gray-100 dark:border-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900'
+                    : 'border-gray-100 dark:border-gray-700 hover:border-indigo-100 dark:hover:border-indigo-900'
                 } ${faqSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transitionDelay: `${index * 50}ms` }}
               >

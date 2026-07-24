@@ -514,7 +514,7 @@ export function WhatsAppAdminPage() {
 
               {/* Extra info */}
               {company.wuzapiStatus?.phoneName && (
-                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-gray-500">
                     Perfil: {company.wuzapiStatus.phoneName}
                   </p>

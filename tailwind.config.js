@@ -131,6 +131,11 @@ export default {
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'mesh-gradient': 'linear-gradient(to right, #6366f1, #8b5cf6, #d946ef)',
       },
+      boxShadow: {
+        // Brilho sutil na borda dos cards (destaca no dark mode):
+        // hairline branco no contorno + bloom indigo suave
+        'glow': '0 0 0 1px rgb(255 255 255 / 0.06), 0 0 20px -6px rgb(129 140 248 / 0.28)',
+      },
     },
   },
   plugins: [],

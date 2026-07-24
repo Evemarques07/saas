@@ -30,7 +30,7 @@ export function PrinterHelpModal({ isOpen, onClose }: PrinterHelpModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-primary-50 dark:bg-primary-900/20">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-primary-50 dark:bg-primary-900/20">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-800">
               <HelpOutlineIcon className="text-primary-600 dark:text-primary-400" />
@@ -113,23 +113,23 @@ export function PrinterHelpModal({ isOpen, onClose }: PrinterHelpModalProps) {
                   </tr>
                 </thead>
                 <tbody className="text-gray-600 dark:text-gray-400">
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <tr className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 font-medium">Ativar</td>
                     <td className="py-2">Marque para habilitar</td>
                   </tr>
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <tr className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 font-medium">Nome</td>
                     <td className="py-2">Ex: "Cozinha", "Balcao"</td>
                   </tr>
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <tr className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 font-medium">IP</td>
                     <td className="py-2">Ex: 192.168.1.100</td>
                   </tr>
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <tr className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 font-medium">Porta</td>
                     <td className="py-2">9100 (padrao)</td>
                   </tr>
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <tr className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 font-medium">Largura</td>
                     <td className="py-2">80mm (mais comum) ou 58mm</td>
                   </tr>
@@ -227,7 +227,7 @@ export function PrinterHelpModal({ isOpen, onClose }: PrinterHelpModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950/50">
           <Button onClick={onClose} className="w-full">
             Entendi
           </Button>
@@ -250,7 +250,7 @@ interface AccordionSectionProps {
 
 function AccordionSection({ title, icon, isOpen, onToggle, children }: AccordionSectionProps) {
   return (
-    <div className="mb-3 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+    <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

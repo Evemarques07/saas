@@ -75,7 +75,7 @@ export function CatalogInstallPrompt({
     <>
       {/* Install Banner */}
       <div className="fixed bottom-20 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-40 animate-slide-up">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {/* Header with close button */}
           <div className="flex items-start gap-3 p-4">
             {/* Company Logo */}

@@ -348,7 +348,7 @@ function PrintMenu({ options, onSelect, direction = 'up' }: PrintMenuProps) {
     <div
       className={`
         absolute left-0 ${positionClasses} w-64 bg-white dark:bg-gray-900
-        rounded-lg shadow-xl border border-gray-200 dark:border-gray-800
+        rounded-lg shadow-xl border border-gray-200 dark:border-gray-700
         py-2 z-[100]
       `}
     >

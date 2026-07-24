@@ -437,7 +437,7 @@ export function UsersPage() {
         loading={loading}
         emptyMessage="Nenhum usuário encontrado"
         mobileCardRender={(m) => (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -458,7 +458,7 @@ export function UsersPage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 <Badge
                   variant={m.role === 'admin' ? 'info' : m.role === 'manager' ? 'warning' : 'default'}

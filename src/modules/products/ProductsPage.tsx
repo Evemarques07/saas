@@ -739,7 +739,7 @@ export function ProductsPage() {
         emptyMessage="Nenhum produto encontrado"
         pageSize={20}
         mobileCardRender={(p) => (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex gap-3">
               {/* Image */}
               {p.image_url ? (
@@ -786,7 +786,7 @@ export function ProductsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
               {p.show_in_catalog && p.is_active && (
                 <>
                   <button
@@ -1046,7 +1046,7 @@ export function ProductsPage() {
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Preview ({importPreview.length} produtos)
               </p>
-              <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
                     <tr>

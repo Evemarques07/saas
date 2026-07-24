@@ -75,7 +75,7 @@ export function AppLayout() {
         <div
           className={`
             transition-all duration-300 h-screen flex flex-col
-            ${isMobile ? 'ml-0' : sidebarCollapsed ? 'ml-24' : 'ml-72'}
+            ${isMobile ? 'ml-0' : sidebarCollapsed ? 'ml-[4.5rem]' : 'ml-[16.5rem]'}
           `}
         >
           <Header onMenuClick={handleToggleSidebar} isMobile={isMobile} />
@@ -94,8 +94,8 @@ export function AppLayout() {
             />
           )}
 
-          <main className="px-2 md:px-4 pb-2 md:pb-4 flex-1 overflow-hidden">
-            <div className="h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <main className="px-2 pb-2 flex-1 overflow-hidden">
+            <div className="h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 dark:shadow-glow overflow-hidden">
               <div className="h-full overflow-y-auto overflow-x-hidden p-3 md:p-4">
                 <Outlet />
               </div>

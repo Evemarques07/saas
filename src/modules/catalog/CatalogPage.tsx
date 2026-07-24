@@ -194,7 +194,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
   return (
     <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-950 flex flex-col p-2 md:p-4">
       {/* Header - Colapsável no mobile ao rolar */}
-      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-2 md:mb-4 flex-shrink-0">
+      <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 mb-2 md:mb-4 flex-shrink-0">
         {/* Mini-bar colapsada (mobile only) */}
         {headerCollapsed && !headerForceOpen && (
           <div className="sm:hidden flex items-center justify-between px-4 py-2.5">
@@ -359,7 +359,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
       </header>
 
       {/* Main Content - Container arredondado com scroll interno */}
-      <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden min-h-0">
+      <main className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden min-h-0">
         {/* Products Grid - Área com scroll */}
         <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-auto px-3 md:px-4 py-3 md:py-4">
           {filteredProducts.length === 0 ? (
@@ -472,7 +472,7 @@ function CatalogContent({ company, products, categories }: CatalogContentProps) 
           )}
 
           {/* Footer dentro do container */}
-          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
             Powered by <span className="font-semibold text-primary-600">Mercado Virtual</span>
           </div>
         </div>

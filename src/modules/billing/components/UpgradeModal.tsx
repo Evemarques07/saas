@@ -368,7 +368,7 @@ export function UpgradeModal({
                     className={`relative p-3 rounded-lg border-2 transition-all text-left ${
                       billingCycle === cycle.value
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
                     <p className="font-medium text-gray-900 dark:text-white">
@@ -400,7 +400,7 @@ export function UpgradeModal({
                       className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                         billingType === type.value
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                          : 'border-gray-200 dark:border-gray-800 hover:border-gray-300'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                       }`}
                     >
                       <div

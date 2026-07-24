@@ -96,7 +96,7 @@ export function CouponsList() {
             key={coupon.id}
             className={`border rounded-xl overflow-hidden ${
               cannotUse
-                ? 'border-gray-200 dark:border-gray-800 opacity-60'
+                ? 'border-gray-200 dark:border-gray-700 opacity-60'
                 : 'border-primary-200 dark:border-primary-800'
             }`}
           >

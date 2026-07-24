@@ -38,7 +38,7 @@ export function WhatsAppPreview() {
   return (
     <div className="h-full flex flex-col">
       {/* WhatsApp Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-gray-800 mb-4">
+      <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-gray-700 mb-4">
         <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
           M
         </div>

@@ -374,3 +374,27 @@ ssh evertonapi "cd /var/www/mercadovirtual && git log --oneline -1" && git log -
 - Todas as Edge Functions usam `--no-verify-jwt` no deploy. `asaas-billing` tem verificacao propria via `verifyAuth()`. `asaas-webhook` e `asaas-withdrawal-validation` recebem requests do Asaas, nao do frontend.
 - O `SUPABASE_ACCESS_TOKEN` em `.env.local` e para CLI/deploy, nao tem permissao de listar secrets (403). Usar Management API com token adequado se necessario.
 - IDs Asaas de producao seguem padrao `cus_000...`, `sub_...`, `pay_...` (o prefixo `000` NAO indica sandbox).
+
+## Roadmap / Features Futuras (planejado em 2026-07)
+
+Backlog de features planejadas. Ao implementar, mover o item para o ROADMAP.md com detalhes e marcar aqui como feito.
+
+1. **Markup e margem de lucro por produto**
+   - Registrar markup e margem de lucro por produto, aproveitando o custo ja rastreado pelo sistema FIFO de estoque (ver migrations `*_add_cost_fields`, `*_fifo_*` e `src/services/stock.ts`).
+   - Exibir na UI de produtos (custo -> preco -> markup% / margem%) e possivelmente em relatorios/dashboard.
+
+2. **Novo layout repaginado (melhorar efeitos)**
+   - Redesign visual do sistema, comecado nesta sessao (header enxuto, sidebar em secoes, espacamento reduzido em `src/components/layout/`).
+   - Continuar: transicoes/animacoes, item ativo com barra indicadora, densidade, mobile. Usar a skill de design Tailwind (projeto e Tailwind v3, `tailwind.config.js`).
+
+3. **Integracao com a API OFICIAL do WhatsApp (WhatsApp Cloud API / Meta)**
+   - Substituir/complementar a WuzAPI (nao-oficial) pela API oficial da Meta para clientes que optarem.
+   - Envolve: cadastro Meta Business, numero verificado, templates aprovados, tokens. Camada de abstracao para o app nao depender do provider.
+
+4. **Integracao com a API da Focus NFe (emissao de NFC-e)**
+   - Emissao de nota fiscal (NFC-e) via Focus NFe (https://focusnfe.com.br). Requer certificado digital, token Focus, dados fiscais da empresa (CNPJ, regime tributario, CSC/CSC-ID).
+   - Ver docs fiscais existentes em `/docs`. Provavelmente via Edge Function para guardar o token Focus server-side.
+
+5. **WuzAPI como fallback de WhatsApp**
+   - Manter o servidor WuzAPI (`/root/wuzapi` na VPS) como **fallback** do WhatsApp: usar quando o cliente NAO optou pela API oficial (item 3), ou quando a oficial falhar.
+   - Selecao de provider por empresa (feature/config); a camada de abstracao do item 3 escolhe entre oficial e WuzAPI.

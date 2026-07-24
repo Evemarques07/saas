@@ -551,7 +551,7 @@ export function CatalogOrdersPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                   <Button
                     variant="secondary"
                     size="sm"

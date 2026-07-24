@@ -39,7 +39,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <ShoppingCartIcon className="w-5 h-5 text-primary-600" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -67,7 +67,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 {items.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800"
+                    className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700"
                   >
                     {/* Image */}
                     <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
@@ -140,7 +140,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
           {/* Footer */}
           {items.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-800 p-4 space-y-3">
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
               {/* Subtotal */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Subtotal</span>

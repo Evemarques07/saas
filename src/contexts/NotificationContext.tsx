@@ -163,7 +163,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex border-l border-gray-200 dark:border-gray-800">
+                <div className="flex border-l border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => toast.dismiss(t.id)}
                     className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-primary-600 hover:text-primary-500 focus:outline-none"

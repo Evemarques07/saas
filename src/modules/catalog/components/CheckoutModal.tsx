@@ -410,68 +410,28 @@ export function CheckoutModal({ isOpen, onClose, company }: CheckoutModalProps) 
     const cleanedPhone = customerPhone.replace(/\D/g, '');
     const cleanedCpf = customerCpf.replace(/\D/g, '');
 
-    const customerData = {
-      company_id: company.id,
-      name: customerName,
-      phone: cleanedPhone,
-      email: customerEmail || null,
-      document: cleanedCpf || null,
-      phone_has_whatsapp: phoneValidation.hasWhatsApp,
-      source: 'catalog' as const,
-      is_active: true,
-    };
-
-    if (existingCustomer) {
-      // Update existing customer
-      const { data, error } = await supabase
-        .from('customers')
-        .update({
-          name: customerName,
-          email: customerEmail || null,
-          document: cleanedCpf || null,
-          phone_has_whatsapp: phoneValidation.hasWhatsApp,
-          total_orders: (existingCustomer.total_orders || 0) + 1,
-          total_spent: (existingCustomer.total_spent || 0) + subtotal,
-          last_order_at: new Date().toISOString(),
-        })
-        .eq('id', existingCustomer.id)
-        .select()
-        .single();
+    // Cria/vincula o cliente via RPC SECURITY DEFINER. O catalogo publico (anon) NAO
+    // acessa a tabela customers diretamente - o RLS bloqueia anon para evitar vazamento
+    // de PII entre empresas. As estatisticas (total_orders/total_spent/last_order_at)
+    // sao atualizadas pelo trigger trg_update_customer_order_stats ao inserir o pedido.
+    try {
+      const { data, error } = await supabase.rpc('catalog_upsert_customer', {
+        p_company_id: company.id,
+        p_phone: cleanedPhone,
+        p_name: customerName,
+        p_email: customerEmail || null,
+        p_document: cleanedCpf || null,
+        p_has_whatsapp: phoneValidation.hasWhatsApp,
+      });
 
       if (error) {
-        console.error('[Checkout] Error updating customer:', error);
-        return existingCustomer.id;
+        console.error('[Checkout] Error upserting customer:', error);
+        return existingCustomer?.id || null;
       }
-      return data.id;
-    } else {
-      // Create new customer
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({
-          ...customerData,
-          total_orders: 1,
-          total_spent: subtotal,
-          last_order_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) {
-        // If duplicate phone, try to find existing
-        if (error.code === '23505') {
-          console.log('[Checkout] Customer already exists, fetching...');
-          const { data: existing } = await supabase
-            .from('customers')
-            .select('id')
-            .eq('company_id', company.id)
-            .eq('phone', cleanedPhone)
-            .single();
-          return existing?.id || null;
-        }
-        console.error('[Checkout] Error creating customer:', error);
-        return null;
-      }
-      return data.id;
+      return (data as string) || existingCustomer?.id || null;
+    } catch (err) {
+      console.error('[Checkout] Exception upserting customer:', err);
+      return existingCustomer?.id || null;
     }
   };
 

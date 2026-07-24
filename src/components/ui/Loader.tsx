@@ -12,7 +12,7 @@ const sizeClasses = {
 export function Loader({ size = 'md', className = '' }: LoaderProps) {
   return (
     <div className={`${sizeClasses[size]} ${className}`}>
-      <div className="w-full h-full border-2 border-gray-200 dark:border-gray-800 border-t-primary-600 rounded-full animate-spin" />
+      <div className="w-full h-full border-2 border-gray-200 dark:border-gray-700 border-t-primary-600 rounded-full animate-spin" />
     </div>
   );
 }

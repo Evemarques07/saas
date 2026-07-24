@@ -102,7 +102,7 @@ export function UpgradePrompt({ feature, compact = false }: UpgradePromptProps) 
             <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-800 dark:to-primary-700 rounded-full flex items-center justify-center">
               <Icon className="w-10 h-10 text-primary-600 dark:text-primary-400" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-700">
               <LockIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>

@@ -117,7 +117,7 @@ export function BillingPage() {
       subtitle="Gerencie seu plano e pagamentos"
     >
       {/* Tabs - responsivas */}
-      <div className="border-b border-gray-200 dark:border-gray-800 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
         <nav className="-mb-px flex justify-between sm:justify-start sm:space-x-6">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -192,7 +192,7 @@ export function BillingPage() {
               {/* Recent Payments */}
               {payments.length > 0 && (
                 <Card>
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       Pagamentos Recentes
                     </h3>
@@ -296,7 +296,7 @@ export function BillingPage() {
                 <>
                   {/* Payment Method */}
                   <Card>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         Metodo de Pagamento
                       </h3>
@@ -334,7 +334,7 @@ export function BillingPage() {
 
                   {/* Payment History */}
                   <Card>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         Historico de Pagamentos
                       </h3>

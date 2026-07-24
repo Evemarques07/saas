@@ -87,7 +87,7 @@ export function CRMPreview() {
         </button>
 
         {/* Customer Header */}
-        <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
             {selectedCustomer.avatar}
           </div>
